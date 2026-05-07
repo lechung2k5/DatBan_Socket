@@ -155,11 +155,10 @@ public Response handleGetInvoiceStats(Request request) {
         if (day != null && month != null) {
             items = statsDAO.getRawInvoicesByDate(LocalDate.of(year, month, day));
         } else if (month != null) {
-        items = statsDAO.getRawInvoicesByMonth(year, month);
-    } else {
-    // Approximate for year if needed, or just scan
-    items = new ArrayList<>(); // Simplify for now
-}
+            items = statsDAO.getRawInvoicesByMonth(year, month);
+        } else {
+            items = statsDAO.getRawInvoicesByYear(year);
+        }
 List<Map<String, Object>> list = items.stream().map(item -> {
     Map<String, Object> m = new HashMap<>();
     m.put("maHD", item.get("id").s());
@@ -229,10 +228,10 @@ public Response handleGetTopSellingItems(Request request) {
         if (day != null && month != null) {
             invoices = statsDAO.getRawInvoicesByDate(LocalDate.of(year, month, day));
         } else if (month != null) {
-        invoices = statsDAO.getRawInvoicesByMonth(year, month);
-    } else {
-    invoices = new ArrayList<>();
-}
+            invoices = statsDAO.getRawInvoicesByMonth(year, month);
+        } else {
+            invoices = statsDAO.getRawInvoicesByYear(year);
+        }
 // Map<ItemName, Quantity>
 Map<String, Integer> itemCounts = new HashMap<>();
 Map<String, Double> itemRevenue = new HashMap<>();

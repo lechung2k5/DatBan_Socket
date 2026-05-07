@@ -3,6 +3,7 @@ import entity.MonAn;
 import db.DynamoDBConfig;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.core.SdkBytes;
 import java.util.*;
 import java.util.stream.Collectors;
 /**
@@ -54,9 +55,13 @@ public void update(MonAn monAn) {
         values.put(":avail", AttributeValue.builder().bool(true).build());
         
         String updateExpr = "SET #n = :name, price = :price, available = :avail";
-        if (monAn.getHinhAnhUrl() != null) {
+        if (monAn.getHinhAnhUrl() != null && !monAn.getHinhAnhUrl().isEmpty()) {
             updateExpr += ", imageUrl = :img";
             values.put(":img", av(monAn.getHinhAnhUrl()));
+        }
+        if (monAn.getHinhAnh() != null && monAn.getHinhAnh().length > 0) {
+            updateExpr += ", hinhAnh = :bin";
+            values.put(":bin", AttributeValue.builder().b(SdkBytes.fromByteArray(monAn.getHinhAnh())).build());
         }
 
         db.updateItem(UpdateItemRequest.builder()
@@ -134,8 +139,11 @@ private void putItem(MonAn monAn) {
         item.put("name",       av(monAn.getTenMon()));
         item.put("price",      avn(monAn.getGiaBan()));
         item.put("available",  AttributeValue.builder().bool(true).build());
-        if (monAn.getHinhAnhUrl() != null) {
+        if (monAn.getHinhAnhUrl() != null && !monAn.getHinhAnhUrl().isEmpty()) {
             item.put("imageUrl", av(monAn.getHinhAnhUrl()));
+        }
+        if (monAn.getHinhAnh() != null && monAn.getHinhAnh().length > 0) {
+            item.put("hinhAnh", AttributeValue.builder().b(SdkBytes.fromByteArray(monAn.getHinhAnh())).build());
         }
         db.putItem(PutItemRequest.builder().tableName(TBL).item(item).build());
     } catch (Exception e) {
@@ -151,6 +159,11 @@ private MonAn mapToMonAn(Map<String, AttributeValue> item) {
     if (item.containsKey("price"))      m.setGiaBan(Double.parseDouble(item.get("price").n()));
     if (item.containsKey("categoryId")) m.setMaDM(item.get("categoryId").s());
     if (item.containsKey("imageUrl"))   m.setHinhAnhUrl(item.get("imageUrl").s());
+    
+    // Hỗ trợ ảnh nhị phân (legacy)
+    if (item.containsKey("hinhAnh") && item.get("hinhAnh").b() != null) {
+        m.setHinhAnh(item.get("hinhAnh").b().asByteArray());
+    }
     return m;
 }
 }

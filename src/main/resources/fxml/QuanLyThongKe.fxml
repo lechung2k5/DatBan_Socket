@@ -83,6 +83,7 @@
                                                 <ComboBox fx:id="cbHoaDonThang" prefWidth="90.0" />
                                                 <Label text="Năm:" />
                                                 <ComboBox fx:id="cbHoaDonNam" prefWidth="100.0" />
+                                                <Button fx:id="btnHoaDonHienTai" text="Hiện Tại" styleClass="view-button" />
                                                 <Button fx:id="btnLocHoaDon" text="Lọc" styleClass="view-button" />
                                              </children>
                                           </HBox>
@@ -137,6 +138,7 @@
                                                 <ComboBox fx:id="cbMonAnThang" prefWidth="90.0" />
                                                 <Label text="Năm:" />
                                                 <ComboBox fx:id="cbMonAnNam" prefWidth="100.0" />
+                                                <Button fx:id="btnMonAnHienTai" text="Hiện Tại" styleClass="view-button" />
                                                 <Button fx:id="btnLocMonAn" text="Lọc" styleClass="view-button" />
                                              </children>
                                           </HBox>
