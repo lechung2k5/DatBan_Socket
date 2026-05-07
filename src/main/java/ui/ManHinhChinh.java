@@ -119,6 +119,10 @@ public class ManHinhChinh {
     private Object currentController;
     private TaiKhoan currentUser;
     private DatBan datBanController;
+    
+    // 🔥 CACHE MÀN HÌNH ĐỂ TRÁNH RE-LOAD FXML VÀ DƯ THỪA LISTENER (MEMORY LEAK)
+    private final Map<String, Parent> screenCache = new HashMap<>();
+    private final Map<String, Object> controllerCache = new HashMap<>();
     // === DAOs REMOVED ===
     private boolean isDarkMode = false;
     private final String darkStyleClass = "dark-mode";
@@ -345,9 +349,39 @@ private void setActiveButton(Button button) {
     updateMenuStyles();
 }
 private void loadScreen(String fxmlPath, String cssPath) throws IOException {
+    // 1. Kiểm tra Cache
+    if (screenCache.containsKey(fxmlPath)) {
+        Parent root = screenCache.get(fxmlPath);
+        currentController = controllerCache.get(fxmlPath);
+        
+        // Nếu là tab Đặt bàn, đảm bảo controller tham chiếu đúng
+        if (currentController instanceof DatBan) {
+            this.datBanController = (DatBan) currentController;
+            // 🔥 Proactive refresh khi quay lại tab
+            Platform.runLater(() -> {
+                this.datBanController.loadTableGrids();
+                this.datBanController.loadBookingCards();
+            });
+        }
+        
+        // 🔥 Dashboard luôn refresh để hiển thị ca trực mới nhất
+        if (currentController instanceof DashboardController) {
+            Platform.runLater(() -> ((DashboardController) currentController).refreshData());
+        }
+        
+        contentArea.setCenter(root);
+        return;
+    }
+
+    // 2. Nếu chưa có trong cache thì mới load mới
     FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
     Parent root = loader.load();
     currentController = loader.getController();
+    
+    // Lưu vào cache
+    screenCache.put(fxmlPath, root);
+    controllerCache.put(fxmlPath, currentController);
+
     if (currentController instanceof DashboardController) {
         ((DashboardController) currentController).setMainController(this);
     }

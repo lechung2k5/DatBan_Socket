@@ -47,15 +47,35 @@ public java.util.List<NhanVien> findAll() {
 }
 return list;
 }
+private void putIfNotEmpty(Map<String, AttributeValue> item, String key, String value) {
+    if (value != null && !value.trim().isEmpty()) {
+        item.put(key, AttributeValue.builder().s(value.trim()).build());
+    }
+}
+
 public void upsert(NhanVien nv) {
     Map<String, AttributeValue> item = new HashMap<>();
-    item.put("employeeId", AttributeValue.builder().s(nv.getMaNV()).build());
-    item.put("name", AttributeValue.builder().s(nv.getHoTen() != null ? nv.getHoTen() : "").build());
-    item.put("phone", AttributeValue.builder().s(nv.getSdt() != null ? nv.getSdt() : "").build());
-    item.put("email", AttributeValue.builder().s(nv.getEmail() != null ? nv.getEmail() : "").build());
-    item.put("role", AttributeValue.builder().s(nv.getChucVu() != null ? nv.getChucVu() : "NhanVien").build());
-    item.put("passwordHash", AttributeValue.builder().s(nv.getMatKhau() != null ? nv.getMatKhau() : "123").build());
-    item.put("username", AttributeValue.builder().s(nv.getUsername_entity() != null ? nv.getUsername_entity() : nv.getMaNV()).build());
+    putIfNotEmpty(item, "employeeId", nv.getMaNV());
+    putIfNotEmpty(item, "name", nv.getHoTen());
+    putIfNotEmpty(item, "phone", nv.getSdt());
+    putIfNotEmpty(item, "email", nv.getEmail());
+    
+    String role = nv.getChucVu();
+    if (role == null || role.trim().isEmpty()) role = "NhanVien";
+    putIfNotEmpty(item, "role", role);
+    
+    String pw = nv.getMatKhau();
+    if (pw == null || pw.trim().isEmpty()) pw = "123";
+    putIfNotEmpty(item, "passwordHash", pw);
+    
+    String username = nv.getUsername_entity();
+    if (username == null || username.trim().isEmpty()) username = nv.getMaNV();
+    putIfNotEmpty(item, "username", username);
+
+    putIfNotEmpty(item, "dob", nv.getNgaySinh());
+    putIfNotEmpty(item, "favoriteShift", nv.getCaLamYeuThich());
+    putIfNotEmpty(item, "status", nv.getTrangThai());
+
     db.putItem(PutItemRequest.builder().tableName(TBL).item(item).build());
 }
 public void updatePassword(String maNV, String newPassword) {
@@ -73,15 +93,38 @@ public void updatePassword(String maNV, String newPassword) {
     .build();
     db.updateItem(request);
 }
+
+private String getSafeString(Map<String, AttributeValue> item, String key) {
+    if (item.containsKey(key)) {
+        AttributeValue val = item.get(key);
+        if (val.s() != null) return val.s();
+        if (val.n() != null) return val.n();
+    }
+    return "";
+}
+
 private NhanVien mapToNhanVien(Map<String, AttributeValue> item) {
     NhanVien nv = new NhanVien();
-    if (item.containsKey("employeeId")) nv.setMaNV(item.get("employeeId").s());
-    if (item.containsKey("name")) nv.setHoTen(item.get("name").s());
-    if (item.containsKey("phone")) nv.setSdt(item.get("phone").s());
-    if (item.containsKey("email")) nv.setEmail(item.get("email").s());
-    if (item.containsKey("role")) nv.setChucVu(item.get("role").s());
-    if (item.containsKey("passwordHash")) nv.setMatKhau(item.get("passwordHash").s()); // Giư xài thuộc tính mặt khȣu để chứa passwordHash
-    if (item.containsKey("username")) nv.setUsername_entity(item.get("username").s());
+    nv.setMaNV(getSafeString(item, "employeeId"));
+    nv.setHoTen(getSafeString(item, "name"));
+    nv.setSdt(getSafeString(item, "phone"));
+    nv.setEmail(getSafeString(item, "email"));
+    nv.setChucVu(getSafeString(item, "role"));
+    nv.setMatKhau(getSafeString(item, "passwordHash")); // Giư xài thuộc tính mặt khȣu để chứa passwordHash
+    nv.setUsername_entity(getSafeString(item, "username"));
+
+    String dob = getSafeString(item, "dob");
+    if (!dob.isEmpty()) nv.setNgaySinh(dob);
+    
+    String favoriteShift = getSafeString(item, "favoriteShift");
+    if (!favoriteShift.isEmpty()) nv.setCaLamYeuThich(favoriteShift);
+    
+    String status = getSafeString(item, "status");
+    if (!status.isEmpty()) {
+        nv.setTrangThai(status);
+    } else {
+        nv.setTrangThai("Đang làm");
+    }
     return nv;
 }
 }
