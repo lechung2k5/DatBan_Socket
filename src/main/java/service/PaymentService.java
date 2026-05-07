@@ -70,8 +70,8 @@ public class PaymentService {
             CacheService.invalidateTables();
             
             // 🔥 Broadcast sự kiện cập nhật bàn và hóa đơn
-            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + (maBan != null ? maBan : "ALL")));
-            Service.broadcast(new RealTimeEvent(CommandType.CHECK_OUT, "[INVOICE]:" + maHD));
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật bàn", maBan != null ? maBan : "ALL"));
+            Service.broadcast(new RealTimeEvent(CommandType.CHECK_OUT, "Hóa đơn đã thanh toán", maHD));
             
             System.out.println("[PaymentService] Thanh toán thành công: " + maHD);
             return Response.ok("Thanh toán thành công");
@@ -89,7 +89,7 @@ public class PaymentService {
             invoiceDAO.updateStatus(maHD, "Dat", false);
             
             // 🔥 Broadcast sự kiện xác nhận cọc (coi như cập nhật hóa đơn)
-            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "[INVOICE]:" + maHD));
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Cập nhật hóa đơn", maHD));
 
             System.out.println("[PaymentService] Xác nhận cọc thành công: " + maHD);
             return Response.ok("Xác nhận tiền cọc thành công");

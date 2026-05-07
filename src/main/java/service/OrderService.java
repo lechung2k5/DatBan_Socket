@@ -101,7 +101,7 @@ public Response handleUpdateInvoicePromo(Request request) {
         invoiceDAO.updatePromo(maHD, maUuDai, giaTri);
         
         // 🔥 Broadcast sự kiện cập nhật hóa đơn (để người dùng khác thấy khuyến mãi mới)
-        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "[INVOICE]:" + maHD));
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Cập nhật khuyến mãi", maHD));
 
         return Response.ok("Cập nhật khuyến mãi thành công");
     } catch (Exception e) {
@@ -121,10 +121,10 @@ public Response handleUpdateInvoice(Request request) {
         invoiceDAO.updateInfoExtended(maHD, soDT, tienCoc, maBan, gioVao, status, itemsJson);
         
         // 🔥 Broadcast sự kiện cập nhật hóa đơn
-        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "[INVOICE]:" + maHD));
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Cập nhật hóa đơn", maHD));
         if (maBan != null) {
             utils.CacheService.invalidateTables();
-            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + maBan));
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật bàn", maBan));
         }
 
         return Response.ok("Cập nhật thông tin hóa đơn thành công");
@@ -141,14 +141,21 @@ public Response handleCancelInvoice(Request request) {
         HoaDon hd = invoiceDAO.findById(maHD);
         // 2. Cập nhật trạng thái hóa đơn
         invoiceDAO.updateStatus(maHD, trangThai, setGioRa);
-        // 3. Nếu có bàn, giải phóng bàn
+        // 3. Nếu có bàn, cập nhật trạng thái bàn tương ứng với Hóa đơn
         if (hd != null && hd.getMaBan() != null && !hd.getMaBan().isEmpty()) {
-            new dao.TableDAO().updateStatus(hd.getMaBan(), "Trong");
+            String tableStatus = "Trong"; // Mặc định là Trống (cho trường hợp Hủy)
+            if (trangThai.equals("Dat")) {
+                tableStatus = "DaDat";
+            } else if (trangThai.equals("DangSuDung")) {
+                tableStatus = "DangDung";
+            }
+            
+            new dao.TableDAO().updateStatus(hd.getMaBan(), tableStatus);
             utils.CacheService.invalidateTables();
-            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + hd.getMaBan()));
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật trạng thái bàn", hd.getMaBan()));
         }
         
-        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "[INVOICE]:" + maHD));
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Hủy hóa đơn", maHD));
         
         return Response.ok("Hủy/Cập nhật hóa đơn thành công");
     } catch (Exception e) {
@@ -219,8 +226,8 @@ public Response handleSplitInvoice(Request request) {
         invoiceDAO.splitItems(sourceId, targetId, itemsToMove);
         
         // 🔥 Broadcast sự kiện tách hóa đơn
-        Service.broadcast(new RealTimeEvent(CommandType.SPLIT_INVOICE, "[INVOICE]:" + sourceId));
-        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:ALL"));
+        Service.broadcast(new RealTimeEvent(CommandType.SPLIT_INVOICE, "Tách hóa đơn", sourceId));
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật bàn", "ALL"));
 
         return Response.ok(targetId);
     } catch (Exception e) {

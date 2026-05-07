@@ -60,7 +60,8 @@ public class TableService {
         CacheService.invalidateTables();
         
         // 🔥 Broadcast sự kiện cập nhật bàn tới tất cả client
-        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật trạng thái bàn"));
+        String affectedId = (maBanObj instanceof String) ? (String) maBanObj : "ALL";
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật trạng thái bàn", affectedId));
         
         return Response.ok("Cập nhật trạng thái bàn thành công");
 } catch (Exception e) {

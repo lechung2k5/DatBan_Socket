@@ -522,42 +522,24 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + event.getType() + " | MSG: " + event.getMessage());
             
             Platform.runLater(() -> {
-                // Reduced delay for "Instant" feel, but still allowing DB to settle
-                new javafx.animation.PauseTransition(javafx.util.Duration.millis(150)).setOnFinished(e -> {
-                    String msg = event.getMessage();
-                    String affectedId = null;
-                    if (msg != null && msg.contains(":")) {
-                        String[] parts = msg.split(":");
-                        if (parts.length > 1) {
-                            affectedId = parts[1];
-                        }
-                    }
-
+                javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(150));
+                pause.setOnFinished(e -> {
+                    String affectedId = event.getAffectedId();
                     System.out.println("[UI-DATBAN] Đang render lại trạng thái... ID: " + affectedId);
-
-                    System.out.println("[UI-DATBAN] Đang làm mới sơ đồ bàn và danh sách đặt bàn (loadBookingCards)...");
                     loadTableGrids();
                     loadBookingCards();
 
-                    // 2. Nếu hóa đơn hiện tại bị ảnh hưởng, tải lại toàn bộ (Dùng cờ skipAutoSave=true)
                     if (currentHoaDon != null && affectedId != null) {
                         if (affectedId.equals(currentHoaDon.getMaHD()) || affectedId.equals("ALL")) {
-                            System.out.println("[UI-DATBAN] Đồng bộ hóa đơn hiện tại: " + affectedId);
                             Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", currentHoaDon.getMaHD()));
                             if (res.getStatusCode() == 200) {
                                 HoaDon updatedHd = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
-                                loadHoaDonToMainInterface(updatedHd, true); // 🔥 true = skip auto-save
+                                loadHoaDonToMainInterface(updatedHd, true);
                             }
                         }
                     }
-
-                    // 3. Nếu bàn hiện tại bị giải phóng (Checkout), xóa trắng form nếu cần
-                    if (currentHoaDon != null && currentHoaDon.getMaBan() != null && affectedId != null) {
-                        if (affectedId.equals(currentHoaDon.getMaBan()) && event.getType() == CommandType.CHECK_OUT) {
-                            clearFormDatBan();
-                        }
-                    }
                 });
+                pause.play(); // 🔥 Kích hoạt bộ đếm thời gian để chạy lệnh load dữ liệu
             });
         };
         RealTimeClient.getInstance().addListener(realTimeListener);
@@ -2407,7 +2389,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                     && currentHoaDon.getTrangThai() == TrangThaiHoaDon.CHO_XAC_NHAN);
             btnThanhToanCoc.setDisable(!enableCocButton);
         }
-        if (vboxReceipt != null)
+        if (vboxReceipt != null && !isRealTimeUpdate)
             vboxReceipt.setVisible(false);
     }
 

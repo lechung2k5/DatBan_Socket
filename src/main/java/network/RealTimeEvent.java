@@ -11,6 +11,7 @@ public class RealTimeEvent implements Serializable {
     
     private CommandType type;
     private String message;
+    private String affectedId; // 🔥 MỚI: ID của bàn hoặc hóa đơn bị ảnh hưởng
     private Object data;
 
     public RealTimeEvent(CommandType type) {
@@ -22,9 +23,16 @@ public class RealTimeEvent implements Serializable {
         this.message = message;
     }
 
-    public RealTimeEvent(CommandType type, String message, Object data) {
+    public RealTimeEvent(CommandType type, String message, String affectedId) {
         this.type = type;
         this.message = message;
+        this.affectedId = affectedId;
+    }
+
+    public RealTimeEvent(CommandType type, String message, String affectedId, Object data) {
+        this.type = type;
+        this.message = message;
+        this.affectedId = affectedId;
         this.data = data;
     }
 
@@ -34,6 +42,9 @@ public class RealTimeEvent implements Serializable {
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
+
+    public String getAffectedId() { return affectedId; }
+    public void setAffectedId(String affectedId) { this.affectedId = affectedId; }
 
     public Object getData() { return data; }
     public void setData(Object data) { this.data = data; }
