@@ -28,15 +28,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 /**
-* Controller Chi Tiết Äáº·t BÃ n: Xá»­ lý hiá»n thá» thông tin vÃ  Cáº¬P NHáº¬T TRáº NG THÃI.
-* Äã Äưá»£c Äơn giản hóa: áº¨n các nút chức nÄng phức tạp (Äá»i/Tách/Gá»i món).
+* Controller Chi Tiết Äặt Bàn: Xử lý hiá»n thá» thông tin và Cáº¬P NHáº¬T TRáº NG THíI.
+* Äã Äược Äơn giản hóa: áº¨n các nút chức nÄng phức tạp (Äá»i/Tách/Gá»i món).
 * =========================================================
-* FIX: Äã thêm lại hÃ m setHoaDonData vÃ  sá»­ dụng các @FXML fields Äúng.
+* FIX: Äã thêm lại hàm setHoaDonData và sử dụng các @FXML fields Äúng.
 * =========================================================
 */
 public class ChiTietDatBanController implements Initializable {
     // =========================================================
-    // FXML FIELDS (LÆ¯á»¢C Bá» CÃC NÃT KHÃNG Cáº¦N THIáº¾T)
+    // FXML FIELDS (LÆ¯á»¢C Bá» CíC NíT KHíNG Cáº¦N THIáº¾T)
     // =========================================================
     @FXML private Label lblMaHD;
     @FXML private TextField txtTenKhachHang;
@@ -47,10 +47,10 @@ public class ChiTietDatBanController implements Initializable {
     @FXML private ComboBox<String> comboTrangThai; // Chứa tên hiá»n thá» trạng thái
     @FXML private TextField txtThoiGian;
     @FXML private DatePicker datePickerThoiGianDen;
-    // NÃT CHá»¨C NÄNG Cáº¦N GIá»® Láº I (Dựa trên ChiTietDatBan_Popup.fxml Äã sá»­a)
+    // NíT CHá»¨C NÄNG Cáº¦N GIá»® Láº I (Dựa trên ChiTietDatBan_Popup.fxml Äã sửa)
     @FXML private Button btnCapNhat;
     @FXML private Button btnBack;
-    // FXML fields từ Panel_ChiTietOrder.fxml (Cáº§n Äưá»£c gán lại qua lookup nếu không dùng Controller con)
+    // FXML fields từ Panel_ChiTietOrder.fxml (Cần Äược gán lại qua lookup nếu không dùng Controller con)
     @FXML private StackPane contentContainer;
     private Label lblTienCoc;
     private Label lblTongTienMonAn;
@@ -65,16 +65,16 @@ public class ChiTietDatBanController implements Initializable {
     private Node orderPanel; // Cache panel con
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // === BÆ¯á»C 1: TRáº¢ Láº I DANH SÃCH Äáº¦Y Äá»¦ ===
+        // === BÆ¯á»C 1: TRáº¢ Láº I DANH SíCH Äáº¦Y Äá»¦ ===
         comboTrangThai.setItems(FXCollections.observableArrayList(
-        TrangThaiHoaDon.DAT.getDisplayName(),          // "Äã Äáº·t"
+        TrangThaiHoaDon.DAT.getDisplayName(),          // "Äã Äặt"
         TrangThaiHoaDon.DANG_SU_DUNG.getDisplayName(), // "Äang phục vụ"
         TrangThaiHoaDon.DA_THANH_TOAN.getDisplayName(),// "Äã thanh toán" (Giữ lại)
         TrangThaiHoaDon.DA_HUY.getDisplayName(),       // "Äã hủy"
         TrangThaiHoaDon.HOA_DON_TAM.getDisplayName(),  // "Hóa Äơn tạm"
-        TrangThaiHoaDon.CHO_XAC_NHAN.getDisplayName()  // "Chá» xác nháº­n"
+        TrangThaiHoaDon.CHO_XAC_NHAN.getDisplayName()  // "Chá» xác nhận"
         ));
-        // === BÆ¯á»C 2: THÃM CELL FACTORY Äá» VÃ HIá»U HÃA Lá»°A CHá»N ===
+        // === BÆ¯á»C 2: THíM CELL FACTORY Äá» Ví HIá»U HíA Lá»°A CHá»N ===
         final String disabledItem = TrangThaiHoaDon.DA_THANH_TOAN.getDisplayName();
         comboTrangThai.setCellFactory(new Callback<ListView<String>, ListCell<String>>() {
             @Override
@@ -89,10 +89,10 @@ public class ChiTietDatBanController implements Initializable {
                             setStyle(null);
                         } else {
                         setText(item);
-                        // Vô hiá»u hóa cell nếu item lÃ  "Äã thanh toán"
+                        // Vô hiá»u hóa cell nếu item là "Äã thanh toán"
                         boolean isDisabled = item.equals(disabledItem);
                         setDisable(isDisabled);
-                        // Thêm style Äá» lÃ m nó má» Äi (giá»ng như bá» vô hiá»u hóa)
+                        // Thêm style Äá» làm nó má» Äi (giá»ng như bá» vô hiá»u hóa)
                         getStyleClass().remove("disabled-list-cell"); // Xóa class cũ (nếu có)
                         if (isDisabled) {
                             getStyleClass().add("disabled-list-cell"); // Thêm class má»i
@@ -104,7 +104,7 @@ public class ChiTietDatBanController implements Initializable {
         };
     }
 });
-// === Káº¾T THÃC THÃM Má»I ===
+// === Káº¾T THíC THíM Má»I ===
 // Gán sự kiá»n (giữ nguyên)
 btnBack.setOnAction(e -> handleClosePopup());
 if (btnCapNhat != null) {
@@ -112,25 +112,25 @@ if (btnCapNhat != null) {
 }
 }
 /**
-* ð¥ Phương thức khá»i tạo dữ liá»u vÃ  nháº­n tham chiếu DAO.
-* Äây lÃ  hÃ m kÃ­ch hoạt viá»c tải dữ liá»u vÃ  giao diá»n.
+* ð¥ Phương thức khá»i tạo dữ liá»u và nhận tham chiếu DAO.
+* Äây là hàm kích hoạt viá»c tải dữ liá»u và giao diá»n.
 */
 public void setHoaDonData(HoaDon hd) {
     this.hoaDon = hd;
     // Tải Panel Chi tiết Order
     loadOrderPanel();
-    // Tải dữ liá»u vÃ o UI (Header + Panel Order)
+    // Tải dữ liá»u vào UI (Header + Panel Order)
     loadDataToUI();
-    // Cáº§n tải lại Panel Order Äá» hiá»n thá» món
+    // Cần tải lại Panel Order Äá» hiá»n thá» món
     loadOrderDetail();
 }
 /**
-* Tải dữ liá»u chÃ­nh (Header) lên UI.
+* Tải dữ liá»u chính (Header) lên UI.
 */
 private void loadDataToUI() {
     if (hoaDon == null) return;
-    lblMaHD.setText("Chi tiết Äáº·t bÃ n " + hoaDon.getMaHD());
-    // Láº¥y giá trá» trạng thái DB
+    lblMaHD.setText("Chi tiết Äặt bàn " + hoaDon.getMaHD());
+    // Lấy giá trá» trạng thái DB
     String trangThaiHdDb = hoaDon.getTrangThai().getDbValue();
     if (hoaDon.getKhachHang() != null) {
         txtTenKhachHang.setText(hoaDon.getKhachHang().getTenKH());
@@ -144,20 +144,20 @@ private void loadDataToUI() {
         txtThoiGian.setText(hoaDon.getGioVao().toLocalTime().format(timeFormatter));
         datePickerThoiGianDen.setValue(hoaDon.getGioVao().toLocalDate());
     }
-    // === Cáº¬P NHáº¬T COMBO BOX TRáº NG THÃI (Láº¤Y TÃN HIá»N THá») ===
+    // === Cáº¬P NHáº¬T COMBO BOX TRáº NG THíI (Láº¤Y TíN HIá»N THá») ===
     String trangThaiHienThi = TrangThaiHoaDon.fromDbValue(trangThaiHdDb).getDisplayName();
     comboTrangThai.getSelectionModel().select(trangThaiHienThi);
     // ===================================
 }
 /**
-* Tải Panel Chi Tiết Order (Món Än) vÃ  gán các fields.
+* Tải Panel Chi Tiết Order (Món Än) và gán các fields.
 */
 private void loadOrderPanel() {
     if (contentContainer == null) return;
     try {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Panel_ChiTietOrder.fxml"));
         orderPanel = loader.load();
-        // === GÃN CÃC FIELDS Bá» THIáº¾U Tá»ª PANEL PHá»¤ QUA LOOKUP ===
+        // === GíN CíC FIELDS Bá» THIáº¾U Tá»ª PANEL PHá»¤ QUA LOOKUP ===
         @SuppressWarnings("unchecked")
         TableView<MonOrder> tblLookup = (TableView<MonOrder>) orderPanel.lookup("#tblChiTietOrder");
         tblChiTietOrder = tblLookup;
@@ -168,10 +168,10 @@ private void loadOrderPanel() {
         // Gán sự kiá»n thanh toán (tùy chá»n)
         if (btnThanhToan != null) {
             // btnThanhToan.setOnAction(e -> handleThanhToan());
-            btnThanhToan.setVisible(false); // áº¨n nút Thanh Toán theo yêu cáº§u
+            btnThanhToan.setVisible(false); // áº¨n nút Thanh Toán theo yêu cầu
         }
         // ========================================================
-        setupOrderTable(); // CÃ i Äáº·t TableView
+        setupOrderTable(); // Cài Äặt TableView
         contentContainer.getChildren().clear();
         contentContainer.getChildren().add(orderPanel);
     } catch (IOException e) {
@@ -179,7 +179,7 @@ private void loadOrderPanel() {
 }
 }
 /**
-* Tải dữ liá»u món Än vÃ o TableView.
+* Tải dữ liá»u món Än vào TableView.
 */
 public void loadOrderDetail() {
     if (hoaDon != null && hoaDon.getMaHD() != null && tblChiTietOrder != null) {
@@ -194,12 +194,12 @@ public void loadOrderDetail() {
     }
 }
 /**
-* CÃ i Äáº·t cáº¥u trúc cá»t cho TableView (Dùng các fields Äã lookup).
+* Cài Äặt cấu trúc cá»t cho TableView (Dùng các fields Äã lookup).
 */
 private void setupOrderTable() {
     if (tblChiTietOrder == null) return;
-    // Giả sá»­ các cá»t Äã Äưá»£c Äá»nh nghÄ©a Äúng thứ tự vÃ  kiá»u trong FXML
-    // Dùng Index Äá» láº¥y cá»t (không an toÃ n, nhưng cáº§n thiết nếu không dùng fx:id)
+    // Giả sử các cá»t Äã Äược Äá»nh nghÄ©a Äúng thứ tự và kiá»u trong FXML
+    // Dùng Index Äá» lấy cá»t (không an toàn, nhưng cần thiết nếu không dùng fx:id)
     if (tblChiTietOrder.getColumns().size() >= 6) {
         @SuppressWarnings("unchecked")
         TableColumn<MonOrder, String> colTenMon = (TableColumn<MonOrder, String>) tblChiTietOrder.getColumns().get(0);
@@ -218,11 +218,11 @@ private void setupOrderTable() {
         colSoLuong.setCellValueFactory(cellData -> cellData.getValue().soLuongProperty().asObject());
         colThanhTien.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getDonGia() * cellData.getValue().getSoLuong()));
         // Logic tÄng giảm / hủy (Giữ nguyên logic phức tạp)
-        // ... (cáº§n thêm logic CellFactory cho TangGiam vÃ  Huy)
+        // ... (cần thêm logic CellFactory cho TangGiam và Huy)
     }
 }
 /**
-* TÃ­nh tá»ng tiá»n vÃ  cáº­p nháº­t labels.
+* Tính tá»ng tiá»n và cập nhật labels.
 */
 public void calculateTotal() {
     double tongTienMonAn = monOrderList.stream()
@@ -230,16 +230,16 @@ public void calculateTotal() {
     .sum();
     final double VAT_RATE = 0.08;
     double thueVAT = tongTienMonAn * VAT_RATE;
-    // Giả sá»­ getTienCoc() trả vá» double (kiá»u nguyên thủy)
+    // Giả sử getTienCoc() trả vá» double (kiá»u nguyên thủy)
     double tienCocDaThanhToan = (hoaDon != null) ? hoaDon.getTienCoc() : 0.0;
     double tongTienThanhToan = tongTienMonAn + thueVAT - tienCocDaThanhToan;
-    // Luôn kiá»m tra null cho các UI component Äưá»£c gán Äá»ng
+    // Luôn kiá»m tra null cho các UI component Äược gán Äá»ng
     if (lblTongTienMonAn != null) lblTongTienMonAn.setText(String.format("%,.0f Ä", tongTienMonAn));
     if (lblTienCoc != null) lblTienCoc.setText(String.format("%,.0f Ä", tienCocDaThanhToan));
     if (lblTongThanhToan != null) lblTongThanhToan.setText(String.format("%,.0f Ä", Math.max(0, tongTienThanhToan)));
 }
 /**
-* ð¥ Xá»­ lý Cáº­p nháº­t thông tin Äáº·t bÃ n vÃ  TRáº NG THÃI (FINAL FIX)
+* ð¥ Xử lý Cập nhật thông tin Äặt bàn và TRáº NG THíI (FINAL FIX)
 */
 @FXML
 private void handleCapNhatDatBan() {
@@ -249,21 +249,21 @@ private void handleCapNhatDatBan() {
     // Convert display name to Enum (Äảm bảo không bá» NullPointerException khi gá»i .getDbValue())
     TrangThaiHoaDon newStatusEnum = TrangThaiHoaDon.fromDisplayName(trangThaiMoiDisplay);
     if (newStatusEnum == null) {
-        showAlert(AlertType.ERROR, "Lá»i Chuyá»n Äá»i", "Trạng thái Äưá»£c chá»n không há»£p lá». Vui lòng kiá»m tra lại.");
+        showAlert(AlertType.ERROR, "Lá»i Chuyá»n Äá»i", "Trạng thái Äược chá»n không hợp lá». Vui lòng kiá»m tra lại.");
         return;
     }
     String trangThaiMoiDb = newStatusEnum.getDbValue();
     // ----------------------------------------------------
     try {
-        // Xác Äá»nh xem có cáº§n set gioRa (Chá» khi DaThanhToan hoáº·c DaHuy)
+        // Xác Äá»nh xem có cần set gioRa (Chá» khi DaThanhToan hoặc DaHuy)
         boolean setGioRa = (trangThaiMoiDb.equals(TrangThaiHoaDon.DA_THANH_TOAN.getDbValue()) || trangThaiMoiDb.equals(TrangThaiHoaDon.DA_HUY.getDbValue()));
-        // 1. Cáº­p nháº­t trạng thái Hóa Äơn qua API
+        // 1. Cập nhật trạng thái Hóa Äơn qua API
         Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of(
         "maHD", hoaDon.getMaHD(),
         "trangThai", trangThaiMoiDb,
         "setGioRa", setGioRa
         ));
-        // 2. Cáº­p nháº­t trạng thái BÃ n qua API
+        // 2. Cập nhật trạng thái Bàn qua API
         if(hoaDon.getBan() != null) {
             String banStatusUpdate = (setGioRa) ? TrangThaiBan.TRONG.getDbValue() : trangThaiMoiDb;
             Client.sendWithParams(CommandType.UPDATE_TABLE_STATUS, Map.of(
@@ -271,22 +271,22 @@ private void handleCapNhatDatBan() {
             "newStatus", banStatusUpdate
             ));
         }
-        // 3. Tải lại dữ liá»u chÃ­nh vÃ  Äóng popup
+        // 3. Tải lại dữ liá»u chính và Äóng popup
         Stage stage = (Stage) btnCapNhat.getScene().getWindow();
         if (stage.getScene().getRoot().getUserData() instanceof DatBan) {
             DatBan parentCtrl = (DatBan) stage.getScene().getRoot().getUserData();
             parentCtrl.loadBookingCards();
             parentCtrl.loadTableGrids();
         }
-        showAlert(AlertType.INFORMATION, "ThÃ nh công", "Äã cáº­p nháº­t trạng thái Hóa Äơn thÃ nh: " + trangThaiMoiDisplay);
+        showAlert(AlertType.INFORMATION, "Thành công", "Äã cập nhật trạng thái Hóa Äơn thành: " + trangThaiMoiDisplay);
         handleClosePopup();
     } catch (Exception e) {
     e.printStackTrace();
-    showAlert(AlertType.ERROR, "Lá»i Cáº­p Nháº­t", "Không thá» cáº­p nháº­t trạng thái: " + e.getMessage());
+    showAlert(AlertType.ERROR, "Lá»i Cập Nhật", "Không thá» cập nhật trạng thái: " + e.getMessage());
 }
 }
 // =========================================================
-// HÃM UTILITY
+// HíM UTILITY
 // =========================================================
 /**
 * Äóng cửa sổ popup

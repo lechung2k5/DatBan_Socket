@@ -29,10 +29,10 @@ public class OrderService {
     public Response handleCreateOrder(Request request) {
         try {
             HoaDon hd = JsonUtil.convertValue(request.getParam("hoaDon"), HoaDon.class);
-            List<ChiTietHoaDon> chiTiet = JsonUtil.fromJsonList(
+            List<ChiTietHoaDon> chiTiet = aggregateItems(JsonUtil.fromJsonList(
             JsonUtil.toJson(request.getParam("chiTiet")),
             ChiTietHoaDon.class
-            );
+            ));
             // ─── Tự động tạo/cập nhật khách hàng nếu có thông tin ───
             if (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null) {
                 new dao.CustomerDAO().insert(hd.getKhachHang()); // DAO insert đã có logic check tồn tại (hoặc nên có)
@@ -112,13 +112,21 @@ public Response handleUpdateInvoice(Request request) {
     try {
         String maHD = (String) request.getParam("maHD");
         String soDT = (String) request.getParam("soDT");
+        String tenKH = (String) request.getParam("tenKH");
         Double tienCoc = request.getParam("tienCoc") != null ? Double.valueOf(String.valueOf(request.getParam("tienCoc"))) : null;
         String maBan = (String) request.getParam("maBan");
         String gioVao = (String) request.getParam("gioVao");
         String status = (String) request.getParam("trangThai");
         String itemsJson = (String) request.getParam("itemsJson");
+        String maUuDai = (String) request.getParam("maUuDai");
+        Double giaTriUuDai = request.getParam("giaTriUuDai") != null ? Double.valueOf(String.valueOf(request.getParam("giaTriUuDai"))) : null;
+
+        if (itemsJson != null) {
+            List<ChiTietHoaDon> items = JsonUtil.fromJsonList(itemsJson, ChiTietHoaDon.class);
+            itemsJson = JsonUtil.toJson(aggregateItems(items));
+        }
         
-        invoiceDAO.updateInfoExtended(maHD, soDT, tienCoc, maBan, gioVao, status, itemsJson);
+        invoiceDAO.updateInfoExtended(maHD, soDT, tenKH, tienCoc, maBan, gioVao, status, itemsJson, maUuDai, giaTriUuDai);
         
         // 🔥 Broadcast sự kiện cập nhật hóa đơn
         Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Cập nhật hóa đơn", maHD));
@@ -220,6 +228,7 @@ public Response handleSplitInvoice(Request request) {
             newHd.setTrangThai("HoaDonTam");
             newHd.setTenNhanVien(sourceHd.getTenNhanVien());
             newHd.setMaHDGoc(sourceId);
+            newHd.setTienCoc(0.0); // 🔥 ÉP TIỀN CỌC VỀ 0 CHO HÓA ĐƠN TÁCH
             invoiceDAO.insert(newHd, new ArrayList<>());
             targetId = newHd.getMaHD();
         }
@@ -241,13 +250,29 @@ public Response handleGetInvoicesAll(Request request) {
     return Response.error("Lỗi: " + e.getMessage());
 }
 }
-public Response handleGetSubInvoices(Request request) {
-    try {
-        String maHDGoc = (String) request.getParam("maHDGoc");
-        if (maHDGoc == null || maHDGoc.isEmpty()) return Response.error("Thiếu mã hóa đơn gốc");
-        return Response.ok(invoiceDAO.findByParentId(maHDGoc));
-    } catch (Exception e) {
-    return Response.error("Lỗi: " + e.getMessage());
-}
-}
+    public Response handleGetSubInvoices(Request request) {
+        try {
+            String maHDGoc = (String) request.getParam("maHDGoc");
+            if (maHDGoc == null || maHDGoc.isEmpty()) return Response.error("Thiếu mã hóa đơn gốc");
+            return Response.ok(invoiceDAO.findByParentId(maHDGoc));
+        } catch (Exception e) {
+            return Response.error("Lỗi: " + e.getMessage());
+        }
+    }
+
+    private List<ChiTietHoaDon> aggregateItems(List<ChiTietHoaDon> items) {
+        if (items == null) return new ArrayList<>();
+        java.util.Map<String, ChiTietHoaDon> map = new java.util.LinkedHashMap<>();
+        for (ChiTietHoaDon it : items) {
+            String key = it.getMaMon() != null ? it.getMaMon() : it.getTenMon();
+            if (map.containsKey(key)) {
+                ChiTietHoaDon existing = map.get(key);
+                existing.setSoLuong(existing.getSoLuong() + it.getSoLuong());
+                existing.setThanhTien(existing.getSoLuong() * existing.getDonGia());
+            } else {
+                map.put(key, it);
+            }
+        }
+        return new ArrayList<>(map.values());
+    }
 }

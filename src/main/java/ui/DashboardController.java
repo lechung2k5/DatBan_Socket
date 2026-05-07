@@ -33,7 +33,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import network.RealTimeEvent;
 public class DashboardController {
     // --- FXML UI Components ---
     @FXML private GridPane weeklyCalendarGrid;
@@ -63,6 +65,7 @@ public class DashboardController {
     private LocalDate startOfWeek;
     private boolean daKiemKeHoacHoatDong = false;
     private Timeline tienMatPollingTimeline;
+    private Consumer<RealTimeEvent> realTimeListener; // 🔥 Listener Real-time
     // 🔥 LIÊN KẾT VỚI MÀN HÌNH CHÍNH
     private ManHinhChinh mainController;
     public void setMainController(ManHinhChinh main) {
@@ -80,6 +83,7 @@ public class DashboardController {
             rootDashboardVBox.sceneProperty().addListener((obs, oldScene, newScene) -> {
                 if (newScene == null) {
                     stopTienMatPolling();
+                    // network.RealTimeClient.getInstance().removeListener(realTimeListener); // Có thể gỡ nếu muốn tiết kiệm tài nguyên
                 } else {
                 kiemTraVaCapNhatTrangThaiKiemKe();
             }
@@ -96,9 +100,32 @@ public class DashboardController {
                 txtSoTienKiemKe.setText(formatted);
                 txtSoTienKiemKe.positionCaret(formatted.length());
             }
-        } catch (NumberFormatException e) {}
+        } catch (Exception e) {}
     });
-}
+        
+        // 🔥 ĐĂNG KÝ REAL-TIME CHO DASHBOARD
+        realTimeListener = event -> {
+            Platform.runLater(() -> {
+                System.out.println("[DASHBOARD] Nhận tín hiệu Real-time: " + event.getType());
+                // Cập nhật các thẻ thống kê và sơ đồ bàn
+                setupTableMap();
+                updateTheBanPhucVu();
+                updateTheBanDatTruoc();
+                
+                // Nếu là thanh toán hoặc hóa đơn, cập nhật thêm doanh thu
+                if (event.getType() == CommandType.CHECK_OUT || event.getType() == CommandType.UPDATE_INVOICE) {
+                    updateKpiDoanhThu();
+                    updateTienMatLabelsRealtime();
+                }
+            });
+        };
+        network.RealTimeClient.getInstance().addListener(realTimeListener);
+    }
+    
+    // 🔥 Thêm phương thức public để ManHinhChinh gọi
+    public void refreshDashboard() {
+        Platform.runLater(this::refreshData);
+    }
 @FXML
 private void refreshData() {
     updateWeeklyCalendar();
@@ -372,10 +399,13 @@ private void updateTheBanDatTruoc() {
 }
 private void updateTheBanPhucVu() {
     try {
-        Response resServing = Client.sendWithParams(CommandType.GET_ACTIVE_INVOICES, Map.of("type", "ACTIVE_TABLE_IDS"));
-        List<?> servingList = (resServing.getStatusCode() == 200) ? (List<?>) resServing.getData() : new ArrayList<>();
-        int serving = servingList.size();
-        if (lblBanPhucVu != null) lblBanPhucVu.setText(serving + " bàn");
+        // 🔥 SỬA: Chỉ lấy những hóa đơn có trạng thái "DangSuDung" (Bàn đang phục vụ thực tế)
+        Response resServing = Client.sendWithParams(CommandType.GET_ACTIVE_INVOICES, Map.of("status", "DangSuDung"));
+        if (resServing.getStatusCode() == 200) {
+            List<?> servingList = (List<?>) resServing.getData();
+            int serving = servingList.size();
+            if (lblBanPhucVu != null) lblBanPhucVu.setText(serving + " bàn");
+        }
     } catch (Exception e) { e.printStackTrace(); }
 }
 private void updateSoNgayNghi() {
@@ -449,7 +479,8 @@ private LocalTime getTimeSlotStartTime(String timeSlot) {
         default: return LocalTime.MIDNIGHT;
     }
 }
-private void updateKpiGioLam() {
+    @SuppressWarnings("unchecked")
+    private void updateKpiGioLam() {
     TaiKhoan currentUser = MainApp.getLoggedInUser();
     if (currentUser == null || currentUser.getNhanVien() == null) {
         drawDonutChart(hoursCanvas.getGraphicsContext2D(), 0, 1, Color.web("#2ecc71"));
@@ -480,7 +511,8 @@ private void updateKpiGioLam() {
     drawDonutChart(hoursCanvas.getGraphicsContext2D(), gioThucTe, gioMucTieu, Color.web("#2ecc71"));
     if (hoursDetailsLabel != null) hoursDetailsLabel.setText(String.format("%.1f/%.0f giờ", gioThucTe, gioMucTieu));
 }
-private void updateKpiDoanhThu() {
+    @SuppressWarnings("unchecked")
+    private void updateKpiDoanhThu() {
     TaiKhoan currentUser = MainApp.getLoggedInUser();
     if (currentUser == null || currentUser.getNhanVien() == null) {
         drawDonutChart(revenueCanvas.getGraphicsContext2D(), 0, 1, Color.web("#f39c12"));

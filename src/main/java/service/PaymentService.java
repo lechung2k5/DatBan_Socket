@@ -34,6 +34,24 @@ public class PaymentService {
             // 1. Xử lý tách bàn nếu có thông tin (Split-and-Pay)
             String maHDGoc = (String) request.getParam("maHDGoc");
             if (maHDGoc != null && !maHDGoc.isEmpty()) {
+                // 🔥 Nếu maHD là mã tạm (TMP), cần tạo HĐ thật trước
+                if (maHD.startsWith("TMP")) {
+                    HoaDon sourceHd = invoiceDAO.findById(maHDGoc);
+                    HoaDon newHd = new HoaDon();
+                    String realId = invoiceDAO.generateNextId();
+                    newHd.setMaHD(realId);
+                    newHd.setNgayLap(java.time.LocalDateTime.now());
+                    newHd.setGioVao(sourceHd != null ? sourceHd.getGioVao() : java.time.LocalDateTime.now());
+                    newHd.setKhachHang(sourceHd != null ? sourceHd.getKhachHang() : null);
+                    newHd.setTrangThai("HoaDonTam");
+                    newHd.setTenNhanVien(sourceHd != null ? sourceHd.getTenNhanVien() : "N/A");
+                    newHd.setMaHDGoc(maHDGoc);
+                    newHd.setTienCoc(0.0);
+                    
+                    invoiceDAO.insert(newHd, new java.util.ArrayList<>());
+                    maHD = realId; // Đổi sang ID thật để checkout bên dưới
+                }
+
                 List<entity.ChiTietHoaDon> monTach = JsonUtil.fromJsonList(
                         JsonUtil.toJson(request.getParam("monTach")),
                         entity.ChiTietHoaDon.class
@@ -48,20 +66,47 @@ public class PaymentService {
                 invoiceDAO.updatePromo(maHD, maUuDai, 0.0);
             }
 
-            // 3. Tìm các hóa đơn phụ liên quan (nếu có) để thanh toán cùng lúc
-            List<HoaDon> subInvoices = invoiceDAO.findByParentId(maHD);
-            
+            // 3. Kiểm tra loại hóa đơn (Gốc hay Phụ)
+            // 🔥 SỬA: Nếu có maHDGoc trong params hoặc trong DB thì đều là hóa đơn phụ
+            entity.HoaDon currentHd = invoiceDAO.findById(maHD);
+            boolean isSubInvoice = (maHDGoc != null && !maHDGoc.isEmpty()) 
+                                || (currentHd != null && currentHd.getMaHDGoc() != null && !currentHd.getMaHDGoc().isEmpty());
+
             // 4. Thanh toán hóa đơn chính
             invoiceDAO.checkout(maHD, pttt != null ? pttt : "TIEN_MAT", maNV, totalAmount, totalFood, serviceFee, vat, discount);
-            if (maBan != null && !maBan.isEmpty()) {
+            
+            // 5. CHỈ giải phóng bàn nếu đây là hóa đơn GỐC (không có parentId)
+            if (!isSubInvoice && maBan != null && !maBan.isEmpty()) {
                 tableDAO.updateStatus(maBan, "Trong");
             }
 
-            // 5. Thanh toán tất cả hóa đơn phụ và giải phóng bàn của chúng
-            for (HoaDon sub : subInvoices) {
-                invoiceDAO.checkout(sub.getMaHD(), pttt != null ? pttt : "TIEN_MAT", maNV, 0.0, 0.0, 0.0, 0.0, 0.0); 
-                if (sub.getMaBan() != null && !sub.getMaBan().isEmpty()) {
-                    tableDAO.updateStatus(sub.getMaBan(), "Trong");
+            // 6. Nếu là hóa đơn GỐC, tự động thanh toán các hóa đơn phụ còn sót lại (nếu có)
+            if (!isSubInvoice) {
+                List<HoaDon> subInvoices = invoiceDAO.findByParentId(maHD);
+                for (HoaDon sub : subInvoices) {
+                    if (sub.getTrangThai() != entity.TrangThaiHoaDon.DA_THANH_TOAN) {
+                        invoiceDAO.checkout(sub.getMaHD(), pttt != null ? pttt : "TIEN_MAT", maNV, 0.0, 0.0, 0.0, 0.0, 0.0);
+                    }
+                }
+            }
+
+            // 7. 🔥 Tự động lưu/cập nhật thông tin Khách hàng (Atomic Upsert + Tích điểm)
+            if (currentHd != null && currentHd.getKhachHang() != null) {
+                String phone = currentHd.getKhachHang().getSoDT();
+                String name = currentHd.getKhachHang().getTenKH();
+                if (phone != null && !phone.isEmpty()) {
+                    dao.CustomerDAO customerDAO = new dao.CustomerDAO();
+                    customerDAO.upsert(phone, name);
+
+                    // 🏆 TÍCH ĐIỂM: 100k = 1 điểm, > 300k tặng +1 điểm
+                    int pointsAdded = (int) (totalAmount / 100000);
+                    if (totalAmount > 300000) pointsAdded += 1;
+                    
+                    if (pointsAdded > 0) {
+                        customerDAO.addPointsAndAdjustLevel(phone, pointsAdded);
+                    }
+
+                    Service.broadcast(new RealTimeEvent(CommandType.UPDATE_CUSTOMER, "Cập nhật khách hàng", phone));
                 }
             }
 

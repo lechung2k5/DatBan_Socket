@@ -60,7 +60,7 @@ Thành viên..." />
                                     <TableColumn fx:id="colEmail" prefWidth="180.0" text="Email" />
                                     <TableColumn fx:id="colNgayDangKy" prefWidth="120.0" text="Ngày đăng ký" />
                                     <TableColumn fx:id="colLoaiKH" prefWidth="100.0" text="Loai KH" />
-                                    <TableColumn fx:id="colTongTien" prefWidth="120.0" text="Tổng tiền HĐ" />
+                                    <TableColumn fx:id="colTongTien" prefWidth="120.0" text="Điểm tích lũy" />
                                     <TableColumn fx:id="colXemLichSu" prefWidth="120.0" text="Lịch sử HĐ" />
                                  </columns>
                               </TableView>
@@ -94,6 +94,9 @@ Thành viên..." />
 
                               <Label styleClass="form-label" text="Ngày đăng ký:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
                               <DatePicker fx:id="datePickerNgayDangKy" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                              
+                              <Label styleClass="form-label" text="Điểm tích lũy:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                              <TextField fx:id="txtDiem" GridPane.columnIndex="3" GridPane.rowIndex="2" />
                            </children>
                            <VBox.margin>
                               <Insets top="20.0" />

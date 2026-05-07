@@ -1,4 +1,4 @@
-package ui;
+﻿package ui;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -8,10 +8,10 @@ import java.util.Optional; // Import Optional
 import java.time.LocalDateTime;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Region;
-import java.util.regex.Pattern; // === THAY ÃÂáÂ»âI ===: ThÃÂªm import ÃâáÂ»Æ kiáÂ»Æm tra regex
-import entity.TaiKhoan; // ÃÂáÂ»Æ láÂºÂ¥y tÃÂªn NV
+import java.util.regex.Pattern; // === THAY íÂáÂ»âI ===: ThíÂªm import íâáÂ»Æ kiáÂ»Æm tra regex
+import entity.TaiKhoan; // íÂáÂ»Æ láÂºÂ¥y tíÂªn NV
 import ui.MainApp;
-//=== CÃÂC IMPORT CHO IN áÂºÂ¤N VÃâ¬ PDFBOX ===
+//=== CíÂC IMPORT CHO IN áÂºÂ¤N Víâ¬ PDFBOX ===
 
 
 
@@ -36,23 +36,23 @@ import network.CommandType;
 import network.Response;
 import utils.JsonUtil;
 import entity.*;
-import javafx.beans.property.SimpleObjectProperty; // THÃÅ M IMPORT SimpleObjectProperty
+import javafx.beans.property.SimpleObjectProperty; // THíÅ M IMPORT SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets; // THÃÅ M IMPORT Insets
+import javafx.geometry.Insets; // THíÅ M IMPORT Insets
 import javafx.geometry.Pos;
 import javafx.scene.control.*; // Import táÂºÂ¥t cáÂºÂ£ control
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority; // THÃÅ M IMPORT Priority
-import javafx.scene.layout.VBox; // THÃÅ M IMPORT VBox
+import javafx.scene.layout.Priority; // THíÅ M IMPORT Priority
+import javafx.scene.layout.VBox; // THíÅ M IMPORT VBox
 public class KhachHang {
-    // === Khai bÃÂ¡o FXML ===
+    // === Khai bíÂ¡o FXML ===
     @FXML private TableView<entity.KhachHang> tblKhachHang;
     @FXML private TableColumn<entity.KhachHang, String> colMaKH;
     @FXML private TableColumn<entity.KhachHang, String> colHoTen;
@@ -61,97 +61,107 @@ public class KhachHang {
     @FXML private TableColumn<entity.KhachHang, String> colEmail;
     @FXML private TableColumn<entity.KhachHang, String> colNgayDangKy;
     @FXML private TableColumn<entity.KhachHang, String> colLoaiKH;
-    @FXML private TableColumn<entity.KhachHang, String> colTongTien; // KiáÂ»Æu String vÃÂ¬ sáÂºÂ½ hiáÂ»Æn tháÂ»â¹ text
+    @FXML private TableColumn<entity.KhachHang, Integer> colTongTien; // KiáÂ»Æu String víÂ¬ sáÂºÂ½ hiáÂ»Æn tháÂ»â¹ text
     @FXML private TableColumn<entity.KhachHang, Void> colXemLichSu;
-    @FXML private TextField txtHoTen, txtSDT, txtDiaChi, txtEmail, txtSearch;
+    @FXML private TextField txtHoTen, txtSDT, txtDiaChi, txtEmail, txtSearch, txtDiem;
     @FXML private DatePicker datePickerNgayDangKy;
     @FXML private ComboBox<String> filterComboBox;
     @FXML private Button btnThem, btnXoa, btnSua, btnXoaTrang;
-    @FXML private Button btnTim; // NÃÂºt tÃÂ¬m kiáÂºÂ¿m
-    // === ThuáÂ»â¢c tÃÂ­nh khÃÂ¡c ===
-    // âÅâ¦ ÃÂáÂºÂ£m báÂºÂ£o cÃÂ¡c formatter nÃÂ y ÃâÃÂ°áÂ»Â£c kháÂ»Å¸i táÂºÂ¡o ÃâÃÂºng vÃÂ  lÃÂ  final
+    @FXML private Button btnTim; // NíÂºt tíÂ¬m kiáÂºÂ¿m
+    // === ThuáÂ»â¢c tíÂ­nh khíÂ¡c ===
+    // âÅâ¦ íÂáÂºÂ£m báÂºÂ£o cíÂ¡c formatter níÂ y íâíÂ°áÂ»Â£c kháÂ»Å¸i táÂºÂ¡o íâíÂºng víÂ  líÂ  final
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private ObservableList<entity.KhachHang> masterCustomerList; // Danh sÃÂ¡ch gáÂ»âc
-    private FilteredList<entity.KhachHang> filteredCustomerList; // Danh sÃÂ¡ch hiáÂ»Æn tháÂ»â¹ sau láÂ»Âc
-    // === THAY ÃÂáÂ»âI ===: ThÃÂªm cÃÂ¡c biáÂºÂ¿n Regex ÃâáÂ»Æ kiáÂ»Æm tra
+    private ObservableList<entity.KhachHang> masterCustomerList; // Danh síÂ¡ch gáÂ»âc
+    private FilteredList<entity.KhachHang> filteredCustomerList; // Danh síÂ¡ch hiáÂ»Æn tháÂ»â¹ sau láÂ»Âc
+    // === THAY íÂáÂ»âI ===: ThíÂªm cíÂ¡c biáÂºÂ¿n Regex íâáÂ»Æ kiáÂ»Æm tra
     private static final Pattern PHONE_REGEX = Pattern.compile("^0\\d{9}$");
     private static final Pattern EMAIL_REGEX = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$");
     // ==================================
     // KHáÂ»Å¾I TáÂºÂ O (INITIALIZE)
     // ==================================
     public void initialize() {
-        setupTableColumns();        // CÃÂ i ÃâáÂºÂ·t cÃÂ¡c cáÂ»â¢t báÂºÂ£ng
-        loadDatabaseData();         // TáÂºÂ£i dáÂ»Â¯ liáÂ»â¡u ban ÃâáÂºÂ§u
-        setupFiltersAndSearch();    // CÃÂ i ÃâáÂºÂ·t báÂ»â¢ láÂ»Âc vÃÂ  tÃÂ¬m kiáÂºÂ¿m
-        setupActionButtons();       // GÃÂ¡n sáÂ»Â± kiáÂ»â¡n cho cÃÂ¡c nÃÂºt ThÃÂªm/SáÂ»Â­a/XÃÂ³a
-        setupSelectionListener();   // LáÂºÂ¯ng nghe sáÂ»Â± kiáÂ»â¡n cháÂ»Ân dÃÂ²ng
-        clearForm();                // XÃÂ³a tráÂºÂ¯ng form ban ÃâáÂºÂ§u
+        setupTableColumns();        // CíÂ i Äâ€˜áÂºÂ·t cíÂ¡c cáÂ»â„¢t báÂºÂ£ng
+        loadDatabaseData();         // TáÂºÂ£i dáÂ»Â¯ liáÂ»â€¡u ban Äâ€˜áÂºÂ§u
+        setupFiltersAndSearch();    // CíÂ i Äâ€˜áÂºÂ·t báÂ»â„¢ láÂ»Â c víÂ  tíÂ¬m kiáÂºÂ¿m
+        setupActionButtons();       // Gán sự kiện cho các nút Thêm/Sửa/Xóa
+        setupSelectionListener();   // Lắng nghe sự kiện chọn dòng
+        clearForm();                // Xóa trắng form ban đầu
+
+        // 🔥 THÊM: Lắng nghe sự kiện Real-time để tự động làm mới danh sách KH
+        network.RealTimeClient.getInstance().addListener(this::handleRealTimeEvent);
+    }
+
+    private void handleRealTimeEvent(network.RealTimeEvent event) {
+        if (event.getType() == network.CommandType.UPDATE_CUSTOMER || 
+            event.getType() == network.CommandType.CHECK_OUT || 
+            event.getType() == network.CommandType.CREATE_ORDER) {
+            javafx.application.Platform.runLater(() -> loadDatabaseData());
+        }
     }
     // ==================================
-    // CÃâ¬I ÃÂáÂºÂ¶T GIAO DIáÂ»â N
+    // Cíâ‚¬I ÄÂ áÂºÂ¶T GIAO DIáÂ»â€ N
     // ==================================
-    /** CÃÂ i ÃâáÂºÂ·t báÂ»â¢ láÂ»Âc ComboBox vÃÂ  sáÂ»Â± kiáÂ»â¡n nÃÂºt TÃÂ¬m */
+    /** CíÂ i Äâ€˜áÂºÂ·t báÂ»â„¢ láÂ»Â c ComboBox víÂ  sáÂ»Â± kiáÂ»â€¡n níÂºt TíÂ¬m */
     private void setupFiltersAndSearch() {
-        // === THAY ÃÂáÂ»âI: ÃÂÃÂ£ xÃÂ³a "Guest" kháÂ»Âi danh sÃÂ¡ch ===
+        // === THAY íÂáÂ»âI: íÂíÂ£ xíÂ³a "Guest" kháÂ»Âi danh síÂ¡ch ===
         filterComboBox.setItems(FXCollections.observableArrayList(
-        "TáÂºÂ¥t cáÂºÂ£", "Member", "Gold", "Diamond"
+        "Tất cả", "Member", "Gold", "Diamond"
         ));
-        // === KáÂºÂ¾T THÃÅ¡C THAY ÃÂáÂ»âI ===
-        filterComboBox.setValue("TáÂºÂ¥t cáÂºÂ£"); // GiÃÂ¡ tráÂ»â¹ máÂºÂ·c ÃâáÂ»â¹nh
-        // LáÂºÂ¯ng nghe thay ÃâáÂ»â¢i ComboBox vÃÂ  ÃÂ´ tÃÂ¬m kiáÂºÂ¿m, gáÂ»Âi updateFilter
+        // === KáÂºÂ¾T THíÅ¡C THAY íÂáÂ»âI ===
+        filterComboBox.setValue("Tất cả"); // GiíÂ¡ tráÂ»â¹ máÂºÂ·c íâáÂ»â¹nh
+        // LáÂºÂ¯ng nghe thay íâáÂ»â¢i ComboBox víÂ  íÂ´ tíÂ¬m kiáÂºÂ¿m, gáÂ»Âi updateFilter
         filterComboBox.valueProperty().addListener((obs, oldVal, newVal) -> updateFilter());
-        //txtSearch.textProperty().addListener((obs, oldVal, newVal) -> updateFilter()); // LáÂ»Âc ngay khi gÃÂµ
-        // NÃÂºt TÃÂ¬m cÃÂ³ tháÂ»Æ khÃÂ´ng cáÂºÂ§n thiáÂºÂ¿t náÂºÂ¿u láÂ»Âc live, nhÃÂ°ng váÂºÂ«n giáÂ»Â¯ láÂºÂ¡i
+        //txtSearch.textProperty().addListener((obs, oldVal, newVal) -> updateFilter()); // LáÂ»Âc ngay khi gíÂµ
+        // NíÂºt TíÂ¬m cíÂ³ tháÂ»Æ khíÂ´ng cáÂºÂ§n thiáÂºÂ¿t náÂºÂ¿u láÂ»Âc live, nhíÂ°ng váÂºÂ«n giáÂ»Â¯ láÂºÂ¡i
         btnTim.setOnAction(e -> updateFilter());
     }
-    /** GÃÂ¡n sáÂ»Â± kiáÂ»â¡n cho cÃÂ¡c nÃÂºt ThÃÂªm, SáÂ»Â­a, XÃÂ³a, XÃÂ³a tráÂºÂ¯ng */
+    /** GíÂ¡n sáÂ»Â± kiáÂ»â¡n cho cíÂ¡c níÂºt ThíÂªm, SáÂ»Â­a, XíÂ³a, XíÂ³a tráÂºÂ¯ng */
     private void setupActionButtons() {
         btnThem.setOnAction(e -> handleThem());
         btnSua.setOnAction(e -> handleSua());
         btnXoa.setOnAction(e -> handleXoa());
         btnXoaTrang.setOnAction(e -> {
             clearForm();
-            txtHoTen.requestFocus(); // CháÂ»â° focus khi ngÃÂ°áÂ»Âi dÃÂ¹ng cáÂ»â tÃÂ¬nh báÂºÂ¥m nÃÂºt XÃÂ³a tráÂºÂ¯ng
+            txtHoTen.requestFocus(); // CháÂ»â° focus khi ngíÂ°áÂ»Âi díÂ¹ng cáÂ»â tíÂ¬nh báÂºÂ¥m níÂºt XíÂ³a tráÂºÂ¯ng
         });
     }
-    /** LáÂºÂ¯ng nghe sáÂ»Â± kiáÂ»â¡n cháÂ»Ân dÃÂ²ng trÃÂªn TableView */
-    private void setupSelectionListener() {
+    /** LáÂºÂ¯ng nghe sáÂ»Â± kiáÂ»â¡n cháÂ»Ân díÂ²ng tríÂªn TableView */
+        private void setupSelectionListener() {
         tblKhachHang.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
-                // HiáÂ»Æn tháÂ»â¹ thÃÂ´ng tin lÃÂªn form
                 txtHoTen.setText(newSelection.getTenKH());
                 txtSDT.setText(newSelection.getSoDT());
                 txtDiaChi.setText(newSelection.getDiaChi());
                 txtEmail.setText(newSelection.getEmail());
+                txtDiem.setText(String.valueOf(newSelection.getDiemTichLuy()));
                 datePickerNgayDangKy.setValue(newSelection.getNgayDangKy());
             } else {
-            clearForm(); // XÃÂ³a form náÂºÂ¿u khÃÂ´ng cÃÂ³ dÃÂ²ng nÃÂ o ÃâÃÂ°áÂ»Â£c cháÂ»Ân
-        }
-    });
-}
-/** CáÂºÂ¥u hÃÂ¬nh cÃÂ¡c cáÂ»â¢t cho TableView KhÃÂ¡ch HÃÂ ng */
-private void setupTableColumns() {
-    tblKhachHang.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-    // âÅâ¦ SáÂ»Â¬A LáÂ»âI: ÃÂáÂºÂ£m báÂºÂ£o tÃÂªn thuáÂ»â¢c tÃÂ­nh kháÂ»âºp váÂ»âºi getter trong entity.KhachHang
-    colMaKH.setCellValueFactory(new PropertyValueFactory<>("maKH")); // CáÂºÂ§n getMaKH()
-    colHoTen.setCellValueFactory(new PropertyValueFactory<>("tenKH")); // CáÂºÂ§n getTenKH()
-    colSDT.setCellValueFactory(new PropertyValueFactory<>("soDT")); // CáÂºÂ§n getSoDT()
-    colDiaChi.setCellValueFactory(new PropertyValueFactory<>("diaChi")); // CáÂºÂ§n getDiaChi()
-    colEmail.setCellValueFactory(new PropertyValueFactory<>("email")); // CáÂºÂ§n getEmail()
-    colLoaiKH.setCellValueFactory(new PropertyValueFactory<>("thanhVien")); // CáÂºÂ§n getThanhVien()
-    // CáÂ»â¢t NgÃÂ y ÃâÃÆng kÃÂ½ (ÃÂáÂ»â¹nh dáÂºÂ¡ng Date) - CáÂºÂ§n getNgayDangKy() tráÂºÂ£ váÂ»Â LocalDate
-    colNgayDangKy.setCellValueFactory(cellData -> {
-        LocalDate date = cellData.getValue().getNgayDangKy();
-        String formattedDate = (date != null) ? date.format(dateFormatter) : "";
-        return new SimpleStringProperty(formattedDate);
-    });
-    // CáÂ»â¢t TáÂ»â¢ng tiáÂ»Ân HÃÂ (HiáÂ»â¡n Ãâang áÂºÂ©n vÃÂ  hiáÂ»Æn tháÂ»â¹ "N/A")
-    // CáÂºÂ§n getTongTienHoaDon() hoáÂºÂ·c tÃÂ­nh toÃÂ¡n riÃÂªng náÂºÂ¿u muáÂ»ân hiáÂ»Æn tháÂ»â¹ giÃÂ¡ tráÂ»â¹
-    colTongTien.setCellValueFactory(cellData -> new SimpleStringProperty("N/A")); // GiÃÂ¡ tráÂ»â¹ táÂºÂ¡m
-    colTongTien.setVisible(false); // áÂºÂ¨n cáÂ»â¢t nÃÂ y Ãâi
-    // CáÂ»â¢t nÃÂºt Xem LáÂ»â¹ch SáÂ»Â­
+                clearForm();
+            }
+        });
+    }
+
+/** CáÂºÂ¥u híÂ¬nh cíÂ¡c cáÂ»â„¢t cho TableView KhíÂ¡ch HíÂ ng */
+    private void setupTableColumns() {
+        tblKhachHang.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        colMaKH.setCellValueFactory(new PropertyValueFactory<>("maKH"));
+        colHoTen.setCellValueFactory(new PropertyValueFactory<>("tenKH"));
+        colSDT.setCellValueFactory(new PropertyValueFactory<>("soDT"));
+        colDiaChi.setCellValueFactory(new PropertyValueFactory<>("diaChi"));
+        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+        colLoaiKH.setCellValueFactory(new PropertyValueFactory<>("thanhVien"));
+        colTongTien.setCellValueFactory(new PropertyValueFactory<>("diemTichLuy"));
+        colNgayDangKy.setCellValueFactory(cellData -> {
+            LocalDate date = cellData.getValue().getNgayDangKy();
+            String formattedDate = (date != null) ? date.format(dateFormatter) : "";
+            return new SimpleStringProperty(formattedDate);
+        });
+    // CáÂ»â„¢t TáÂ»â€¢ng tiáÂ»Â n HÄÂ  (HiáÂ»â€¡n Äâ€˜ang áÂºÂ©n víÂ  hiáÂ»Æ’n tháÂ»â€¹ "N/A")
+    // CáÂºÂ§n getTongTienHoaDon() hoáÂºÂ·c tíÂ­nh toíÂ¡n riíÂªng náÂºÂ¿u muáÂ»â€˜n hiáÂ»Æ’n tháÂ»â€¹ giíÂ¡ tráÂ»â€¹
+     // áÂºÂ¨n cáÂ»â„¢t níÂ y Äâ€˜i
+    // CáÂ»â„¢t níÂºt Xem LáÂ»â€¹ch SáÂ»Â­
     colXemLichSu.setCellFactory(param -> new TableCell<entity.KhachHang, Void>() {
         private final Button viewButton = new Button("Xem");
         private final HBox pane = new HBox(viewButton);
@@ -161,9 +171,9 @@ private void setupTableColumns() {
             viewButton.setOnAction(event -> {
                 entity.KhachHang customer = getTableView().getItems().get(getIndex());
                 if (customer != null && customer.getMaKH() != null) {
-                    showInvoiceHistoryDialog(customer); // GáÂ»Âi hÃÂ m hiáÂ»Æn tháÂ»â¹ láÂ»â¹ch sáÂ»Â­
+                    showInvoiceHistoryDialog(customer); // GáÂ»Â i híÂ m hiáÂ»Æ’n tháÂ»â€¹ láÂ»â€¹ch sáÂ»Â­
                 } else {
-                showAlert(Alert.AlertType.WARNING, "LáÂ»âi", "KhÃÂ´ng tháÂ»Æ láÂºÂ¥y thÃÂ´ng tin khÃÂ¡ch hÃÂ ng.");
+                showAlert(Alert.AlertType.WARNING, "LáÂ»â€”i", "KhíÂ´ng tháÂ»Æ’ láÂºÂ¥y thíÂ´ng tin khíÂ¡ch híÂ ng.");
             }
         });
     }
@@ -175,29 +185,38 @@ private void setupTableColumns() {
 });
 }
 // ==================================
-// XáÂ»Â¬ LÃÂ DáÂ»Â® LIáÂ»â U VÃâ¬ SáÂ»Â° KIáÂ»â N
+// XáÂ»Â¬ LíÂ  DáÂ»Â® LIáÂ»â€ U Víâ‚¬ SáÂ»Â° KIáÂ»â€ N
 // ==================================
-/** TáÂºÂ£i dáÂ»Â¯ liáÂ»â¡u táÂ»Â« CSDL vÃÂ o danh sÃÂ¡ch gáÂ»âc vÃÂ  ÃÂ¡p dáÂ»Â¥ng báÂ»â¢ láÂ»Âc */
-private void loadDatabaseData() {
-    try {
-        Response res = Client.send(CommandType.GET_CUSTOMERS, null);
-        if (res.getStatusCode() == 200) {
-            List<entity.KhachHang> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(res.getData()), entity.KhachHang.class);
-            masterCustomerList = FXCollections.observableArrayList(list);
-        } else {
-        masterCustomerList = FXCollections.observableArrayList();
-        showAlert(Alert.AlertType.ERROR, "LáÂ»âi dáÂ»Â¯ liáÂ»â¡u", "KhÃÂ´ng tháÂ»Æ táÂºÂ£i danh sÃÂ¡ch khÃÂ¡ch hÃÂ ng: " + res.getMessage());
+/** Tải dữ liệu từ CSDL vào danh sách gốc và áp dụng bộ lọc */
+    /** Tải dữ liệu từ CSDL vào danh sách gốc và áp dụng bộ lọc */
+    private void loadDatabaseData() {
+        try {
+            Response res = Client.send(CommandType.GET_CUSTOMERS, null);
+            if (res.getStatusCode() == 200) {
+                List<entity.KhachHang> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(res.getData()), entity.KhachHang.class);
+                list.sort((a, b) -> {
+                    if (a.getNgayDangKy() == null) return 1;
+                    if (b.getNgayDangKy() == null) return -1;
+                    return b.getNgayDangKy().compareTo(a.getNgayDangKy());
+                });
+                if (masterCustomerList == null) {
+                    masterCustomerList = FXCollections.observableArrayList(list);
+                    filteredCustomerList = new FilteredList<>(masterCustomerList, p -> true);
+                    tblKhachHang.setItems(filteredCustomerList);
+                } else {
+                    masterCustomerList.setAll(list);
+                }
+                System.out.println("LOG: Đã tìm thấy " + list.size() + " khách hàng.");
+            } else {
+                if (masterCustomerList == null) masterCustomerList = FXCollections.observableArrayList();
+                showAlert(Alert.AlertType.ERROR, "Lỗi dữ liệu", "Không thể tải danh sách khách hàng: " + res.getMessage());
+            }
+        } catch (Exception e) {
+            if (masterCustomerList == null) masterCustomerList = FXCollections.observableArrayList();
+            showAlert(Alert.AlertType.ERROR, "Lỗi tải dữ liệu", "Đã xảy ra lỗi: " + e.getMessage());
+        }
+        if (filteredCustomerList != null) updateFilter();
     }
-} catch (Exception e) {
-masterCustomerList = FXCollections.observableArrayList();
-showAlert(Alert.AlertType.ERROR, "Lỗi tải dữ liệu", "Đã xảy ra lỗi: " + e.getMessage());
-}
-// Luôn khởi tạo FilteredList dù có lỗi hay không
-filteredCustomerList = new FilteredList<>(masterCustomerList, p -> true);
-tblKhachHang.setItems(filteredCustomerList);
-updateFilter(); // Áp dụng bộ lọc ban đầu (hiển thị tất cả)
-    System.out.println("LOG: Đã tìm thấy " + masterCustomerList.size() + " khách hàng.");
-}
 /** Cập nhật bộ lọc dựa trên ComboBox và ô tìm kiếm */
 private void updateFilter() {
     String selectedTier = filterComboBox.getValue();
@@ -237,21 +256,24 @@ private void handleThem() {
     }
     // === KẾT THÚC THAY ĐỔI ===
     String loaiKH = "Member"; // Mặc định khi thêm mới
+    int diem = 0;
+    try { diem = Integer.parseInt(txtDiem.getText().trim()); } catch(Exception ex){}
     entity.KhachHang newCustomer = new entity.KhachHang("KH" + System.currentTimeMillis(), hoTen, sdt, email, ngayDangKy, diaChi, loaiKH);
-    Response res = Client.sendWithParams(CommandType.TIM_HOAC_TAO_KH, Map.of("sdt", sdt, "tenKH", hoTen));
+    newCustomer.setDiemTichLuy(diem);
+    Response res = Client.sendWithParams(CommandType.TIM_HOAC_TAO_KH, Map.of("khachHang", newCustomer));
     if (res.getStatusCode() == 200) {
-        // Cập nhật lại thông tin đầy đủ nếu cần
-        Client.sendWithParams(CommandType.UPDATE_CUSTOMER, Map.of("khachHang", newCustomer));
         masterCustomerList.add(newCustomer);
         tblKhachHang.getSelectionModel().select(newCustomer);
         showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã thêm khách hàng mới.");
+    } else {
+        showAlert(Alert.AlertType.ERROR, "Lỗi", "Thêm khách hàng thất bại: " + res.getMessage());
     }
 }
 /** Xử lý nút Sửa */
 private void handleSua() {
     entity.KhachHang selectedCustomer = tblKhachHang.getSelectionModel().getSelectedItem();
     if (selectedCustomer == null) {
-        showAlert(Alert.AlertType.WARNING, "ChÃÂ°a cháÂ»Ân", "Vui lÃÂ²ng cháÂ»Ân khÃÂ¡ch hÃÂ ng cáÂºÂ§n sáÂ»Â­a.");
+        showAlert(Alert.AlertType.WARNING, "ChíÂ°a cháÂ»Ân", "Vui líÂ²ng cháÂ»Ân khíÂ¡ch híÂ ng cáÂºÂ§n sáÂ»Â­a.");
         return;
     }
     String hoTen = txtHoTen.getText().trim();
@@ -261,15 +283,16 @@ private void handleSua() {
     LocalDate ngayDangKy = datePickerNgayDangKy.getValue();
 
     if (!validateInput(hoTen, sdt, diaChi, email, ngayDangKy, selectedCustomer)) {
-        return; // DáÂ»Â«ng náÂºÂ¿u dáÂ»Â¯ liáÂ»â€¡u khÃƒÂ´ng háÂ»Â£p láÂ»â€¡
+        return; // DáÂ»Â«ng náÂºÂ¿u dáÂ»Â¯ liáÂ»â€¡u khíÂ´ng háÂ»Â£p láÂ»â€¡
     }
-    // === KáÂºÂ¾T THÃƒÅ¡C THAY Ã„Â áÂ»â€ I ===
+    // === KáÂºÂ¾T THíÅ¡C THAY ÄÂ áÂ»â€ I ===
     // Cập nhật đối tượng trong bộ nhớ
     selectedCustomer.setTenKH(hoTen);
     selectedCustomer.setSoDT(sdt);
     selectedCustomer.setDiaChi(diaChi);
     selectedCustomer.setEmail(email);
     selectedCustomer.setNgayDangKy(ngayDangKy);
+    try { selectedCustomer.setDiemTichLuy(Integer.parseInt(txtDiem.getText().trim())); } catch(Exception ex){}
     // Không cho sửa loại KH ở đây (Giữ nguyên loại KH cũ: selectedCustomer.getThanhVien())
     if (Client.sendWithParams(CommandType.UPDATE_CUSTOMER, Map.of("khachHang", selectedCustomer)).getStatusCode() == 200) {
         tblKhachHang.refresh(); // Cập nhật hiển thị dòng đã sửa
@@ -306,7 +329,7 @@ private void handleXoa() {
 }
 /** Xóa trắng các trường nhập liệu */
 private void clearForm() {
-    txtHoTen.clear(); txtSDT.clear(); txtDiaChi.clear(); txtEmail.clear();
+    txtHoTen.clear(); txtSDT.clear(); txtDiaChi.clear(); txtEmail.clear(); txtDiem.clear();
     datePickerNgayDangKy.setValue(null);
     tblKhachHang.getSelectionModel().clearSelection(); // Bỏ chọn dòng
 }
@@ -398,55 +421,101 @@ private boolean validateInput(String hoTen, String sdt, String diaChi, String em
 * Hiển thị Dialog lịch sử hóa đơn CÓ THÊM SỰ KIỆN DOUBLE-CLICK
 */
 private void showInvoiceHistoryDialog(entity.KhachHang customer) {
-    Response res = Client.sendWithParams(CommandType.GET_INVOICES_BY_CUSTOMER, Map.of("maKH", customer.getMaKH()));
-    List<HoaDon> hoaDonList;
-    if (res.getStatusCode() == 200) {
-        hoaDonList = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(res.getData()), HoaDon.class);
-        hoaDonList = hoaDonList.stream()
-        .filter(hd -> hd.getTrangThai() != null && hd.getTrangThai() == TrangThaiHoaDon.DA_THANH_TOAN)
-        .collect(java.util.stream.Collectors.toList());
-    } else {
-    hoaDonList = new ArrayList<>();
-}
-Dialog<Void> dialog = new Dialog<>();
-dialog.setTitle("Lịch sử hóa đơn - " + customer.getTenKH());
-dialog.setHeaderText("Danh sách hóa đơn của: " + customer.getTenKH() + " (SĐT: " + customer.getSoDT() + ")");
-TableView<HoaDon> historyTable = new TableView<>();
-historyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-TableColumn<HoaDon, String> colHistMaHD = new TableColumn<>("Mã HĐ");
-colHistMaHD.setCellValueFactory(new PropertyValueFactory<>("maHD")); colHistMaHD.setPrefWidth(80);
-TableColumn<HoaDon, String> colHistNgayLap = new TableColumn<>("Ngày Lập");
-colHistNgayLap.setCellValueFactory(cellData -> { LocalDateTime dt = cellData.getValue().getNgayLap(); return new SimpleStringProperty(dt != null ? dt.format(dateTimeFormatter) : "N/A"); });
-colHistNgayLap.setPrefWidth(150);
-TableColumn<HoaDon, String> colHistPTTT = new TableColumn<>("PTTT");
-colHistPTTT.setCellValueFactory(cellData -> { PTTThanhToan pt = cellData.getValue().getHinhThucTT(); return new SimpleStringProperty(pt != null ? pt.getDisplayName() : "Chưa TT"); });
-colHistPTTT.setPrefWidth(100);
-TableColumn<HoaDon, Double> colHistTongTien = new TableColumn<>("Tổng Tiền");
-colHistTongTien.setCellValueFactory(new PropertyValueFactory<>("tongTienThanhToan"));
-colHistTongTien.setCellFactory(tc -> new TableCell<>() { @Override protected void updateItem(Double item, boolean empty) { super.updateItem(item, empty); setText(empty || item == null ? null : String.format("%,.0f Đ", item)); setAlignment(Pos.CENTER_RIGHT); } });
-colHistTongTien.setPrefWidth(120);
-historyTable.getColumns().setAll(colHistMaHD, colHistNgayLap, colHistPTTT, colHistTongTien);
-if (hoaDonList.isEmpty()) { historyTable.setPlaceholder(new Label("Khách hàng chưa có hóa đơn.")); }
-else { historyTable.setItems(FXCollections.observableArrayList(hoaDonList)); }
-// --- THÊM SỰ KIỆN DOUBLE-CLICK ---
-historyTable.setOnMouseClicked(event -> {
-    if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
-        HoaDon selectedHoaDon = historyTable.getSelectionModel().getSelectedItem();
-        if (selectedHoaDon != null && selectedHoaDon.getMaHD() != null) {
-            System.out.println("Double clicked on HD: " + selectedHoaDon.getMaHD());
-            // Gọi hàm hiển thị chi tiết hóa đơn
-            showInvoiceDetailDialog(selectedHoaDon.getMaHD());
+        String id = customer.getMaKH();
+        List<HoaDon> ls = new ArrayList<>();
+        Response resLS = Client.sendWithParams(CommandType.GET_INVOICES_BY_CUSTOMER, java.util.Map.of("maKH", id));
+        if (resLS.getStatusCode() == 200) {
+            ls = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resLS.getData()), HoaDon.class);
+            ls = ls.stream()
+                .filter(hd -> hd.getTrangThai() != null && hd.getTrangThai() == TrangThaiHoaDon.DA_THANH_TOAN)
+                .collect(java.util.stream.Collectors.toList());
         }
+
+        Dialog<Void> d = new Dialog<>();
+        d.setTitle("Khách hàng - " + id);
+        VBox main = new VBox(15);
+        main.setPadding(new Insets(15));
+        main.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
+
+        // Thông tin khách hàng
+        Label t = new Label("THÔNG TIN KHÁCH HÀNG");
+        t.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
+        t.setMaxWidth(Double.MAX_VALUE);
+        t.setAlignment(Pos.CENTER);
+        
+        GridPane g = new GridPane();
+        g.setHgap(15);
+        g.setVgap(8);
+        int row = 0;
+        addInfoRow(g, row++, "Mã:", customer.getMaKH(), "Tên:", customer.getTenKH());
+        addInfoRow(g, row++, "SĐT:", customer.getSoDT(), "Email:", customer.getEmail() != null ? customer.getEmail() : "");
+        addInfoRow(g, row++, "Địa chỉ:", customer.getDiaChi() != null ? customer.getDiaChi() : "", "Loại:", customer.getThanhVien() != null ? customer.getThanhVien() : "");
+        addInfoRow(g, row++, "Ngày ĐK:", customer.getNgayDangKy() != null ? customer.getNgayDangKy().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "", "", "");
+
+        double tot = ls.stream().mapToDouble(HoaDon::getTongTienThanhToan).sum();
+        HBox s = new HBox();
+        s.setAlignment(Pos.CENTER_RIGHT);
+        Label sl = new Label("Tổng chi tiêu: ");
+        sl.setStyle("-fx-font-weight: bold;");
+        Label sv = new Label(String.format("%,.0f VNĐ", tot));
+        sv.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: green;");
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        s.getChildren().addAll(sl, sp, sv);
+        
+        main.getChildren().addAll(t, g, s);
+
+        // Lịch sử hóa đơn
+        Label ht = new Label("LỊCH SỬ (" + ls.size() + " hóa đơn)");
+        ht.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
+        
+        TableView<HoaDon> tb = new TableView<>();
+        tb.setPrefHeight(250);
+        tb.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        
+        TableColumn<HoaDon, String> c1 = new TableColumn<>("Mã");
+        c1.setCellValueFactory(new PropertyValueFactory<>("maHD"));
+        c1.setPrefWidth(100);
+        
+        TableColumn<HoaDon, String> c2 = new TableColumn<>("Ngày");
+        c2.setCellValueFactory(cellData -> {
+            HoaDon h = cellData.getValue();
+            return new SimpleStringProperty(h.getNgayLap() != null ? h.getNgayLap().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "N/A");
+        });
+        c2.setPrefWidth(150);
+        
+        TableColumn<HoaDon, String> c3 = new TableColumn<>("PTTT");
+        c3.setCellValueFactory(cellData -> {
+            PTTThanhToan pt = cellData.getValue().getHinhThucTT();
+            return new SimpleStringProperty(pt != null ? pt.getDisplayName() : "N/A");
+        });
+        
+        TableColumn<HoaDon, Double> c4 = new TableColumn<>("Tổng");
+        c4.setCellValueFactory(new PropertyValueFactory<>("tongTienThanhToan"));
+        c4.setCellFactory(col -> new TableCell<>() {
+            protected void updateItem(Double i, boolean e) {
+                super.updateItem(i, e);
+                setText(e || i == null ? "" : String.format("%,.0f VNĐ", i));
+                setAlignment(Pos.CENTER_RIGHT);
+            }
+        });
+
+        tb.getColumns().addAll(c1, c2, c3, c4);
+        tb.setItems(FXCollections.observableArrayList(ls));
+        
+        tb.setOnMouseClicked(event -> {
+            if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
+                HoaDon selected = tb.getSelectionModel().getSelectedItem();
+                if (selected != null) showInvoiceDetailDialog(selected.getMaHD());
+            }
+        });
+
+        main.getChildren().addAll(ht, tb);
+        d.getDialogPane().setContent(main);
+        d.getDialogPane().setPrefWidth(600);
+        d.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        d.showAndWait();
     }
-});
-// --- KẾT THÚC THÊM SỰ KIỆN ---
-VBox dialogLayout = new VBox(10, historyTable);
-dialogLayout.setPadding(new Insets(10)); VBox.setVgrow(historyTable, Priority.ALWAYS);
-dialog.getDialogPane().setContent(dialogLayout);
-dialog.getDialogPane().setPrefSize(550, 400);
-dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-dialog.showAndWait();
-}
 // --- HÀM MỚI ĐỂ HIỂN THỊ CHI TIẾT HÓA ĐƠN ---
 /**
 * Hiển thị Dialog chi tiết hóa đơn dựa vào mã hóa đơn.
@@ -457,103 +526,140 @@ dialog.showAndWait();
 * Đã sửa lỗi định dạng thời gian.
 */
 private void showInvoiceDetailDialog(String maHD) {
-    Response resHD = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("invoiceId", maHD));
-    if (resHD.getStatusCode() != 200) { showAlert(Alert.AlertType.ERROR, "Lỗi", "Không tìm thấy hóa đơn " + maHD); return; }
-    HoaDon hoaDon = utils.JsonUtil.convertValue(resHD.getData(), HoaDon.class);
-    Response resDT = Client.sendWithParams(CommandType.GET_INVOICE_DETAILS, Map.of("maHD", maHD));
-    List<ChiTietHoaDon> chiTietList;
-    if (resDT.getStatusCode() == 200) {
-        chiTietList = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resDT.getData()), ChiTietHoaDon.class);
-    } else {
-    chiTietList = new ArrayList<>();
-}
-Dialog<Void> detailDialog = new Dialog<>();
-detailDialog.setTitle("Chi tiết hóa đơn - " + maHD);
-detailDialog.setHeaderText(null);
-// --- Layout chính ---
-VBox mainLayout = new VBox(15);
-mainLayout.setPadding(new Insets(15));
-// Load CSS nếu có
-String cssPath = getClass().getResource("/css/HoaDon.css") != null ? getClass().getResource("/css/HoaDon.css").toExternalForm() : null;
-if (cssPath != null) {
-    detailDialog.getDialogPane().getStylesheets().add(cssPath);
-    mainLayout.getStyleClass().add("right-panel");
-} else {
-mainLayout.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
-}
-// --- Tiêu đề ---
-Label title = new Label("CHI TIẾT HÓA ĐƠN " + maHD);
-title.getStyleClass().add("screen-title");
-title.setMaxWidth(Double.MAX_VALUE);
-title.setAlignment(Pos.CENTER);
-// --- Thông tin chung ---
-GridPane infoGrid = new GridPane(); infoGrid.setHgap(10); infoGrid.setVgap(8);
-ColumnConstraints col1=new ColumnConstraints(); col1.setHgrow(Priority.NEVER);
-ColumnConstraints col2=new ColumnConstraints(); col2.setHgrow(Priority.ALWAYS);
-ColumnConstraints col3=new ColumnConstraints(); col3.setHgrow(Priority.NEVER);
-ColumnConstraints col4=new ColumnConstraints(); col4.setHgrow(Priority.ALWAYS);
-infoGrid.getColumnConstraints().addAll(col1, col2, col3, col4);
-int rowIndex = 0;
-// Ngày - SĐT
-addInfoRow(infoGrid, rowIndex++, "Ngày:", (hoaDon.getNgayLap() != null ? hoaDon.getNgayLap().format(dateFormatter) : "N/A"),
-"SĐT Khách:", (hoaDon.getSoDienThoaiKH() != null ? hoaDon.getSoDienThoaiKH() : "N/A"));
-// Bàn - Thu ngân
-addInfoRow(infoGrid, rowIndex++, "Bàn:", (hoaDon.getMaBan() != null ? hoaDon.getMaBan() : "N/A"),
-"Thu ngân:", (hoaDon.getTenNhanVien() != null ? hoaDon.getTenNhanVien() : "N/A"));
-// Giờ vào - Giờ ra
-addInfoRow(infoGrid, rowIndex++, "Giờ vào:", (hoaDon.getGioVao() != null ? hoaDon.getGioVao().toLocalTime().format(timeFormatter) : "N/A"),
-"Giờ ra:", (hoaDon.getGioRa() != null ? hoaDon.getGioRa().toLocalTime().format(timeFormatter) : "N/A"));
-// --- Bảng chi tiết món ---
-TableView<ChiTietHoaDon> detailTable = new TableView<>();
-detailTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS); detailTable.setPrefHeight(180);
-TableColumn<ChiTietHoaDon, Void> colSTT = new TableColumn<>("STT"); colSTT.setPrefWidth(40);
-colSTT.setCellFactory(col -> new TableCell<>() { @Override public void updateIndex(int index) { super.updateIndex(index); setText(isEmpty() || index < 0 ? null : Integer.toString(index + 1)); } });
-TableColumn<ChiTietHoaDon, String> colTenMon = new TableColumn<>("Tên món"); colTenMon.setCellValueFactory(new PropertyValueFactory<>("tenMon"));
-TableColumn<ChiTietHoaDon, Integer> colSoLuong = new TableColumn<>("SL"); colSoLuong.setCellValueFactory(new PropertyValueFactory<>("soLuong")); colSoLuong.setPrefWidth(50);
-TableColumn<ChiTietHoaDon, Double> colDonGia = new TableColumn<>("Đơn giá"); colDonGia.setCellValueFactory(new PropertyValueFactory<>("donGia"));
-colDonGia.setCellFactory(c -> new TableCell<>() { @Override protected void updateItem(Double item, boolean empty) { super.updateItem(item, empty); setText(empty || item == null ? null : String.format("%,.0f", item)); setAlignment(Pos.CENTER_RIGHT); }});
-TableColumn<ChiTietHoaDon, Double> colThanhTien = new TableColumn<>("Thành tiền"); colThanhTien.setCellValueFactory(new PropertyValueFactory<>("thanhTien"));
-colThanhTien.setCellFactory(c -> new TableCell<>() { @Override protected void updateItem(Double item, boolean empty) { super.updateItem(item, empty); setText(empty || item == null ? null : String.format("%,.0f", item)); setAlignment(Pos.CENTER_RIGHT); }});
-detailTable.getColumns().setAll(colSTT, colTenMon, colSoLuong, colDonGia, colThanhTien);
-detailTable.setItems(FXCollections.observableArrayList(chiTietList));
-// --- Tổng tiền ---
-VBox totalBox = new VBox(5); totalBox.setPadding(new Insets(5, 0, 5, 0));
-double tongMonAn = hoaDon.getTongCongMonAn();
-totalBox.getChildren().addAll(
-createTotalRow("TáÂ»â¢ng cáÂ»â¢ng mÃÂ³n ÃÆn:", String.format("%,.0f VNÃÂ", tongMonAn)),
-createTotalRow("PhÃÂ­ dáÂ»â¹ch váÂ»Â¥ (5%):", String.format("%,.0f VNÃÂ", tongMonAn * 0.05)),
-createTotalRow("ThuáÂºÂ¿ VAT (8%):", String.format("%,.0f VNÃÂ", tongMonAn * 0.08)),
-createTotalRow("TiáÂ»Ân ÃâáÂºÂ·t cáÂ»Âc bÃÂ n:", String.format("%,.0f VNÃÂ", hoaDon.getTienCoc()))
-);
-// --- Ã°Å¸âÂ¥ PHáÂºÂ¦N CUáÂ»ÂI: NÃÅ¡T IN + TáÂ»âNG TIáÂ»â¬N ---
-HBox finalTotalBox = new HBox(10);
-finalTotalBox.setAlignment(Pos.CENTER_RIGHT);
-// âÅâ¦ NÃÂºt In HÃÂ³a ÃÂÃÂ¡n (ThÃÂªm máÂ»âºi)
-Button btnPrint = new Button("In hÃÂ³a ÃâÃÂ¡n");
-btnPrint.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold;");
-btnPrint.setOnAction(e -> handleInHoaDon(hoaDon)); // GáÂ»Âi hÃÂ m in
-Label finalTotalLabel = new Label("TáÂ»â¢ng tiáÂ»Ân thanh toÃÂ¡n:"); finalTotalLabel.getStyleClass().add("total-title");
-Label finalTotalValue = new Label(String.format("%,.0f VNÃÂ", hoaDon.getTongTienThanhToan())); finalTotalValue.getStyleClass().add("total-value");
-Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
-finalTotalBox.getChildren().addAll(btnPrint, spacer, finalTotalLabel, finalTotalValue);
-// --- Add all to layout ---
-mainLayout.getChildren().addAll(title, infoGrid, detailTable, totalBox, finalTotalBox);
-detailDialog.getDialogPane().setContent(mainLayout);
-detailDialog.getDialogPane().setPrefWidth(600);
-detailDialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-detailDialog.getDialogPane().setStyle("-fx-background-color: transparent;");
-detailDialog.showAndWait();
-}
+        Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, java.util.Map.of("maHD", maHD));
+        if (res.getStatusCode() != 200) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không tìm thấy hóa đơn: " + maHD);
+            return;
+        }
+        HoaDon hd = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
+        Response resDetails = Client.sendWithParams(CommandType.GET_INVOICE_DETAILS, java.util.Map.of("maHD", maHD));
+        List<ChiTietHoaDon> ct = new ArrayList<>();
+        if (resDetails.getStatusCode() == 200) {
+            ct = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resDetails.getData()), ChiTietHoaDon.class);
+        }
+        hd.setChiTietHoaDon(ct);
+        if (hd.getTongCongMonAn() == 0 && !ct.isEmpty()) {
+            double totalFood = ct.stream().mapToDouble(item -> item.getDonGia() * item.getSoLuong()).sum();
+            hd.setTongCongMonAn(totalFood);
+        }
+
+        Dialog<Void> d = new Dialog<>();
+        d.setTitle("Chi tiết hóa đơn - " + maHD);
+        VBox main = new VBox(15);
+        main.setPadding(new Insets(15));
+        main.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
+
+        Label title = new Label("CHI TIẾT HÓA ĐƠN " + maHD);
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
+        title.setMaxWidth(Double.MAX_VALUE);
+        title.setAlignment(Pos.CENTER);
+
+        GridPane info = new GridPane();
+        info.setHgap(15);
+        info.setVgap(8);
+        int rowIdx = 0;
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
+        
+        addInfoRow(info, rowIdx++, "Ngày:", hd.getNgayLap() != null ? hd.getNgayLap().format(fmt) : "",
+                "SĐT:", hd.getKhachHang() != null ? hd.getKhachHang().getSoDT() : "");
+        addInfoRow(info, rowIdx++, "Bàn:", hd.getMaBan() != null ? hd.getMaBan() : "",
+                "Thu ngân:", hd.getTenNhanVien() != null ? hd.getTenNhanVien() : "");
+        addInfoRow(info, rowIdx++, "Giờ vào:", hd.getGioVao() != null ? hd.getGioVao().toLocalTime().format(timeFmt) : "",
+                "Giờ ra:", hd.getGioRa() != null ? hd.getGioRa().toLocalTime().format(timeFmt) : "");
+
+        TableView<ChiTietHoaDon> tbl = new TableView<>();
+        tbl.setPrefHeight(200);
+        tbl.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        
+        TableColumn<ChiTietHoaDon, Void> c0 = new TableColumn<>("STT");
+        c0.setPrefWidth(40);
+        c0.setCellFactory(col -> new TableCell<>() {
+            @Override
+            public void updateIndex(int i) {
+                super.updateIndex(i);
+                setText(isEmpty() || i < 0 ? null : String.valueOf(i + 1));
+            }
+        });
+        TableColumn<ChiTietHoaDon, String> c1 = new TableColumn<>("Tên món");
+        c1.setCellValueFactory(new PropertyValueFactory<>("tenMon"));
+        TableColumn<ChiTietHoaDon, Integer> c2 = new TableColumn<>("SL");
+        c2.setCellValueFactory(new PropertyValueFactory<>("soLuong"));
+        c2.setPrefWidth(50);
+        TableColumn<ChiTietHoaDon, Double> c3 = new TableColumn<>("Đơn giá");
+        c3.setCellValueFactory(new PropertyValueFactory<>("donGia"));
+        c3.setCellFactory(col -> new TableCell<>() {
+            protected void updateItem(Double i, boolean e) {
+                super.updateItem(i, e);
+                setText(e || i == null ? "" : String.format("%,.0f", i));
+                setAlignment(Pos.CENTER_RIGHT);
+            }
+        });
+        TableColumn<ChiTietHoaDon, Double> c4 = new TableColumn<>("Thành tiền");
+        c4.setCellValueFactory(new PropertyValueFactory<>("thanhTien"));
+        c4.setCellFactory(col -> new TableCell<>() {
+            protected void updateItem(Double i, boolean e) {
+                super.updateItem(i, e);
+                setText(e || i == null ? "" : String.format("%,.0f", i));
+                setAlignment(Pos.CENTER_RIGHT);
+            }
+        });
+        tbl.getColumns().addAll(c0, c1, c2, c3, c4);
+        tbl.setItems(FXCollections.observableArrayList(ct));
+
+        VBox sum = new VBox(5);
+        sum.setAlignment(Pos.CENTER_RIGHT);
+        Label row1 = new Label(String.format("Cộng món ăn: %,.0f VNĐ", hd.getTongCongMonAn()));
+        Label row2 = new Label(String.format("Phí DV (5%%): %,.0f VNĐ", hd.getPhiDichVu()));
+        Label row3 = new Label(String.format("VAT (8%%): %,.0f VNĐ", hd.getThueVAT()));
+        Label row4 = new Label(String.format("Tiền cọc: %,.0f VNĐ", hd.getTienCoc()));
+        Label row5 = new Label(String.format("Khuyến mãi: %,.0f VNĐ", hd.getKhuyenMai()));
+        
+        row1.setStyle("-fx-font-weight: bold;");
+        row2.setStyle("-fx-font-weight: bold;");
+        row3.setStyle("-fx-font-weight: bold;");
+        row4.setStyle("-fx-font-weight: bold;");
+        row5.setStyle("-fx-font-weight: bold; -fx-text-fill: #2f9e44;");
+        
+        sum.getChildren().addAll(row1, row2, row3, row4, row5);
+
+        HBox tot = new HBox();
+        tot.setAlignment(Pos.CENTER_RIGHT);
+        Label lbl = new Label("TỔNG THANH TOÁN: ");
+        lbl.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
+        Label val = new Label(String.format("%,.0f VNĐ", hd.getTongTienThanhToan()));
+        val.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e03131;");
+        
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        tot.getChildren().addAll(lbl, sp, val);
+
+        main.getChildren().addAll(title, info, tbl, sum, tot);
+        d.getDialogPane().setContent(main);
+        d.getDialogPane().setPrefWidth(600);
+        d.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        
+        // Thêm nút in hóa đơn
+        ButtonType btnPrintType = new ButtonType("In hóa đơn", ButtonBar.ButtonData.LEFT);
+        d.getDialogPane().getButtonTypes().add(0, btnPrintType);
+        Button printButton = (Button) d.getDialogPane().lookupButton(btnPrintType);
+        printButton.setStyle("-fx-background-color: #1971c2; -fx-text-fill: white; -fx-font-weight: bold;");
+        printButton.setOnAction(e -> {
+            handleInHoaDon(hd);
+        });
+
+        d.showAndWait();
+    }
 // ==============================================================================
-// Ã°Å¸âÂ¥ CÃÂC HÃâ¬M XáÂ»Â¬ LÃÂ IN HÃâA ÃÂÃÂ N (COPY TáÂ»Âª HoaDonUI.java)
+// ðÅ¸âÂ¥ CíÂC Híâ¬M XáÂ»Â¬ LíÂ IN HíâA íÂíÂ N (COPY TáÂ»Âª HoaDonUI.java)
 // ==============================================================================
-// Helper Class cho váÂ»â¹ trÃÂ­ Y
+// Helper Class cho váÂ»â¹ tríÂ­ Y
 private static class YPosition {
     public float y;
     public YPosition(float initialY) { this.y = initialY; }
 }
 /**
-* XáÂ»Â­ lÃÂ½ sáÂ»Â± kiáÂ»â¡n nháÂºÂ¥n nÃÂºt In HÃÂ³a ÃÂÃÂ¡n
+* XáÂ»Â­ líÂ½ sáÂ»Â± kiáÂ»â¡n nháÂºÂ¥n níÂºt In HíÂ³a íÂíÂ¡n
 */
     private void handleInHoaDon(HoaDon hd) {
         if (hd == null) return;
@@ -583,7 +689,7 @@ private void addInfoRow(GridPane grid, int row, String l1, String v1, String l2,
     grid.add(lbl1, 0, row); grid.add(val1, 1, row);
     grid.add(lbl2, 2, row); grid.add(val2, 3, row);
 }
-/** HÃÂ m tiáÂ»â¡n ÃÂ­ch táÂºÂ¡o máÂ»â¢t dÃÂ²ng HBox cho pháÂºÂ§n táÂ»â¢ng tiáÂ»Ân */
+/** HíÂ m tiáÂ»â¡n íÂ­ch táÂºÂ¡o máÂ»â¢t díÂ²ng HBox cho pháÂºÂ§n táÂ»â¢ng tiáÂ»Ân */
 private HBox createTotalRow(String labelText, String valueText) {
     HBox hbox = new HBox();
     Label label = new Label(labelText); label.getStyleClass().add("info-title");
@@ -592,10 +698,21 @@ private HBox createTotalRow(String labelText, String valueText) {
     hbox.getChildren().addAll(label, spacer, value);
     return hbox;
 }
-/** HiáÂ»Æn tháÂ»â¹ Alert ÃâÃ¡n giản */
+/** HiáÂ»Æn tháÂ»â¹ Alert íâí¡n giản */
 private void showAlert(Alert.AlertType type, String title, String content) {
     Alert alert = new Alert(type);
     alert.setTitle(title); alert.setHeaderText(null); alert.setContentText(content);
     alert.showAndWait();
 }
 }
+
+
+
+
+
+
+
+
+
+
+

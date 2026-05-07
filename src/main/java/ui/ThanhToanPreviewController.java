@@ -80,7 +80,7 @@ public class ThanhToanPreviewController {
     @FXML private TableColumn<MyReceiptItem, Double> colThanhTien;
     // ===============================================
     @FXML private ComboBox<String> promoComboBoxPreview;
-    // 🔥 THÊM CÁC BIẾN ĐỂ QUẢN LÝ KHUYẾN MÃI VÀ TÍNH TOÁN LẠI
+    // 🔥 THÊM CÁC BIẾN ĐỂ QUẢN LÝ KHUYẾN MíI VÀ TÍNH TOÁN LẠI
     private List<UuDai> dsUuDaiDangApDung = new ArrayList<>();
     private UuDai selectedUuDai = null;
     // 🔥 THÊM BIẾN LƯU TRỮ GIÁ TRỊ TÍNH TOÁN
@@ -216,7 +216,7 @@ if (promoComboBoxPreview != null) {
 }
 /**
 * 🔥 SỬA: Cập nhật hàm để tính toán, đổ dữ liệu vào các Labels mới và BẢNG
-* ĐÃ FIX: Đảm bảo TableView được cấu hình và đổ dữ liệu MonOrder từ MonTachSnapshot.
+* ĐÝFIX: Đảm bảo TableView được cấu hình và đổ dữ liệu MonOrder từ MonTachSnapshot.
 */
 // [Trong file ThanhToanPreviewController.java]
 public void setInitialData(HoaDon hd, DatBan controller, double tongMonAn, double tienCoc, boolean isNewInvoice) {
@@ -226,7 +226,7 @@ public void setInitialData(HoaDon hd, DatBan controller, double tongMonAn, doubl
     // --- 1. LƯU GIÁ TRỊ TÍNH TOÁN (Đã đúng) ---
     this.currentTongMonAn = tongMonAn;
     this.currentTienCoc = isNewInvoice ? 0.0 : tienCoc;
-    // --- 🔥 ĐÃ XÓA KHỎI TÍNH TOÁN CŨ (từ phiDV đến soTienKhachTra) ---
+    // --- 🔥 ĐÝXÓA KHỎI TÍNH TOÁN CŨ (từ phiDV đến soTienKhachTra) ---
     // (Logic này đã được chuyển vào hàm calculateAndDisplayTotals())
     // --- 2. ĐỔ DỮ LIỆU CHUNG (HEADER) (Giữ nguyên) ---
     HoaDon hdGocDeLayThongTin = hd;
@@ -258,7 +258,7 @@ if (lblGioRa != null) lblGioRa.setText("Giờ ra: " + java.time.LocalTime.now().
 if (lblThuNgan != null) lblThuNgan.setText("Thu ngân: " + tenThuNgan);
 if (lblKhachHang != null) lblKhachHang.setText("Khách hàng: " + khachHangSdt);
 if (lblBan != null) lblBan.setText("Bàn: " + (hd.getBan() != null ? hd.getBan().getMaBan() : "Chưa gán"));
-    // --- 🔥 ĐÃ XÓA CÁC LỆNH .setText CŨ CHO PHẦN SUMMARY ---
+    // --- 🔥 ĐÝXÓA CÁC LỆNH .setText CŨ CHO PHẦN SUMMARY ---
 if (lblThanhVien != null) {
     String memberStatus = (hdGocDeLayThongTin.getKhachHang() != null && hdGocDeLayThongTin.getKhachHang().getThanhVien().equals("VIP")) ? "Gold (giảm 10%)" : "N/A";
     lblThanhVien.setText(memberStatus);
@@ -269,9 +269,9 @@ if (tblMonAnThanhToan != null && monTachListSnapshot != null) {
     for (TachBanPopupController.MonTach mon : monTachListSnapshot) {
         int sl;
         if (isNewInvoice) {
-            sl = mon.getSoLuongTach(); // SL ÃâÃÂ£ tÃÂ¡ch
+            sl = mon.getSoLuongTach(); // SL íâíÂ£ tíÂ¡ch
         } else {
-        sl = mon.getSoLuongGoc() - mon.getSoLuongTach(); // SL cÃÂ²n láÂºÂ¡i
+        sl = mon.getSoLuongGoc() - mon.getSoLuongTach(); // SL cíÂ²n láÂºÂ¡i
     }
     if (sl > 0) {
         double tt = sl * mon.getDonGia();
@@ -280,7 +280,7 @@ if (tblMonAnThanhToan != null && monTachListSnapshot != null) {
 }
 tblMonAnThanhToan.setItems(receiptList);
 }
-// --- 4. GáÂ»ÅI HÃâ¬M TÃÂNH TOÃÂN TáÂ»âNG THáÂ»â (ÃÂÃÂ£ ÃâÃÂºng) ---
+// --- 4. GáÂ»ÅI Híâ¬M TíÂNH TOíÂN TáÂ»âNG THáÂ»â (íÂíÂ£ íâíÂºng) ---
 calculateAndDisplayTotals();
 }
 public void setMonTachList(ObservableList<TachBanPopupController.MonTach> monTachListSnapshot, String maHDGoc) {
@@ -288,14 +288,14 @@ public void setMonTachList(ObservableList<TachBanPopupController.MonTach> monTac
     this.maHDGocSnapshot = maHDGoc;
 }
 /**
-* XáÂ»Â­ lÃÂ½ xÃÂ¡c nháÂºÂ­n thanh toÃÂ¡n cuáÂ»âi cÃÂ¹ng (LÃÂ°u vÃÂ o CSDL).
-* HÃÂ m nÃÂ y sáÂºÂ½ ÃâÃÂ°áÂ»Â£c gáÂ»Âi TáÂ»Âª BÃÅ N TRONG cÃÂ¡c popup thanh toÃÂ¡n (TiáÂ»Ân máÂºÂ·t, QR...).
+* XáÂ»Â­ líÂ½ xíÂ¡c nháÂºÂ­n thanh toíÂ¡n cuáÂ»âi cíÂ¹ng (LíÂ°u víÂ o CSDL).
+* HíÂ m níÂ y sáÂºÂ½ íâíÂ°áÂ»Â£c gáÂ»Âi TáÂ»Âª BíÅ N TRONG cíÂ¡c popup thanh toíÂ¡n (TiáÂ»Ân máÂºÂ·t, QR...).
 */
 private void handleFinalThanhToan() {
     String maNV = ClientSessionManager.getInstance().getCurrentEmployee().getMaNV();
     try {
         String maUuDaiDaChon = (selectedUuDai != null) ? selectedUuDai.getMaUuDai() : null;
-        // 1. GáÂ»ÅI API THANH TOÃÂN (HáÂ»â tráÂ»Â£ cáÂºÂ£ TÃÂ¡ch bÃÂ n náÂºÂ¿u cÃÂ³ maHDGocSnapshot)
+        // 1. GáÂ»ÅI API THANH TOíÂN (HáÂ»â tráÂ»Â£ cáÂºÂ£ TíÂ¡ch bíÂ n náÂºÂ¿u cíÂ³ maHDGocSnapshot)
         Map<String, Object> params = new HashMap<>();
         params.put("maHD", hoaDonToPay.getMaHD());
         params.put("pttt", selectedPTTT.name());
@@ -312,6 +312,7 @@ private void handleFinalThanhToan() {
             // Convert MonTach to ChiTietHoaDon list
             List<entity.ChiTietHoaDon> itemsToMove = monTachListSnapshot.stream().map(m -> {
                 entity.ChiTietHoaDon ct = new entity.ChiTietHoaDon();
+                ct.setMaMon(m.getMaMon()); // 🔥 QUAN TRỌNG: Phải có mã món
                 ct.setTenMon(m.getTenMon());
                 ct.setSoLuong(m.getSoLuongTach());
                 ct.setDonGia(m.getDonGia());

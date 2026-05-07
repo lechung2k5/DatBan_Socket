@@ -364,6 +364,11 @@ private void loadScreen(String fxmlPath, String cssPath) throws IOException {
             });
         }
         
+        // 🔥 MỚI: Nếu quay lại Dashboard, hãy refresh dữ liệu
+        if (currentController instanceof DashboardController) {
+            ((DashboardController) currentController).refreshDashboard();
+        }
+        
         contentArea.setCenter(root);
         return;
     }

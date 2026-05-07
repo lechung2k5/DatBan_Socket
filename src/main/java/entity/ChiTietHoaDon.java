@@ -6,19 +6,23 @@ import java.io.Serializable;
 */
 public class ChiTietHoaDon implements Serializable {
     private static final long serialVersionUID = 1L;
+    private String maMon;
     private String tenMon;
     private int soLuong;
     private double donGia;
     private double thanhTien;
     public ChiTietHoaDon() {
     }
-    public ChiTietHoaDon(String tenMon, int soLuong, double donGia, double thanhTien) {
+    public ChiTietHoaDon(String maMon, String tenMon, int soLuong, double donGia, double thanhTien) {
+        this.maMon = maMon;
         this.tenMon = tenMon;
         this.soLuong = soLuong;
         this.donGia = donGia;
         this.thanhTien = thanhTien;
     }
     // --- Getters & Setters ---
+    public String getMaMon() { return maMon; }
+    public void setMaMon(String maMon) { this.maMon = maMon; }
     public String getTenMon() { return tenMon; }
     public void setTenMon(String value) { this.tenMon = value; }
     public int getSoLuong() { return soLuong; }
@@ -27,9 +31,10 @@ public class ChiTietHoaDon implements Serializable {
     public void setDonGia(double value) { this.donGia = value; }
     public double getThanhTien() { return thanhTien; }
     public void setThanhTien(double value) { this.thanhTien = value; }
-    // 🔥 Helper for UI compatibility (Nếu cần)
+    // 🔥 Helper for UI compatibility
     public void setMonAn(MonAn monAn) {
         if (monAn != null) {
+            this.maMon = monAn.getMaMon();
             this.tenMon = monAn.getTenMon();
             this.donGia = monAn.getGiaBan();
         }

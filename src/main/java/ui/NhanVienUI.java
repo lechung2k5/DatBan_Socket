@@ -29,7 +29,7 @@ public class NhanVienUI {
     @FXML private TextField txtSDT;
     @FXML private ComboBox<String> cbxChucVu;
     @FXML private DatePicker dpNgaySinh;
-    @FXML private ComboBox<String> cbxCaLam; // Sáº½ dùng cho ca YÃU THÃCH
+    @FXML private ComboBox<String> cbxCaLam; // Sáº½ dùng cho ca YíU THíCH
     @FXML private PasswordField pfMatKhau;
     @FXML private ComboBox<String> cbxTrangThai;
     @FXML private TextField txtTimKiem;
@@ -39,43 +39,43 @@ public class NhanVienUI {
     @FXML private TableColumn<NhanVien, String> colSDT;
     @FXML private TableColumn<NhanVien, String> colChucVu;
     @FXML private TableColumn<NhanVien, String> colNgaySinh;
-    @FXML private TableColumn<NhanVien, String> colCaLam; // (FXML id váº«n lÃ  colCaLam)
+    @FXML private TableColumn<NhanVien, String> colCaLam; // (FXML id váº«n là colCaLam)
     @FXML private TableColumn<NhanVien, String> colTrangThai;
     // Khai báo Äúng 6 nút
     @FXML private Button btnThem; // Nút "Thêm" (Lưu má»i)
-    @FXML private Button btnSua;  // Nút "Sá»­a" (Cáº­p nháº­t ngay)
+    @FXML private Button btnSua;  // Nút "Sửa" (Cập nhật ngay)
     @FXML private Button btnXoa;
     @FXML private Button btnLuu;  // Nút "Lưu" (Không dùng)
     @FXML private Button btnHuy;
-    @FXML private Button btnXoaRong; // Nút "Xóa rá»ng" (Báº¯t Äáº§u thêm)
+    @FXML private Button btnXoaRong; // Nút "Xóa rá»ng" (Bắt Äầu thêm)
     //</editor-fold>
     private ObservableList<NhanVien> nhanVienList;
     // DAO removed
     private NhanVien currentSelectedNhanVien = null;
-    // Trạng thái giao diá»n: VIEWING (Äang xem/sá»­a) hoáº·c ADDING (Äang thêm má»i)
+    // Trạng thái giao diá»n: VIEWING (Äang xem/sửa) hoặc ADDING (Äang thêm má»i)
     private enum EditState { VIEWING, ADDING }
     private EditState currentState = EditState.VIEWING;
     @FXML
     private void initialize() {
         nhanVienList = FXCollections.observableArrayList();
-        // Cáº¥u hình cá»t
+        // Cấu hình cá»t
         colMaNV.setCellValueFactory(new PropertyValueFactory<>("maNV"));
         colHoTen.setCellValueFactory(new PropertyValueFactory<>("hoTen"));
         colSDT.setCellValueFactory(new PropertyValueFactory<>("sdt"));
         colChucVu.setCellValueFactory(new PropertyValueFactory<>("chucVu"));
         colNgaySinh.setCellValueFactory(new PropertyValueFactory<>("ngaySinh"));
-        // ð¥ THAY Äá»I QUAN TRá»NG: Bind cá»t vÃ o "caLamYeuThich"
+        // ð¥ THAY Äá»I QUAN TRá»NG: Bind cá»t vào "caLamYeuThich"
         colCaLam.setCellValueFactory(new PropertyValueFactory<>("caLamYeuThich"));
         colTrangThai.setCellValueFactory(new PropertyValueFactory<>("trangThai"));
-        // Cáº¥u hình ComboBox
+        // Cấu hình ComboBox
         ObservableList<String> vaiTroStrings = FXCollections.observableArrayList();
         for (VaiTro vaiTro : VaiTro.values()) { vaiTroStrings.add(vaiTro.getTenVaiTro()); }
         cbxChucVu.setItems(vaiTroStrings);
-        cbxTrangThai.setItems(FXCollections.observableArrayList("Äang lÃ m", "Nghá» viá»c"));
-        // Dùng danh sách code cứng cho Ca lÃ m YÃU THÃCH
-        cbxCaLam.setItems(FXCollections.observableArrayList("Sáng", "Chiá»u", "Tá»i", "Nguyên ngÃ y"));
-        cbxCaLam.setPromptText("Chá»n ca yêu thÃ­ch...");
-        // Cáº¥u hình tìm kiếm
+        cbxTrangThai.setItems(FXCollections.observableArrayList("Äang làm", "Nghá» viá»c"));
+        // Dùng danh sách code cứng cho Ca làm YíU THíCH
+        cbxCaLam.setItems(FXCollections.observableArrayList("Sáng", "Chiá»u", "Tá»i", "Nguyên ngày"));
+        cbxCaLam.setPromptText("Chá»n ca yêu thích...");
+        // Cấu hình tìm kiếm
         FilteredList<NhanVien> filteredList = new FilteredList<>(nhanVienList, p -> true);
         txtTimKiem.textProperty().addListener((obs, oldVal, newVal) -> {
             filteredList.setPredicate(nv -> {
@@ -96,10 +96,10 @@ public class NhanVienUI {
             }
         });
 
-        // Listener cho bảng: Khi chá» n dòng -> VIEWING, hiá»ƒn thá»‹ data, má»Ÿ khóa form
+        // Listener cho bảng: Khi chọn dòng -> VIEWING, hiá»ƒn thị data, mở khóa form
         tblNhanVien.getSelectionModel().selectedItemProperty().addListener(
         (obs, oldSelection, newSelection) -> {
-            if (currentState == EditState.ADDING) return; // Không lÃ m gì nếu Ä‘ang thêm
+            if (currentState == EditState.ADDING) return; // Không làm gì nếu đang thêm
             currentSelectedNhanVien = newSelection;
             if (newSelection != null) {
                 showNhanVienDetails(newSelection);
@@ -111,7 +111,7 @@ public class NhanVienUI {
         updateUIState(EditState.VIEWING); // Luôn quay vá» VIEWING khi chá»n dòng
     }
     );
-    loadNhanVienData(); // Tải dữ liá»u láº§n Äáº§u
+    loadNhanVienData(); // Tải dữ liá»u lần Äầu
 }
 //<editor-fold desc="State Management & UI Control">
 private void setFormEditable(boolean editable) {
@@ -121,41 +121,41 @@ private void setFormEditable(boolean editable) {
     pfMatKhau.setEditable(editable);
     cbxChucVu.setDisable(!editable);
     dpNgaySinh.setDisable(!editable);
-    cbxCaLam.setDisable(!editable); // ComboBox Äã Äưá»£c má»
+    cbxCaLam.setDisable(!editable); // ComboBox Äã Äược má»
     cbxTrangThai.setDisable(!editable);
 }
 private void updateUIState(EditState state) {
     this.currentState = state;
     boolean rowIsSelected = (currentSelectedNhanVien != null);
     if (state == EditState.ADDING) {
-        // Khi Äang thêm má»i (sau khi báº¥m Xóa rá»ng)
+        // Khi Äang thêm má»i (sau khi bấm Xóa rá»ng)
         setFormEditable(true);      // Má» khóa form
-        btnXoaRong.setDisable(true);  // Táº¯t "Xóa rá»ng"
-        btnThem.setDisable(false);     // Báº­t "Thêm" (Lưu má»i)
+        btnXoaRong.setDisable(true);  // Tắt "Xóa rá»ng"
+        btnThem.setDisable(false);     // Bật "Thêm" (Lưu má»i)
         btnSua.setDisable(true);
-        btnLuu.setDisable(true);      // Táº¯t nút "Lưu"
+        btnLuu.setDisable(true);      // Tắt nút "Lưu"
         btnXoa.setDisable(true);
         btnHuy.setDisable(false);
         tblNhanVien.setDisable(true);  // Khóa bảng
-    } else { // VIEWING state (Äang xem hoáº·c Äang sá»­a trên dòng Äã chá»n)
-    setFormEditable(rowIsSelected); // Form sá»­a Äưá»£c nếu có dòng Äưá»£c chá»n
-    btnXoaRong.setDisable(false); // Báº­t "Xóa rá»ng"
-    btnThem.setDisable(true);      // Táº¯t "Thêm" (Lưu má»i)
-    btnSua.setDisable(!rowIsSelected); // Báº­t Sá»­a/Xóa/Hủy nếu có dòng Äưá»£c chá»n
-    btnLuu.setDisable(true);      // Táº¯t nút "Lưu"
+    } else { // VIEWING state (Äang xem hoặc Äang sửa trên dòng Äã chá»n)
+    setFormEditable(rowIsSelected); // Form sửa Äược nếu có dòng Äược chá»n
+    btnXoaRong.setDisable(false); // Bật "Xóa rá»ng"
+    btnThem.setDisable(true);      // Tắt "Thêm" (Lưu má»i)
+    btnSua.setDisable(!rowIsSelected); // Bật Sửa/Xóa/Hủy nếu có dòng Äược chá»n
+    btnLuu.setDisable(true);      // Tắt nút "Lưu"
     btnXoa.setDisable(!rowIsSelected);
-    btnHuy.setDisable(!rowIsSelected); // Hủy chá» báº­t khi có dòng Äang chá»n (Äá» revert)
+    btnHuy.setDisable(!rowIsSelected); // Hủy chá» bật khi có dòng Äang chá»n (Äá» revert)
     tblNhanVien.setDisable(false); // Má» khóa bảng
 }
 }
 //</editor-fold>
 //<editor-fold desc="Event Handlers">
 @FXML
-private void handleXoaRong(ActionEvent event) { // Nút "Xóa rá»ng" -> Báº¯t Äáº§u thêm
+private void handleXoaRong(ActionEvent event) { // Nút "Xóa rá»ng" -> Bắt Äầu thêm
     tblNhanVien.getSelectionModel().clearSelection();
     clearForm();
     txtMaNV.setText(generateNewMaNV());
-    pfMatKhau.setPromptText("Báº¯t buá»c nháº­p");
+    pfMatKhau.setPromptText("Bắt buá»c nhập");
     updateUIState(EditState.ADDING); // Chuyá»n sang trạng thái ADDING
     txtHoTen.requestFocus();
 }
@@ -165,50 +165,50 @@ private void handleThem(ActionEvent event) { // Nút "Thêm" -> Lưu nhân viên
     NhanVien nv = createNhanVienFromForm();
     Response res = Client.sendWithParams(CommandType.UPDATE_EMPLOYEE, Map.of("employee", nv));
     if (res.getStatusCode() == 200) {
-        showInfoAlert("ThÃ nh công", "Äã thêm nhân viên má»i!");
+        showInfoAlert("Thành công", "Äã thêm nhân viên má»i!");
         loadNhanVienData();
     } else {
-    showErrorAlert("Tháº¥t bại", "Thêm má»i không thÃ nh công: " + res.getMessage());
+    showErrorAlert("Thất bại", "Thêm má»i không thành công: " + res.getMessage());
 }
 }
 @FXML
-private void handleSua(ActionEvent event) { // Nút "Sá»­a" -> Cáº­p nháº­t ngay dòng Äang chá»n
+private void handleSua(ActionEvent event) { // Nút "Sửa" -> Cập nhật ngay dòng Äang chá»n
     if (currentSelectedNhanVien == null || currentState != EditState.VIEWING || !validateInput()) return;
     NhanVien nv = createNhanVienFromForm();
     Response res = Client.sendWithParams(CommandType.UPDATE_EMPLOYEE, Map.of("employee", nv));
     if (res.getStatusCode() == 200) {
-        showInfoAlert("ThÃ nh công", "Äã cáº­p nháº­t thông tin nhân viên!");
+        showInfoAlert("Thành công", "Äã cập nhật thông tin nhân viên!");
         loadNhanVienData();
     } else {
-    showErrorAlert("Tháº¥t bại", "Cáº­p nháº­t không thÃ nh công: " + res.getMessage());
+    showErrorAlert("Thất bại", "Cập nhật không thành công: " + res.getMessage());
 }
 }
 @FXML
-private void handleLuu(ActionEvent event) { // Nút "Lưu" -> Không lÃ m gì cả
-    System.out.println("Nút Lưu không có chức nÄng trong quy trình nÃ y.");
+private void handleLuu(ActionEvent event) { // Nút "Lưu" -> Không làm gì cả
+    System.out.println("Nút Lưu không có chức nÄng trong quy trình này.");
 }
 @FXML
 private void handleXoa(ActionEvent event) { // Nút "Xóa"
     if (currentSelectedNhanVien == null || currentState != EditState.VIEWING) return;
     Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-    confirm.setTitle("Xác nháº­n xóa");
-    confirm.setContentText("Bạn có cháº¯c cháº¯n muá»n xóa nhân viên '" + currentSelectedNhanVien.getHoTen() + "'?");
+    confirm.setTitle("Xác nhận xóa");
+    confirm.setContentText("Bạn có chắc chắn muá»n xóa nhân viên '" + currentSelectedNhanVien.getHoTen() + "'?");
     Optional<ButtonType> result = confirm.showAndWait();
     if (result.isPresent() && result.get() == ButtonType.OK) {
         currentSelectedNhanVien.setTrangThai("Nghá» viá»c");
         Response res = Client.sendWithParams(CommandType.UPDATE_EMPLOYEE, Map.of("employee", currentSelectedNhanVien));
         if (res.getStatusCode() == 200) {
-            showInfoAlert("ThÃ nh công", "Äã xóa (ngừng hoạt Äá»ng) nhân viên!");
+            showInfoAlert("Thành công", "Äã xóa (ngừng hoạt Äá»ng) nhân viên!");
             loadNhanVienData();
         } else {
-        showErrorAlert("Tháº¥t bại", "Xóa nhân viên không thÃ nh công: " + res.getMessage());
+        showErrorAlert("Thất bại", "Xóa nhân viên không thành công: " + res.getMessage());
     }
 }
 }
 @FXML
 private void handleHuy(ActionEvent event) { // Nút "Hủy"
     if (currentState == EditState.ADDING) {
-        loadNhanVienData(); // Quay vá» trạng thái xem ban Äáº§u
+        loadNhanVienData(); // Quay vá» trạng thái xem ban Äầu
     } else if (currentSelectedNhanVien != null) {
     showNhanVienDetails(currentSelectedNhanVien); // Khôi phục dữ liá»u gá»c của dòng Äang chá»n
 }
@@ -253,8 +253,8 @@ private void showNhanVienDetails(NhanVien nhanVien) {
     cbxChucVu.setValue(nhanVien.getChucVu());
     cbxTrangThai.setValue(nhanVien.getTrangThai());
     pfMatKhau.setText("");
-    pfMatKhau.setPromptText("Äá» trá»ng nếu không muá»n Äá»i máº­t kháº©u");
-    // Hiá»n thá» ca lÃ m YÃU THÃCH
+    pfMatKhau.setPromptText("Äá» trá»ng nếu không muá»n Äá»i mật kháº©u");
+    // Hiá»n thá» ca làm YíU THíCH
     cbxCaLam.setValue(nhanVien.getCaLamYeuThich());
     try {
         dpNgaySinh.setValue(LocalDate.parse(nhanVien.getNgaySinh(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
@@ -265,7 +265,7 @@ private void showNhanVienDetails(NhanVien nhanVien) {
 private NhanVien createNhanVienFromForm() {
     NhanVien nv;
     if (currentState == EditState.VIEWING && currentSelectedNhanVien != null) {
-        nv = currentSelectedNhanVien; // Dùng trực tiếp Äá»i tưá»£ng Äã chá»n
+        nv = currentSelectedNhanVien; // Dùng trực tiếp Äá»i tượng Äã chá»n
     }
     else {
         nv = new NhanVien();
@@ -280,15 +280,15 @@ private NhanVien createNhanVienFromForm() {
     nv.setNgaySinh(null);
 }
 nv.setTrangThai(cbxTrangThai.getValue());
-// Láº¥y ca lÃ m yêu thÃ­ch từ ComboBox
+// Lấy ca làm yêu thích từ ComboBox
 nv.setCaLamYeuThich(cbxCaLam.getValue());
 String matKhau = pfMatKhau.getText();
 if (!matKhau.isEmpty()) {
     nv.setMatKhau(matKhau);
 } else if (currentState == EditState.ADDING) {
-nv.setMatKhau(""); // Báº¯t buá»c máº­t kháº©u khi thêm má»i (logic validate)
+nv.setMatKhau(""); // Bắt buá»c mật kháº©u khi thêm má»i (logic validate)
 } else if (currentSelectedNhanVien != null) {
-// Khi Sá»­a, nếu máº­t kháº©u trá»ng -> giữ máº­t kháº©u cũ (láº¥y từ DAO)
+// Khi Sửa, nếu mật kháº©u trá»ng -> giữ mật kháº©u cũ (lấy từ DAO)
 nv.setMatKhau(currentSelectedNhanVien.getMatKhau());
 }
 return nv;
@@ -303,12 +303,12 @@ private String generateNewMaNV() {
 }
 private boolean validateInput() {
     if (txtHoTen.getText().trim().isEmpty()) {
-        showErrorAlert("Lá»i", "Há» tên không Äưá»£c Äá» trá»ng.");
+        showErrorAlert("Lá»i", "Há» tên không Äược Äá» trá»ng.");
         txtHoTen.requestFocus();
         return false;
     }
     if (!txtSDT.getText().trim().matches("^0\\d{9}$")) {
-        showErrorAlert("Lá»i", "Sá» Äiá»n thoại phải báº¯t Äáº§u báº±ng 0 vÃ  có 10 chữ sá».");
+        showErrorAlert("Lá»i", "Sá» Äiá»n thoại phải bắt Äầu báº±ng 0 và có 10 chữ sá».");
         txtSDT.requestFocus();
         return false;
     }
@@ -318,12 +318,12 @@ private boolean validateInput() {
         return false;
     }
     if (dpNgaySinh.getValue() == null) {
-        showErrorAlert("Lá»i", "Vui lòng chá»n ngÃ y sinh.");
+        showErrorAlert("Lá»i", "Vui lòng chá»n ngày sinh.");
         dpNgaySinh.requestFocus();
         return false;
     }
     if (currentState == EditState.ADDING && pfMatKhau.getText().isEmpty()) {
-        showErrorAlert("Lá»i", "Máº­t kháº©u lÃ  báº¯t buá»c khi thêm má»i.");
+        showErrorAlert("Lá»i", "Mật kháº©u là bắt buá»c khi thêm má»i.");
         pfMatKhau.requestFocus();
         return false;
     }
@@ -332,7 +332,7 @@ private boolean validateInput() {
         cbxTrangThai.requestFocus();
         return false;
     }
-    // Không cáº§n validate cbxCaLam (vì có thá» Äá» trá»ng - không yêu thích)
+    // Không cần validate cbxCaLam (vì có thá» Äá» trá»ng - không yêu thích)
     return true;
 }
 private void clearForm() {

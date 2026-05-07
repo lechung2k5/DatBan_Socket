@@ -1,4 +1,4 @@
-package ui;
+﻿package ui;
 import network.Client;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -29,7 +29,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-// ð¥ THÃM IMPORT CHO IN HÃA ÄÆ N
+// ð¥ THíM IMPORT CHO IN HíA ÄÆ N
 
 
 
@@ -75,6 +75,10 @@ public class TraCuu {
         // Load data initial
         loadData();
         setupTables();
+
+        // 🔥 THÊM: Lắng nghe sự kiện Real-time để tự động làm mới dữ liệu
+        network.RealTimeClient.getInstance().addListener(this::handleRealTimeEvent);
+
         Platform.runLater(() -> {
             Scene scene = tblHoaDon.getScene();
             if (scene == null) return;
@@ -105,33 +109,36 @@ public class TraCuu {
                     loadData();
                 }
             });
-        });
-        cboSapXepHD.setItems(FXCollections.observableArrayList("Theo ngÃ y", "Theo tháng", "Theo nÄm"));
-        cboSapXepKH.setItems(FXCollections.observableArrayList("Theo ngÃ y", "Theo tháng", "Theo nÄm"));
-        cboSapXepKH.valueProperty().addListener((o, old, n) -> { if (n != null) sapXepKH(n); });
-        cboSapXepHD.valueProperty().addListener((o, old, n) -> { if (n != null) sapXepHD(n); });
-        txtTimKiemHD.textProperty().addListener((o, old, n) -> timHD(n));
-        txtTimKiemKH.textProperty().addListener((o, old, n) -> timKH(n));
 
-        // 🔥 ĐĂNG KÝ REAL-TIME LISTENER ĐỂ TỰ ĐỘNG REFRESH
-        RealTimeClient.getInstance().addListener(this::handleRealTimeEvent);
+            // Gán dữ liệu cho ComboBox và listener (Phải nằm trong initialize)
+            cboSapXepHD.setItems(FXCollections.observableArrayList("Theo ngày", "Theo tháng", "Theo năm"));
+            cboSapXepKH.setItems(FXCollections.observableArrayList("Theo ngày", "Theo tháng", "Theo năm"));
+            cboSapXepKH.valueProperty().addListener((o, old, n) -> { if (n != null) sapXepKH(n); });
+            cboSapXepHD.valueProperty().addListener((o, old, n) -> { if (n != null) sapXepHD(n); });
+            txtTimKiemHD.textProperty().addListener((o, old, n) -> timHD(n));
+            txtTimKiemKH.textProperty().addListener((o, old, n) -> timKH(n));
+
+            // 🔥 ĐĂNG KÝ REAL-TIME LISTENER ĐỂ TỰ ĐỘNG REFRESH
+            RealTimeClient.getInstance().addListener(this::handleRealTimeEvent);
+        });
     }
 
     private void handleRealTimeEvent(RealTimeEvent event) {
-        // Nếu có sự kiện cập nhật hóa đơn/đặt bàn -> Tải lại dữ liệu
+        // Làm mới dữ liệu khi có bất kỳ sự kiện thay đổi hóa đơn, đặt bàn hoặc khách hàng
         if (event.getType() == CommandType.CREATE_ORDER || 
             event.getType() == CommandType.CHECK_OUT ||
             event.getType() == CommandType.UPDATE_INVOICE ||
             event.getType() == CommandType.UPDATE_TABLE_STATUS ||
             event.getType() == CommandType.MERGE_INVOICES ||
-            event.getType() == CommandType.SPLIT_INVOICE) {
+            event.getType() == CommandType.SPLIT_INVOICE ||
+            event.getType() == CommandType.UPDATE_CUSTOMER) {
             
             System.out.println("[TraCuu] Nhận tín hiệu Real-time, đang làm mới dữ liệu...");
             Platform.runLater(() -> loadData());
         }
     }
     private void setupTables() {
-        // Setup bảng Hóa Äơn
+        // Setup bảng Hóa đơn
         colMaHD.setCellValueFactory(c -> c.getValue().maHDProperty());
         colNgayHD.setCellValueFactory(c -> c.getValue().ngayProperty());
         colHinhThuc.setCellValueFactory(c -> c.getValue().hinhThucProperty());
@@ -187,31 +194,40 @@ public class TraCuu {
         tblHoaDon.setItems(danhSachHoaDon);
         tblKhachHang.setItems(danhSachKhachHang);
     }
-        private void loadData() {
+    private void loadData() {
         tatCaHoaDon.clear();
         tatCaKhachHang.clear();
         // 1. Load Hóa Đơn qua API
         Response resHD = Client.send(CommandType.GET_INVOICES_ALL, null);
         if (resHD.getStatusCode() == 200) {
             List<HoaDon> listHD = JsonUtil.fromJsonList(JsonUtil.toJson(resHD.getData()), HoaDon.class);
+            // Sắp xếp mặc định: Sớm nhất đến Muộn nhất
+            listHD.sort((a, b) -> {
+                if (a.getNgayLap() == null) return 1;
+                if (b.getNgayLap() == null) return -1;
+                return b.getNgayLap().compareTo(a.getNgayLap());
+            });
             for (HoaDon hd : listHD) {
-                // 🔥 Fallback calculation for zeroed financial fields
-                if (hd.getTongTienThanhToan() == 0 && hd.getTongCongMonAn() > 0) {
+                if (hd.getTongTienThanhToan() <= 0) {
+                    if (hd.getChiTietHoaDon() != null && !hd.getChiTietHoaDon().isEmpty()) {
+                        double totalFood = hd.getChiTietHoaDon().stream()
+                                .mapToDouble(item -> item.getDonGia() * item.getSoLuong())
+                                .sum();
+                        hd.setTongCongMonAn(totalFood);
+                    }
                     hd.calculateTotals();
                 }
-                // RÀNG BUỘC: Hiển thị tất cả hóa đơn (Admin có thể tra cứu mọi trạng thái)
-                // if (hd.getTrangThai() != TrangThaiHoaDon.DA_THANH_TOAN) {
-                //     continue;
-                // }
-                
+                if (hd.getTrangThai() != TrangThaiHoaDon.DA_THANH_TOAN) {
+                    continue;
+                }
                 String sdt = (hd.getKhachHang() != null) ? hd.getKhachHang().getSoDT() : "N/A";
                 double tongTien = hd.getTongTienThanhToan();
                 tatCaHoaDon.add(new HoaDonDisplay(
-                hd.getMaHD(),
-                hd.getNgayLap() != null ? hd.getNgayLap().format(fmt) : "",
-                hd.getHinhThucTT() != null ? hd.getHinhThucTT().getDisplayName() : "",
-                sdt,
-                String.format("%,.0f VNĐ ", tongTien)
+                    hd.getMaHD(),
+                    hd.getNgayLap() != null ? hd.getNgayLap().format(fmt) : "",
+                    hd.getHinhThucTT() != null ? hd.getHinhThucTT().getDisplayName() : "",
+                    sdt,
+                    String.format("%,.0f VNĐ ", tongTien)
                 ));
             }
         }
@@ -221,6 +237,11 @@ public class TraCuu {
         Response resKH = Client.send(CommandType.GET_CUSTOMERS, null);
         if (resKH.getStatusCode() == 200) {
             List<KhachHang> listKH = JsonUtil.fromJsonList(JsonUtil.toJson(resKH.getData()), KhachHang.class);
+            listKH.sort((a, b) -> {
+                if (a.getNgayDangKy() == null) return 1;
+                if (b.getNgayDangKy() == null) return -1;
+                return b.getNgayDangKy().compareTo(a.getNgayDangKy());
+            });
             for (KhachHang kh : listKH) {
                 double total = 0;
                 boolean hasPaidInvoice = false;
@@ -228,7 +249,6 @@ public class TraCuu {
                     Response res = Client.sendWithParams(CommandType.GET_INVOICES_BY_CUSTOMER, java.util.Map.of("maKH", kh.getMaKH()));
                     if (res.getStatusCode() == 200) {
                         List<HoaDon> hdList = JsonUtil.fromJsonList(JsonUtil.toJson(res.getData()), HoaDon.class);
-                        // RÀNG BUỘC: Chỉ tính tổng từ hóa đơn đã thanh toán và kiểm tra nếu có ít nhất 1 cái
                         for (HoaDon hd : hdList) {
                             if (hd.getTrangThai() == TrangThaiHoaDon.DA_THANH_TOAN) {
                                 total += hd.getTongTienThanhToan();
@@ -237,18 +257,16 @@ public class TraCuu {
                         }
                     }
                 }
-                
-                // RÀNG BUỘC: Chỉ hiển thị khách hàng đã có hóa đơn thanh toán
                 if (hasPaidInvoice) {
                     tatCaKhachHang.add(new KhachHangDisplay(
-                    kh.getMaKH(),
-                    kh.getTenKH(),
-                    kh.getSoDT(),
-                    kh.getDiaChi() != null ? kh.getDiaChi() : "",
-                    kh.getEmail() != null ? kh.getEmail() : "",
-                    kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "",
-                    kh.getThanhVien() != null ? kh.getThanhVien() : "",
-                    String.format("%,.0f VNĐ ", total)
+                        kh.getMaKH(),
+                        kh.getTenKH(),
+                        kh.getSoDT(),
+                        kh.getDiaChi() != null ? kh.getDiaChi() : "",
+                        kh.getEmail() != null ? kh.getEmail() : "",
+                        kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "",
+                        kh.getThanhVien() != null ? kh.getThanhVien() : "",
+                        String.format("%,.0f VNĐ ", total)
                     ));
                 }
             }
@@ -331,21 +349,22 @@ return d1.compareTo(d2);
 });
 danhSachKhachHang.setAll(l);
 }
-// ð¥ RÃNG BUá»C: Tìm kiếm hóa Äơn CHá» theo SÄT hoáº·c Mã HD
+// ð¥ RíNG BUá»C: Tìm kiếm hóa Äơn CHá» theo SÄT hoặc Mã HD
 private void timHD(String t) {
     if (t == null || t.trim().isEmpty()) {
+        tatCaHoaDon.sort((a, b) -> a.getNgay().compareTo(b.getNgay())); // Tạm thời theo chuỗi ngày, nhưng nên theo LocalDateTime của HoaDon gốc. `tatCaHoaDon` là HoaDonDisplay.
         danhSachHoaDon.setAll(tatCaHoaDon);
         return;
     }
     String s = t.toLowerCase().trim();
-    // RÃ ng buá»c: Chá» tìm kiếm theo SÄT KH hoáº·c Mã HD
+    // Ràng buá»c: Chá» tìm kiếm theo SÄT KH hoặc Mã HD
     danhSachHoaDon.setAll(tatCaHoaDon.stream()
     .filter(h -> {
-        // Kiá»m tra SÄT KH (không null vÃ  chứa từ khóa)
+        // Kiá»m tra SÄT KH (không null và chứa từ khóa)
         boolean matchSDT = h.getSdtKH() != null &&
         !h.getSdtKH().equals("N/A") &&
         h.getSdtKH().toLowerCase().contains(s);
-        // Kiá»m tra Mã HD (không null vÃ  chứa từ khóa)
+        // Kiá»m tra Mã HD (không null và chứa từ khóa)
         boolean matchMaHD = h.getMaHD() != null &&
         h.getMaHD().toLowerCase().contains(s);
         // Trả vá» true nếu khá»p vá»i SÄT HOáº¶C Mã HD
@@ -353,20 +372,20 @@ private void timHD(String t) {
     })
     .collect(Collectors.toList()));
 }
-// ð¥ RÃNG BUá»C: Tìm kiếm khách hÃ ng CHá» theo SÄT hoáº·c Tên KH
+// ð¥ RíNG BUá»C: Tìm kiếm khách hàng CHá» theo SÄT hoặc Tên KH
 private void timKH(String t) {
     if (t == null || t.trim().isEmpty()) {
         danhSachKhachHang.setAll(tatCaKhachHang);
         return;
     }
     String s = t.toLowerCase().trim();
-    // RÃ ng buá»c: Chá» tìm kiếm theo SÄT hoáº·c Há» tên KH
+    // Ràng buá»c: Chá» tìm kiếm theo SÄT hoặc Há» tên KH
     danhSachKhachHang.setAll(tatCaKhachHang.stream()
     .filter(k -> {
-        // Kiá»m tra SÄT (không null vÃ  chứa từ khóa)
+        // Kiá»m tra SÄT (không null và chứa từ khóa)
         boolean matchSDT = k.getSdt() != null &&
         k.getSdt().toLowerCase().contains(s);
-        // Kiá»m tra Há» tên (không null vÃ  chứa từ khóa)
+        // Kiá»m tra Há» tên (không null và chứa từ khóa)
         boolean matchHoTen = k.getHoTen() != null &&
         k.getHoTen().toLowerCase().contains(s);
         // Trả vá» true nếu khá»p vá»i SÄT HOáº¶C Há» tên
@@ -374,7 +393,7 @@ private void timKH(String t) {
     })
     .collect(Collectors.toList()));
 }
-// ð¥ Sá»¬A HÃM NÃY: THÃM NÃT IN HÃA ÄÆ N
+// ð¥ Sá»¬A HíM NíY: THíM NíT IN HíA ÄÆ N
 
     
     private void showFullDetailHD(String id) {
@@ -506,7 +525,7 @@ private void timKH(String t) {
 
         d.show();
     }
-// ð¥ HÃM Xá»¬ LÃ IN HÃA ÄÆ N (Láº¤Y Äáº¦Y Äá»¦ Dá»® LIá»U Tá»ª DAO GIá»NG NÃT XEM)
+// ð¥ HíM Xá»¬ Lí IN HíA ÄÆ N (Láº¤Y Äáº¦Y Äá»¦ Dá»® LIá»U Tá»ª DAO GIá»NG NíT XEM)
     private void handleInHoaDon(HoaDon hd) {
         if (hd == null) return;
         try {
@@ -533,11 +552,16 @@ private void showFullHistoryKH(String id) {
     if (resLS.getStatusCode() == 200) {
         ls = JsonUtil.fromJsonList(JsonUtil.toJson(resLS.getData()), HoaDon.class);
     }
-    // Láº¥y thông tin KH
+    // Lấy thông tin KH
     Response resKH = Client.send(CommandType.GET_CUSTOMERS, null);
     KhachHang kh = null;
     if (resKH.getStatusCode() == 200) {
         List<KhachHang> listKH = JsonUtil.fromJsonList(JsonUtil.toJson(resKH.getData()), KhachHang.class);
+            listKH.sort((a, b) -> {
+                if (a.getNgayDangKy() == null) return 1;
+                if (b.getNgayDangKy() == null) return -1;
+                return b.getNgayDangKy().compareTo(a.getNgayDangKy());
+            });
         kh = listKH.stream().filter(k -> id.equals(k.getMaKH())).findFirst().orElse(null);
     }
     Dialog<Void> d = new Dialog<>();
@@ -546,7 +570,7 @@ private void showFullHistoryKH(String id) {
     main.setPadding(new Insets(15));
     main.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
     if (kh != null) {
-        Label t = new Label("THÃNG TIN KHÃCH HÃNG");
+        Label t = new Label("THÔNG TIN KHÁCH HÀNG");
         t.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
         t.setMaxWidth(Double.MAX_VALUE);
         t.setAlignment(Pos.CENTER);
@@ -555,22 +579,22 @@ private void showFullHistoryKH(String id) {
         g.setVgap(8);
         int row = 0;
         addInfo(g, row++, "Mã:", kh.getMaKH(), "Tên:", kh.getTenKH());
-        addInfo(g, row++, "SÄT:", kh.getSoDT(), "Email:", kh.getEmail() != null ? kh.getEmail() : "");
-        addInfo(g, row++, "Äá»a chá»:", kh.getDiaChi() != null ? kh.getDiaChi() : "", "Loại:", kh.getThanhVien() != null ? kh.getThanhVien() : "");
-        addInfo(g, row++, "Ngày ÄK:", kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "", "", "");
+        addInfo(g, row++, "SĐT:", kh.getSoDT(), "Email:", kh.getEmail() != null ? kh.getEmail() : "");
+        addInfo(g, row++, "Địa chỉ:", kh.getDiaChi() != null ? kh.getDiaChi() : "", "Loại:", kh.getThanhVien() != null ? kh.getThanhVien() : "");
+        addInfo(g, row++, "Ngày ĐK:", kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "", "", "");
         double tot = ls.stream().mapToDouble(HoaDon::getTongTienThanhToan).sum();
         HBox s = new HBox();
         s.setAlignment(Pos.CENTER_RIGHT);
-        Label sl = new Label("Tá»ng chi tiêu: ");
+        Label sl = new Label("Tổng chi tiêu: ");
         sl.setStyle("-fx-font-weight: bold;");
-        Label sv = new Label(String.format("%,.0f VNÄ", tot));
+        Label sv = new Label(String.format("%,.0f VNĐ", tot));
         sv.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: green;");
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
         s.getChildren().addAll(sl, sp, sv);
         main.getChildren().addAll(t, g, s);
     }
-    Label ht = new Label("Lá»CH Sá»¬ (" + ls.size() + " hóa Äơn)");
+    Label ht = new Label("Lịch sử (" + ls.size() + " hóa đơn)");
     ht.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
     TableView<HoaDon> tb = new TableView<>();
     tb.setPrefHeight(250);
@@ -590,13 +614,13 @@ private void showFullHistoryKH(String id) {
         return new SimpleStringProperty(h.getHinhThucTT() != null ? h.getHinhThucTT().getDisplayName() : "Chưa TT");
     });
     c3.setPrefWidth(120);
-    TableColumn<HoaDon, Double> c4 = new TableColumn<>("Tá»ng");
+    TableColumn<HoaDon, Double> c4 = new TableColumn<>("Tổng cộng");
     c4.setCellValueFactory(new PropertyValueFactory<>("tongTienThanhToan"));
     c4.setPrefWidth(130);
     c4.setCellFactory(col -> new TableCell<>() {
         protected void updateItem(Double i, boolean e) {
             super.updateItem(i, e);
-            setText(e || i == null ? null : String.format("%,.0f VNÄ", i));
+            setText(e || i == null ? null : String.format("%,.0f VNĐ", i));
             setAlignment(Pos.CENTER_RIGHT);
         }
     });
@@ -664,7 +688,7 @@ private void handleXuatExcelHoaDon() {
                 rw.createCell(4).setCellValue(hd.getTongTien());
             }
             wb.write(out);
-            alert("Thành công", "Äã xuáº¥t Excel");
+            alert("Thành công", "Äã xuất Excel");
         } catch (Exception e) {
         alert("Lá»i", e.getMessage());
     }
@@ -758,3 +782,6 @@ public static class KhachHangDisplay {
     public SimpleStringProperty tongTienHDProperty() { return tongTienHD; }
 }
 }
+
+
+
