@@ -21,7 +21,10 @@ public class TableDAO {
     public List<Ban> findAll() {
         List<Ban> bans = new ArrayList<>();
         try {
-            ScanResponse response = db.scan(ScanRequest.builder().tableName(TBL).build());
+            ScanResponse response = db.scan(ScanRequest.builder()
+                    .tableName(TBL)
+                    .consistentRead(true)
+                    .build());
             for (Map<String, AttributeValue> item : response.items()) {
                 bans.add(mapToBan(item));
             }
@@ -37,7 +40,11 @@ public Ban findById(String maBan) {
         Map<String, AttributeValue> key = Map.of(
         "maBan", AttributeValue.builder().s(maBan).build()
         );
-        GetItemResponse res = db.getItem(GetItemRequest.builder().tableName(TBL).key(key).build());
+        GetItemResponse res = db.getItem(GetItemRequest.builder()
+                .tableName(TBL)
+                .key(key)
+                .consistentRead(true)
+                .build());
         if (res.hasItem() && !res.item().isEmpty()) {
             return mapToBan(res.item());
         }

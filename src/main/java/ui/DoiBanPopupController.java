@@ -324,7 +324,7 @@ private void handleXacNhanDoi() {
                 Response resHd = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGoc));
                 if (resHd.getStatusCode() == 200) {
                     HoaDon hdMoi = JsonUtil.convertValue(resHd.getData(), HoaDon.class);
-                    mainController.loadHoaDonToMainInterface(hdMoi);
+                    mainController.loadHoaDonToMainInterface(hdMoi, false);
                 }
             }
             closePopup();

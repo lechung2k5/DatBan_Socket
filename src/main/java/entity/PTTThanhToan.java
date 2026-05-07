@@ -27,12 +27,16 @@ public enum PTTThanhToan {
         if (dbValue == null) {
             return null;
         }
+        // Chuẩn hóa: xóa dấu gạch dưới và viết thường để so sánh (ví dụ TIEN_MAT -> tienmat)
+        String normalized = dbValue.replace("_", "").toLowerCase();
         for (PTTThanhToan pt : values()) {
-            if (pt.dbValue.equalsIgnoreCase(dbValue)) {
+            if (pt.dbValue.equalsIgnoreCase(dbValue) || 
+                pt.name().equalsIgnoreCase(dbValue) ||
+                pt.dbValue.replace("_", "").equalsIgnoreCase(normalized)) {
                 return pt;
             }
         }
-        return null; // Hoặc ném Exception nếu muốn
+        return null;
     }
     /**
     * Tìm Enum tương ứng dựa vào tên hiển thị.

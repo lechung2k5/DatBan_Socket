@@ -133,11 +133,11 @@
     -fx-background-radius: 8px; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 8 18;
 }
 .action-button-edit, .action-button-switch, .action-button-split, .action-button-merge, .action-button-cancel{
-    -fx-background-radius: 8px; 
+    -fx-background-radius: 6px; 
     -fx-font-weight: bold; 
-    -fx-text-fill: white; /* Mặc định chữ trắng */
-    -fx-font-size: 13px; 
-    -fx-padding: 8 18;
+    -fx-text-fill: white; 
+    -fx-font-size: 12px; 
+    -fx-padding: 6 12;
 }
 
 /* Nút Sửa (Màu Đỏ) */
@@ -172,10 +172,17 @@
 
 
 .vertical-divider { -fx-background-color: #fcc419; -fx-pref-width: 2px; }
+.confirm-button, .payment-button, .action-button-save {
+    -fx-background-radius: 6px; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 6 12;
+}
 .confirm-button { -fx-background-color: #228be6;}
-.confirm-button-large { -fx-background-color: #f7a940; -fx-font-size: 14px; -fx-padding: 10 30;}
+.confirm-button-large { -fx-background-color: #f7a940; -fx-font-size: 14px; -fx-padding: 10 30; -fx-background-radius: 8px;}
 .payment-button { -fx-background-color: #40c057;}
 .action-button-save { -fx-background-color: #37b24d;}
+.action-button-save-items { -fx-background-color: #1098ad; -fx-background-radius: 6px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 6 12; -fx-font-size: 12px;}
+.action-button-save-items:hover { -fx-background-color: #15aabf; }
+.action-button-refresh { -fx-background-color: #adb5bd; -fx-background-radius: 6px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 6 12; -fx-font-size: 12px;}
+.action-button-refresh:hover { -fx-background-color: #ced4da; }
 
 .select-button { -fx-background-color: #20c997; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;}
 .cancel-button { -fx-background-color: #fa5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;}

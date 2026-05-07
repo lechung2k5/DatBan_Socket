@@ -13,6 +13,7 @@ public class HoaDon implements Serializable {
     private TrangThaiHoaDon trangThai;
     private String maUuDai;
     private KhachHang khachHang;
+    private NhanVien nhanVien;
     private String tenNhanVien;
     private Ban ban;
     private LocalDateTime gioVao;
@@ -49,6 +50,7 @@ public class HoaDon implements Serializable {
     public TrangThaiHoaDon getTrangThai() { return trangThai; }
     public String getMaUuDai() { return maUuDai; }
     public KhachHang getKhachHang() { return khachHang; }
+    public NhanVien getNhanVien() { return nhanVien; }
     public String getTenNhanVien() { return tenNhanVien; }
     public Ban getBan() { return ban; }
     public LocalDateTime getGioVao() { return gioVao; }
@@ -78,6 +80,7 @@ public class HoaDon implements Serializable {
     }
     public void setMaUuDai(String maUuDai) { this.maUuDai = maUuDai; }
     public void setKhachHang(KhachHang khachHang) { this.khachHang = khachHang; }
+    public void setNhanVien(NhanVien nhanVien) { this.nhanVien = nhanVien; }
     public void setTenNhanVien(String tenNhanVien) { this.tenNhanVien = tenNhanVien; }
     public void setBan(Ban ban) { this.ban = ban; }
     public void setMaBan(String maBan) {

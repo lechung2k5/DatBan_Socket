@@ -76,6 +76,21 @@ public class ThucDon {
         formInputArea.setVisible(false);
         btnLuuForm.setText("Lưu");
 
+        // 🔥 LẮNG NGHE REAL-TIME (Tải lại thực đơn khi có máy khác cập nhật)
+        network.RealTimeClient.getInstance().addListener(event -> {
+            if (event.getType() == CommandType.UPDATE_MENU) {
+                Platform.runLater(() -> {
+                    // Lấy lại danh mục đang chọn (nếu có) hoặc tải mặc định
+                    DanhMucMon current = comboDanhMuc.getValue();
+                    if (current != null) {
+                        filterTableData(current.getMaDM());
+                    } else if (!dsDanhMuc.isEmpty()) {
+                        filterTableData(dsDanhMuc.get(0).getMaDM());
+                    }
+                });
+            }
+        });
+
         // Event handlers
         uploadLabel.setOnMouseClicked(e -> onUploadClicked());
         btnThem.setOnAction(e -> toggleForm(true));

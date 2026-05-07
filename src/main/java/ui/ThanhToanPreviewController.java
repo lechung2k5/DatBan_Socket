@@ -302,6 +302,10 @@ private void handleFinalThanhToan() {
         params.put("maNhanVien", maNV);
         params.put("maUuDai", maUuDaiDaChon);
         params.put("totalAmount", Double.parseDouble(lblSoTienKhachTra.getText().replaceAll("[^0-9]", "")));
+        params.put("totalFood", Double.parseDouble(lblTongMonAn.getText().replaceAll("[^0-9]", "")));
+        params.put("serviceFee", Double.parseDouble(lblPhiDV.getText().replaceAll("[^0-9]", "")));
+        params.put("vat", Double.parseDouble(lblThueVAT.getText().replaceAll("[^0-9]", "")));
+        params.put("discount", Double.parseDouble(lblUuDaiApDung.getText().replaceAll("[^0-9]", "")));
         params.put("maBan", hoaDonToPay.getBan() != null ? hoaDonToPay.getBan().getMaBan() : "");
         if (maHDGocSnapshot != null) {
             params.put("maHDGoc", maHDGocSnapshot);

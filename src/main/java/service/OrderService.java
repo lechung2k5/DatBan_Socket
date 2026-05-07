@@ -5,6 +5,9 @@ import dao.InvoiceDAO;
 import utils.JsonUtil;
 import network.Request;
 import network.Response;
+import network.Service;
+import network.RealTimeEvent;
+import network.CommandType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,6 +39,14 @@ public class OrderService {
             }
             invoiceDAO.insert(hd, chiTiet);
             System.out.println("[OrderService] Đã tạo hóa đơn: " + hd.getMaHD());
+            
+            // 🔥 Broadcast sự kiện tạo đơn mới
+            Service.broadcast(new RealTimeEvent(CommandType.CREATE_ORDER, "[ORDER]:" + hd.getMaHD()));
+            if (hd.getMaBan() != null) {
+                utils.CacheService.invalidateTables();
+                Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + hd.getMaBan()));
+            }
+
             return Response.ok("Tạo đơn hàng thành công");
         } catch (Exception e) {
         System.err.println("[OrderService] Lỗi handleCreateOrder: " + e.getMessage());
@@ -88,6 +99,10 @@ public Response handleUpdateInvoicePromo(Request request) {
         String maUuDai = (String) request.getParam("maUuDai");
         Double giaTri = Double.valueOf(String.valueOf(request.getParam("giaTri")));
         invoiceDAO.updatePromo(maHD, maUuDai, giaTri);
+        
+        // 🔥 Broadcast sự kiện cập nhật hóa đơn (để người dùng khác thấy khuyến mãi mới)
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "[INVOICE]:" + maHD));
+
         return Response.ok("Cập nhật khuyến mãi thành công");
     } catch (Exception e) {
     return Response.error("Lỗi: " + e.getMessage());
@@ -104,6 +119,14 @@ public Response handleUpdateInvoice(Request request) {
         String itemsJson = (String) request.getParam("itemsJson");
         
         invoiceDAO.updateInfoExtended(maHD, soDT, tienCoc, maBan, gioVao, status, itemsJson);
+        
+        // 🔥 Broadcast sự kiện cập nhật hóa đơn
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "[INVOICE]:" + maHD));
+        if (maBan != null) {
+            utils.CacheService.invalidateTables();
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + maBan));
+        }
+
         return Response.ok("Cập nhật thông tin hóa đơn thành công");
     } catch (Exception e) {
         return Response.error("Lỗi: " + e.getMessage());
@@ -122,7 +145,11 @@ public Response handleCancelInvoice(Request request) {
         if (hd != null && hd.getMaBan() != null && !hd.getMaBan().isEmpty()) {
             new dao.TableDAO().updateStatus(hd.getMaBan(), "Trong");
             utils.CacheService.invalidateTables();
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + hd.getMaBan()));
         }
+        
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "[INVOICE]:" + maHD));
+        
         return Response.ok("Hủy/Cập nhật hóa đơn thành công");
     } catch (Exception e) {
     return Response.error("Lỗi: " + e.getMessage());
@@ -141,6 +168,11 @@ public Response handleMergeInvoices(Request request) {
         String targetId = (String) request.getParam("targetId");
         String sourceId = (String) request.getParam("sourceId");
         invoiceDAO.mergeItems(targetId, sourceId);
+        
+        // 🔥 Broadcast sự kiện gộp hóa đơn
+        Service.broadcast(new RealTimeEvent(CommandType.MERGE_INVOICES, "[INVOICE]:" + targetId));
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:ALL"));
+        
         return Response.ok("Gộp hóa đơn thành công");
     } catch (Exception e) {
     return Response.error("Lỗi gộp: " + e.getMessage());
@@ -185,6 +217,11 @@ public Response handleSplitInvoice(Request request) {
             targetId = newHd.getMaHD();
         }
         invoiceDAO.splitItems(sourceId, targetId, itemsToMove);
+        
+        // 🔥 Broadcast sự kiện tách hóa đơn
+        Service.broadcast(new RealTimeEvent(CommandType.SPLIT_INVOICE, "[INVOICE]:" + sourceId));
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:ALL"));
+
         return Response.ok(targetId);
     } catch (Exception e) {
     return Response.error("Lỗi tách: " + e.getMessage());

@@ -213,7 +213,7 @@ public void chuyenSangTabDatBan(HoaDon hd) {
         loadScreen("/fxml/QuanLyDatBan.fxml", "/css/DatBan.css");
         if (this.datBanController != null) {
             if (hd != null) {
-                this.datBanController.loadHoaDonToMainInterface(hd);
+                this.datBanController.loadHoaDonToMainInterface(hd, false);
             } else {
             this.datBanController.clearFormDatBan();
         }

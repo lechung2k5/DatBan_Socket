@@ -66,6 +66,7 @@ public class RequestDispatcher {
             case GET_ZONE_REVENUE_FOR_WEEK: return StatsService.handleGetZoneRevenueForWeek(request);
             case GET_TOP_SELLING_ITEMS: return StatsService.handleGetTopSellingItems(request);
             case GET_PROMOS: return PromoService.handleGetAll(request);
+            case GET_TABLE_COUNTS: return StatsService.handleGetTableCounts(request);
             case UPDATE_PROMO: return PromoService.handleUpdate(request);
             case DELETE_PROMO: return PromoService.handleDelete(request);
             case GET_PROMO_BY_ID: return PromoService.handleGetById(request);

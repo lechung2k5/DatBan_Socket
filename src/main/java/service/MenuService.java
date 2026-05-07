@@ -5,6 +5,7 @@ import utils.CacheService;
 import dao.MenuDAO;
 import utils.JsonUtil;
 import network.Request;
+import network.CommandType;
 import network.Response;
 
 import java.util.List;
@@ -79,6 +80,7 @@ public class MenuService {
 
             // Xóa cache thực đơn vì dữ liệu đã thay đổi
             CacheService.invalidateMenu();
+            network.Service.broadcast(new network.RealTimeEvent(CommandType.UPDATE_MENU, "[MENU]:ALL"));
             System.out.println("[MenuService] Đã cập nhật thực đơn, loại: " + type);
             return Response.ok("Thao tác thực đơn thành công");
         } catch (Exception e) {

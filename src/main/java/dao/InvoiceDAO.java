@@ -76,6 +76,7 @@ public class InvoiceDAO {
             GetItemResponse res = db.getItem(GetItemRequest.builder()
                     .tableName(TBL)
                     .key(Map.of("invoiceId", av(invoiceId)))
+                    .consistentRead(true)
                     .build());
             if (res.hasItem() && !res.item().isEmpty())
                 return mapToHoaDon(res.item());
@@ -124,6 +125,7 @@ public class InvoiceDAO {
                     .filterExpression("#s = :status")
                     .expressionAttributeNames(Map.of("#s", "status"))
                     .expressionAttributeValues(Map.of(":status", av(status)))
+                    .consistentRead(true)
                     .build());
             return res.items().stream().map(this::mapToHoaDon).collect(Collectors.toList());
         } catch (Exception e) {
@@ -143,6 +145,7 @@ public class InvoiceDAO {
                             ":s2", av("ChoXacNhan"),
                             ":s3", av("DangSuDung"),
                             ":s4", av("HoaDonTam")))
+                    .consistentRead(true)
                     .build());
             return res.items().stream().map(this::mapToHoaDon).collect(Collectors.toList());
         } catch (Exception e) {
@@ -286,22 +289,28 @@ public class InvoiceDAO {
 
     // â”€â”€â”€ Checkout
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    public void checkout(String invoiceId, String paymentMethod, String employeeId, double totalAmount) {
+    public void checkout(String invoiceId, String paymentMethod, String employeeId, double totalAmount, 
+                         double totalFood, double serviceFee, double vat, double discount) {
         try {
             db.updateItem(UpdateItemRequest.builder()
                     .tableName(TBL)
                     .key(Map.of("invoiceId", av(invoiceId)))
                     .updateExpression(
-                            "SET #s = :paid, paymentMethod = :pm, employeeId = :emp, #t = :total, checkoutAt = :now")
+                            "SET #s = :paid, paymentMethod = :pm, employeeId = :emp, #t = :total, checkoutAt = :now, " +
+                            "tongCongMonAn = :tf, phiDichVu = :sf, thueVAT = :vat, khuyenMai = :dis")
                     .expressionAttributeNames(Map.of("#s", "status", "#t", "total"))
                     .expressionAttributeValues(Map.of(
                             ":paid", av("DaThanhToan"),
                             ":pm", av(paymentMethod),
                             ":emp", av(employeeId),
                             ":total", avn(totalAmount),
+                            ":tf", avn(totalFood),
+                            ":sf", avn(serviceFee),
+                            ":vat", avn(vat),
+                            ":dis", avn(discount),
                             ":now", av(java.time.LocalDateTime.now().toString())))
                     .build());
-            System.out.println("[DAO:Invoices] checkout(" + invoiceId + ") âœ“");
+            System.out.println("[DAO:Invoices] checkout(" + invoiceId + ") ✓");
         } catch (Exception e) {
             System.err.println("[DAO:Invoices] Lá»—i checkout: " + e.getMessage());
         }
@@ -315,6 +324,7 @@ public class InvoiceDAO {
                     .tableName(TBL)
                     .key(Map.of("invoiceId", av(invoiceId)))
                     .projectionExpression("itemsJson")
+                    .consistentRead(true)
                     .build());
             if (res.hasItem() && res.item().containsKey("itemsJson")) {
                 String json = res.item().get("itemsJson").s();
@@ -430,48 +440,95 @@ public class InvoiceDAO {
         return AttributeValue.builder().n(String.valueOf(n)).build();
     }
 
+    
+    
     private HoaDon mapToHoaDon(Map<String, AttributeValue> m) {
         HoaDon hd = new HoaDon();
-        if (m.containsKey("invoiceId"))
-            hd.setMaHD(m.get("invoiceId").s());
-        if (m.containsKey("tableId"))
-            hd.setMaBan(m.get("tableId").s());
-        if (m.containsKey("status"))
-            hd.setTrangThai(m.get("status").s());
-        if (m.containsKey("gioVao")) {
-            try {
-                hd.setGioVao(LocalDateTime.parse(m.get("gioVao").s()));
-            } catch (Exception ignored) {
+        try {
+            if (m.containsKey("invoiceId"))
+                hd.setMaHD(m.get("invoiceId").s());
+            if (m.containsKey("tableId"))
+                hd.setMaBan(m.get("tableId").s());
+            if (m.containsKey("status"))
+                hd.setTrangThai(m.get("status").s());
+            
+            // Map itemsJson and calculate total if needed
+            if (m.containsKey("itemsJson")) {
+                String itemsJson = m.get("itemsJson").s();
+                try {
+                    List<ChiTietHoaDon> items = JsonUtil.fromJsonList(itemsJson, ChiTietHoaDon.class);
+                    hd.setChiTietHoaDon(items);
+                    
+                    // Nếu tổng tiền đang là 0, tính lại từ danh sách món
+                    double calculatedTotal = items.stream()
+                        .mapToDouble(it -> it.getSoLuong() * it.getDonGia())
+                        .sum();
+                    hd.setTongCongMonAn(calculatedTotal);
+                } catch (Exception ignored) {}
             }
-        } else if (m.containsKey("createdAt")) {
-            try {
-                hd.setGioVao(LocalDateTime.parse(m.get("createdAt").s()));
-            } catch (Exception ignored) {
+            
+            // Map Ngày lập / Giờ vào
+            if (m.containsKey("gioVao")) {
+                try { hd.setGioVao(LocalDateTime.parse(m.get("gioVao").s())); } catch (Exception ignored) {}
+            } else if (m.containsKey("createdAt")) {
+                try { hd.setGioVao(LocalDateTime.parse(m.get("createdAt").s())); } catch (Exception ignored) {}
             }
-        }
-        if (m.containsKey("createdAt")) {
-            try {
-                hd.setNgayLap(LocalDateTime.parse(m.get("createdAt").s()));
-            } catch (Exception ignored) {
+            if (m.containsKey("createdAt")) {
+                try { hd.setNgayLap(LocalDateTime.parse(m.get("createdAt").s())); } catch (Exception ignored) {}
             }
-        }
-        if (m.containsKey("total"))
-            hd.setTongTienThanhToan(Double.parseDouble(m.get("total").n()));
-        if (m.containsKey("tienCoc"))
-            hd.setTienCoc(Double.parseDouble(m.get("tienCoc").n()));
-        if (m.containsKey("employeeId"))
-            hd.setTenNhanVien(m.get("employeeId").s());
-        if (m.containsKey("promoId"))
-            hd.setMaUuDai(m.get("promoId").s());
-        if (m.containsKey("parentInvoiceId"))
-            hd.setMaHDGoc(m.get("parentInvoiceId").s());
-        if (m.containsKey("customerPhone") || m.containsKey("customerName")) {
-            KhachHang kh = new KhachHang();
-            if (m.containsKey("customerPhone"))
-                kh.setSoDT(m.get("customerPhone").s());
-            if (m.containsKey("customerName"))
-                kh.setTenKH(m.get("customerName").s());
-            hd.setKhachHang(kh);
+            if (m.containsKey("finishedAt")) {
+                try { hd.setGioRa(LocalDateTime.parse(m.get("finishedAt").s())); } catch (Exception ignored) {}
+            } else if (m.containsKey("checkoutAt")) {
+                try { hd.setGioRa(LocalDateTime.parse(m.get("checkoutAt").s())); } catch (Exception ignored) {}
+            }
+
+            // 🔥 Map Tổng tiền và các khoản phí
+            double total = 0;
+            if (m.containsKey("total") && m.get("total").n() != null) total = Double.parseDouble(m.get("total").n());
+            else if (m.containsKey("totalAmount") && m.get("totalAmount").n() != null) total = Double.parseDouble(m.get("totalAmount").n());
+            
+            // Nếu total vẫn bằng 0, sử dụng giá trị đã tính toán từ itemsJson
+            if (total <= 0 && hd.getTongCongMonAn() > 0) {
+                total = hd.getTongCongMonAn();
+                // Áp dụng thuế phí mặc định nếu cần (hoặc lấy từ DB nếu có)
+                double phiDV = m.containsKey("phiDichVu") ? Double.parseDouble(m.get("phiDichVu").n()) : 0;
+                double thue = m.containsKey("thueVAT") ? Double.parseDouble(m.get("thueVAT").n()) : total * 0.1;
+                double km = m.containsKey("khuyenMai") ? Double.parseDouble(m.get("khuyenMai").n()) : 0;
+                total = total + phiDV + thue - km;
+            }
+            hd.setTongTienThanhToan(total);
+
+            if (m.containsKey("tongCongMonAn") && m.get("tongCongMonAn").n() != null) hd.setTongCongMonAn(Double.parseDouble(m.get("tongCongMonAn").n()));
+            if (m.containsKey("phiDichVu") && m.get("phiDichVu").n() != null) hd.setPhiDichVu(Double.parseDouble(m.get("phiDichVu").n()));
+            if (m.containsKey("thueVAT") && m.get("thueVAT").n() != null) hd.setThueVAT(Double.parseDouble(m.get("thueVAT").n()));
+            if (m.containsKey("khuyenMai") && m.get("khuyenMai").n() != null) hd.setKhuyenMai(Double.parseDouble(m.get("khuyenMai").n()));
+
+            // 🔥 Map Hình thức thanh toán
+            String pm = null;
+            if (m.containsKey("paymentMethod")) pm = m.get("paymentMethod").s();
+            else if (m.containsKey("hinhThucTT")) pm = m.get("hinhThucTT").s();
+            
+            if (pm != null && !pm.isEmpty()) {
+                hd.setHinhThucTT(PTTThanhToan.fromDbValue(pm));
+            }
+
+            if (m.containsKey("tienCoc") && m.get("tienCoc").n() != null)
+                hd.setTienCoc(Double.parseDouble(m.get("tienCoc").n()));
+            if (m.containsKey("employeeId"))
+                hd.setTenNhanVien(m.get("employeeId").s());
+            if (m.containsKey("promoId"))
+                hd.setMaUuDai(m.get("promoId").s());
+            if (m.containsKey("parentInvoiceId"))
+                hd.setMaHDGoc(m.get("parentInvoiceId").s());
+
+            if (m.containsKey("customerPhone") || m.containsKey("customerName")) {
+                KhachHang kh = new KhachHang();
+                if (m.containsKey("customerPhone")) kh.setSoDT(m.get("customerPhone").s());
+                if (m.containsKey("customerName")) kh.setTenKH(m.get("customerName").s());
+                hd.setKhachHang(kh);
+            }
+        } catch (Exception e) {
+            System.err.println("[InvoiceDAO] Lỗi mapping HoaDon: " + e.getMessage());
         }
         return hd;
     }

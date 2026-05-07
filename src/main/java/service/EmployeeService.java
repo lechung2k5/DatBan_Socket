@@ -2,6 +2,7 @@ package service;
 import entity.NhanVien;
 import dao.EmployeeDAO;
 import utils.JsonUtil;
+import network.CommandType;
 import network.Request;
 import network.Response;
 import java.util.List;
@@ -23,10 +24,11 @@ public Response handleUpdate(Request request) {
     try {
         NhanVien nv = JsonUtil.convertValue(request.getParam("employee"), NhanVien.class);
         if (nv == null) {
-            return Response.error("Dữ liá»u nhân viên không há»£p lá»");
+            return Response.error("Dữ liệu nhân viên không hợp lệ");
         }
         employeeDAO.upsert(nv);
-        System.out.println("[EmployeeService] Äã cập nhật nhân viên: " + nv.getMaNV());
+        network.Service.broadcast(new network.RealTimeEvent(CommandType.UPDATE_EMPLOYEE, "[EMPLOYEE]:" + nv.getMaNV()));
+        System.out.println("[EmployeeService] Đã cập nhật nhân viên: " + nv.getMaNV());
         return Response.ok("Thao tác nhân viên thành công");
     } catch (Exception e) {
     System.err.println("[EmployeeService] Lỗi handleUpdate: " + e.getMessage());

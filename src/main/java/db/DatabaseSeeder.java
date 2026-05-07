@@ -204,7 +204,7 @@ private static void seedPromos() {
     };
     for (Object[] p : promos) {
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("promoId",    s((String) p[0]));
+        item.put("maUuDai",     s((String) p[0]));
         item.put("name",       s((String) p[1]));
         item.put("description",s((String) p[2]));
         item.put("discountPercent", n(String.valueOf(p[3])));

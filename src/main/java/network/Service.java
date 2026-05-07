@@ -68,25 +68,28 @@ public static void stop() {
      * Hủy đăng ký một stream.
      */
     public static void unregisterNotificationClient(ObjectOutputStream out) {
-        notificationClients.remove(out);
-        System.out.println("[BROADCAST] Đã hủy 1 client. Còn lại: " + notificationClients.size());
+        if (notificationClients.remove(out)) {
+            System.out.println("[BROADCAST] Đã hủy 1 client Real-time. Còn lại: " + notificationClients.size());
+        }
     }
 
     /**
      * Phát loa thông báo tới tất cả các client đang kết nối.
      */
     public static void broadcast(Object event) {
-        System.out.println("[BROADCAST] Đang gửi sự kiện: " + event);
+        System.out.println("[BROADCAST] Đang gửi sự kiện: " + event + " tới " + notificationClients.size() + " clients.");
+        int successCount = 0;
         for (ObjectOutputStream out : notificationClients) {
             try {
                 out.writeObject(event);
                 out.flush();
-                out.reset(); // Quan trọng để tránh cache object
+                out.reset(); 
+                successCount++;
             } catch (IOException e) {
-                // Nếu lỗi, có thể client đã ngắt kết nối
                 System.err.println("[BROADCAST ERROR] Lỗi gửi tới 1 client, đang dọn dẹp...");
                 notificationClients.remove(out);
             }
         }
+        System.out.println("[BROADCAST] Hoàn tất gửi tới " + successCount + " clients thành công.");
     }
 }

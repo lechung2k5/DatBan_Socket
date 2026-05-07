@@ -11,6 +11,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 // import java.sql.Time; // ð¥ Bá»
@@ -87,10 +88,18 @@ public class NhanVienUI {
         SortedList<NhanVien> sortedList = new SortedList<>(filteredList);
         sortedList.comparatorProperty().bind(tblNhanVien.comparatorProperty());
         tblNhanVien.setItems(sortedList);
-        // Listener cho bảng: Khi chá»n dòng -> VIEWING, hiá»n thá» data, má» khóa form
+
+        // 🔥 LẮNG NGHE REAL-TIME (Tải lại danh sách nhân viên khi có thay đổi)
+        network.RealTimeClient.getInstance().addListener(event -> {
+            if (event.getType() == CommandType.UPDATE_EMPLOYEE) {
+                Platform.runLater(this::loadNhanVienData);
+            }
+        });
+
+        // Listener cho bảng: Khi chá» n dòng -> VIEWING, hiá»ƒn thá»‹ data, má»Ÿ khóa form
         tblNhanVien.getSelectionModel().selectedItemProperty().addListener(
         (obs, oldSelection, newSelection) -> {
-            if (currentState == EditState.ADDING) return; // Không lÃ m gì nếu Äang thêm
+            if (currentState == EditState.ADDING) return; // Không lÃ m gì nếu Ä‘ang thêm
             currentSelectedNhanVien = newSelection;
             if (newSelection != null) {
                 showNhanVienDetails(newSelection);

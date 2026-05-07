@@ -62,6 +62,7 @@ public class RealTimeClient {
                             
                             // Thông báo cho tất cả các listeners trên luồng JavaFX
                             Platform.runLater(() -> {
+                                System.out.println("[REALTIME] Đang thông báo tới " + listeners.size() + " bộ lắng nghe.");
                                 for (Consumer<RealTimeEvent> listener : listeners) {
                                     listener.accept(event);
                                 }

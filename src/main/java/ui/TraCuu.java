@@ -4,6 +4,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.stage.Stage;
 import network.CommandType;
+import network.RealTimeClient;
+import network.RealTimeEvent;
 import network.Response;
 import utils.JsonUtil;
 import entity.ChiTietHoaDon;
@@ -110,6 +112,23 @@ public class TraCuu {
         cboSapXepHD.valueProperty().addListener((o, old, n) -> { if (n != null) sapXepHD(n); });
         txtTimKiemHD.textProperty().addListener((o, old, n) -> timHD(n));
         txtTimKiemKH.textProperty().addListener((o, old, n) -> timKH(n));
+
+        // 🔥 ĐĂNG KÝ REAL-TIME LISTENER ĐỂ TỰ ĐỘNG REFRESH
+        RealTimeClient.getInstance().addListener(this::handleRealTimeEvent);
+    }
+
+    private void handleRealTimeEvent(RealTimeEvent event) {
+        // Nếu có sự kiện cập nhật hóa đơn/đặt bàn -> Tải lại dữ liệu
+        if (event.getType() == CommandType.CREATE_ORDER || 
+            event.getType() == CommandType.CHECK_OUT ||
+            event.getType() == CommandType.UPDATE_INVOICE ||
+            event.getType() == CommandType.UPDATE_TABLE_STATUS ||
+            event.getType() == CommandType.MERGE_INVOICES ||
+            event.getType() == CommandType.SPLIT_INVOICE) {
+            
+            System.out.println("[TraCuu] Nhận tín hiệu Real-time, đang làm mới dữ liệu...");
+            Platform.runLater(() -> loadData());
+        }
     }
     private void setupTables() {
         // Setup bảng Hóa Äơn
@@ -137,7 +156,7 @@ public class TraCuu {
                 setAlignment(Pos.CENTER);
             }
         });
-        // Setup bảng Khách hÃ ng
+        // Setup bảng Khách hàng
         colMaKH.setCellValueFactory(c -> c.getValue().maKHProperty());
         colHoTen.setCellValueFactory(c -> c.getValue().hoTenProperty());
         colSDT.setCellValueFactory(c -> c.getValue().sdtProperty());
@@ -176,10 +195,14 @@ public class TraCuu {
         if (resHD.getStatusCode() == 200) {
             List<HoaDon> listHD = JsonUtil.fromJsonList(JsonUtil.toJson(resHD.getData()), HoaDon.class);
             for (HoaDon hd : listHD) {
-                // RÀNG BUỘC: Chỉ hiển thị Hóa đơn đã thanh toán
-                if (hd.getTrangThai() != TrangThaiHoaDon.DA_THANH_TOAN) {
-                    continue;
+                // 🔥 Fallback calculation for zeroed financial fields
+                if (hd.getTongTienThanhToan() == 0 && hd.getTongCongMonAn() > 0) {
+                    hd.calculateTotals();
                 }
+                // RÀNG BUỘC: Hiển thị tất cả hóa đơn (Admin có thể tra cứu mọi trạng thái)
+                // if (hd.getTrangThai() != TrangThaiHoaDon.DA_THANH_TOAN) {
+                //     continue;
+                // }
                 
                 String sdt = (hd.getKhachHang() != null) ? hd.getKhachHang().getSoDT() : "N/A";
                 double tongTien = hd.getTongTienThanhToan();
@@ -352,107 +375,137 @@ private void timKH(String t) {
     .collect(Collectors.toList()));
 }
 // ð¥ Sá»¬A HÃM NÃY: THÃM NÃT IN HÃA ÄÆ N
-private void showFullDetailHD(String id) {
-    Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, java.util.Map.of("maHD", id));
-    if (res.getStatusCode() != 200) {
-        alert("Lá»i", "Không tìm tháº¥y hóa Äơn: " + id);
-        return;
+
+    
+    private void showFullDetailHD(String id) {
+        Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, java.util.Map.of("maHD", id));
+        if (res.getStatusCode() != 200) {
+            alert("Lỗi", "Không tìm thấy hóa đơn: " + id);
+            return;
+        }
+        HoaDon hd = JsonUtil.convertValue(res.getData(), HoaDon.class);
+        Response resDetails = Client.sendWithParams(CommandType.GET_INVOICE_DETAILS, java.util.Map.of("maHD", id));
+        List<ChiTietHoaDon> ct = new ArrayList<>();
+        if (resDetails.getStatusCode() == 200) {
+            ct = JsonUtil.fromJsonList(JsonUtil.toJson(resDetails.getData()), ChiTietHoaDon.class);
+        }
+        
+        // 🔥 QUAN TRỌNG: Gán danh sách chi tiết vào hóa đơn để in được
+        hd.setChiTietHoaDon(ct);
+
+        // 🔥 FALLBACK CALCULATION: Nếu các trường phí đang bằng 0, tính toán lại từ danh sách món
+        if (hd.getTongCongMonAn() == 0 && !ct.isEmpty()) {
+            double totalFood = ct.stream().mapToDouble(item -> item.getDonGia() * item.getSoLuong()).sum();
+            hd.setTongCongMonAn(totalFood);
+            // setTongCongMonAn sẽ tự gọi calculateTotals() bên trong Entity HoaDon
+        }
+
+        Dialog<Void> d = new Dialog<>();
+        d.setTitle("Chi tiết hóa đơn - " + id);
+        VBox main = new VBox(15);
+        main.setPadding(new Insets(15));
+        main.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
+
+        Label title = new Label("CHI TIẾT HÓA ĐƠN " + id);
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
+        title.setMaxWidth(Double.MAX_VALUE);
+        title.setAlignment(Pos.CENTER);
+
+        GridPane info = new GridPane();
+        info.setHgap(15);
+        info.setVgap(8);
+        int rowIdx = 0;
+        addInfo(info, rowIdx++, "Ngày:", hd.getNgayLap() != null ? hd.getNgayLap().format(fmt) : "",
+                "SĐT:", hd.getKhachHang() != null ? hd.getKhachHang().getSoDT() : "");
+        addInfo(info, rowIdx++, "Bàn:", hd.getMaBan() != null ? hd.getMaBan() : "",
+                "Thu ngân:", hd.getTenNhanVien() != null ? hd.getTenNhanVien() : "");
+        addInfo(info, rowIdx++, "Giờ vào:", hd.getGioVao() != null ? hd.getGioVao().toLocalTime().format(timeFmt) : "",
+                "Giờ ra:", hd.getGioRa() != null ? hd.getGioRa().toLocalTime().format(timeFmt) : "");
+
+        TableView<ChiTietHoaDon> tbl = new TableView<>();
+        tbl.setPrefHeight(200);
+        
+        TableColumn<ChiTietHoaDon, Void> c0 = new TableColumn<>("STT");
+        c0.setPrefWidth(40);
+        c0.setCellFactory(col -> new TableCell<>() {
+            @Override
+            public void updateIndex(int i) {
+                super.updateIndex(i);
+                setText(isEmpty() || i < 0 ? null : String.valueOf(i + 1));
+            }
+        });
+
+        TableColumn<ChiTietHoaDon, String> c1 = new TableColumn<>("Tên món");
+        c1.setCellValueFactory(new PropertyValueFactory<>("tenMon"));
+        c1.setPrefWidth(180);
+
+        TableColumn<ChiTietHoaDon, Integer> c2 = new TableColumn<>("SL");
+        c2.setCellValueFactory(new PropertyValueFactory<>("soLuong"));
+        c2.setPrefWidth(50);
+
+        TableColumn<ChiTietHoaDon, Double> c3 = new TableColumn<>("Đơn giá");
+        c3.setCellValueFactory(new PropertyValueFactory<>("donGia"));
+        c3.setPrefWidth(100);
+        c3.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double i, boolean e) {
+                super.updateItem(i, e);
+                setText(e || i == null ? null : String.format("%,.0f", i));
+                setAlignment(Pos.CENTER_RIGHT);
+            }
+        });
+
+        TableColumn<ChiTietHoaDon, Double> c4 = new TableColumn<>("Thành tiền");
+        c4.setCellValueFactory(new PropertyValueFactory<>("thanhTien"));
+        c4.setPrefWidth(110);
+        c4.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double i, boolean e) {
+                super.updateItem(i, e);
+                setText(e || i == null ? null : String.format("%,.0f", i));
+                setAlignment(Pos.CENTER_RIGHT);
+            }
+        });
+
+        tbl.getColumns().addAll(c0, c1, c2, c3, c4);
+        tbl.setItems(FXCollections.observableArrayList(ct));
+
+        VBox sum = new VBox(5);
+        sum.getChildren().addAll(
+                row("Tổng món ăn:", String.format("%,.0f VNĐ", hd.getTongCongMonAn())),
+                row("Phí DV (5%):", String.format("%,.0f VNĐ", hd.getPhiDichVu())),
+                row("VAT (8%):", String.format("%,.0f VNĐ", hd.getThueVAT())),
+                row("Tiền cọc:", String.format("%,.0f VNĐ", hd.getTienCoc())),
+                row("Khuyến mãi:", String.format("%,.0f VNĐ", hd.getKhuyenMai()))
+        );
+
+        HBox tot = new HBox();
+        tot.setAlignment(Pos.CENTER_RIGHT);
+        Label lbl = new Label("Tổng thanh toán: ");
+        lbl.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        Label val = new Label(String.format("%,.0f VNĐ", hd.getTongTienThanhToan()));
+        val.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e03131;");
+        
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        tot.getChildren().addAll(lbl, sp, val);
+
+        main.getChildren().addAll(title, info, tbl, sum, tot);
+        d.getDialogPane().setContent(main);
+        d.getDialogPane().setPrefWidth(600);
+
+        ButtonType btnPrint = new ButtonType("In hóa đơn", ButtonBar.ButtonData.LEFT);
+        d.getDialogPane().getButtonTypes().addAll(btnPrint, ButtonType.CLOSE);
+
+        Button printButton = (Button) d.getDialogPane().lookupButton(btnPrint);
+        printButton.setStyle("-fx-background-color: #1971c2; -fx-text-fill: white; -fx-font-weight: bold;");
+        printButton.setOnAction(e -> {
+            e.consume();
+            handleInHoaDon(hd);
+        });
+
+        d.show();
     }
-    HoaDon hd = JsonUtil.convertValue(res.getData(), HoaDon.class);
-    Response resDetails = Client.sendWithParams(CommandType.GET_INVOICE_DETAILS, java.util.Map.of("maHD", id));
-    List<ChiTietHoaDon> ct = new ArrayList<>();
-    if (resDetails.getStatusCode() == 200) {
-        ct = JsonUtil.fromJsonList(JsonUtil.toJson(resDetails.getData()), ChiTietHoaDon.class);
-    }
-    Dialog<Void> d = new Dialog<>();
-    d.setTitle("Chi tiết hóa Äơn - " + id);
-    VBox main = new VBox(15);
-    main.setPadding(new Insets(15));
-    main.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
-    Label title = new Label("CHI TIáº¾T HÃA ÄÆ N " + id);
-    title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
-    title.setMaxWidth(Double.MAX_VALUE);
-    title.setAlignment(Pos.CENTER);
-    GridPane info = new GridPane();
-    info.setHgap(15);
-    info.setVgap(8);
-    int row = 0;
-    addInfo(info, row++, "NgÃ y:", hd.getNgayLap() != null ? hd.getNgayLap().format(fmt) : "",
-    "SÄT:", hd.getSoDienThoaiKH() != null ? hd.getSoDienThoaiKH() : "");
-    addInfo(info, row++, "BÃ n:", hd.getMaBan() != null ? hd.getMaBan() : "",
-    "Thu ngân:", hd.getTenNhanVien() != null ? hd.getTenNhanVien() : "");
-    addInfo(info, row++, "Giá» vÃ o:", hd.getGioVao() != null ? hd.getGioVao().toLocalTime().format(timeFmt) : "",
-    "Giá» ra:", hd.getGioRa() != null ? hd.getGioRa().toLocalTime().format(timeFmt) : "");
-    TableView<ChiTietHoaDon> tbl = new TableView<>();
-    tbl.setPrefHeight(180);
-    TableColumn<ChiTietHoaDon, Void> c0 = new TableColumn<>("STT");
-    c0.setPrefWidth(40);
-    c0.setCellFactory(col -> new TableCell<>() {
-        public void updateIndex(int i) {
-            super.updateIndex(i);
-            setText(isEmpty() || i < 0 ? null : String.valueOf(i + 1));
-        }
-    });
-    TableColumn<ChiTietHoaDon, String> c1 = new TableColumn<>("Tên món");
-    c1.setCellValueFactory(new PropertyValueFactory<>("tenMon"));
-    c1.setPrefWidth(150);
-    TableColumn<ChiTietHoaDon, Integer> c2 = new TableColumn<>("SL");
-    c2.setCellValueFactory(new PropertyValueFactory<>("soLuong"));
-    c2.setPrefWidth(50);
-    TableColumn<ChiTietHoaDon, Double> c3 = new TableColumn<>("Äơn giá");
-    c3.setCellValueFactory(new PropertyValueFactory<>("donGia"));
-    c3.setPrefWidth(90);
-    c3.setCellFactory(col -> new TableCell<>() {
-        protected void updateItem(Double i, boolean e) {
-            super.updateItem(i, e);
-            setText(e || i == null ? null : String.format("%,.0f", i));
-            setAlignment(Pos.CENTER_RIGHT);
-        }
-    });
-    TableColumn<ChiTietHoaDon, Double> c4 = new TableColumn<>("ThÃ nh tiá»n");
-    c4.setCellValueFactory(new PropertyValueFactory<>("thanhTien"));
-    c4.setPrefWidth(100);
-    c4.setCellFactory(col -> new TableCell<>() {
-        protected void updateItem(Double i, boolean e) {
-            super.updateItem(i, e);
-            setText(e || i == null ? null : String.format("%,.0f", i));
-            setAlignment(Pos.CENTER_RIGHT);
-        }
-    });
-    tbl.getColumns().addAll(c0, c1, c2, c3, c4);
-    tbl.setItems(FXCollections.observableArrayList(ct));
-    VBox sum = new VBox(5);
-    sum.getChildren().addAll(
-    row("Tá»ng món Än:", String.format("%,.0f VNĐ", hd.getTongCongMonAn())),
-    row("PhÃ­ DV (5%):", String.format("%,.0f VNĐ", hd.getPhiDichVu())),
-    row("VAT (8%):", String.format("%,.0f VNĐ", hd.getThueVAT())),
-    row("Tiá»n cá»c:", String.format("%,.0f VNĐ", hd.getTienCoc())),
-    row("Khuyến mãi:", String.format("%,.0f VNĐ", hd.getKhuyenMai()))
-    );
-    HBox tot = new HBox();
-    tot.setAlignment(Pos.CENTER_RIGHT);
-    Label lbl = new Label("Tá»ng thanh toán: ");
-    lbl.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-    Label val = new Label(String.format("%,.0f VNĐ", hd.getTongTienThanhToan()));
-    val.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red;");
-    Region sp = new Region();
-    HBox.setHgrow(sp, Priority.ALWAYS);
-    tot.getChildren().addAll(lbl, sp, val);
-    main.getChildren().addAll(title, info, tbl, sum, tot);
-    d.getDialogPane().setContent(main);
-    d.getDialogPane().setPrefWidth(600);
-    // ð¥ THÃM NÃT IN HÃA ÄÆ N Káº¾ NÃT CLOSE
-    ButtonType btnPrint = new ButtonType("ð¨ï¸ In hóa Äơn", ButtonBar.ButtonData.LEFT);
-    d.getDialogPane().getButtonTypes().addAll(btnPrint, ButtonType.CLOSE);
-    // ð¥ Xá»¬ LÃ Sá»° KIá»N NÃT IN
-    Button printButton = (Button) d.getDialogPane().lookupButton(btnPrint);
-    printButton.setOnAction(e -> {
-        e.consume(); // NgÄn dialog Äóng
-        handleInHoaDon(hd);
-    });
-    d.getDialogPane().setStyle("-fx-background-color: transparent;");
-    d.show();
-}
 // ð¥ HÃM Xá»¬ LÃ IN HÃA ÄÆ N (Láº¤Y Äáº¦Y Äá»¦ Dá»® LIá»U Tá»ª DAO GIá»NG NÃT XEM)
     private void handleInHoaDon(HoaDon hd) {
         if (hd == null) return;
@@ -488,7 +541,7 @@ private void showFullHistoryKH(String id) {
         kh = listKH.stream().filter(k -> id.equals(k.getMaKH())).findFirst().orElse(null);
     }
     Dialog<Void> d = new Dialog<>();
-    d.setTitle("Khách hÃ ng - " + id);
+    d.setTitle("Khách hàng - " + id);
     VBox main = new VBox(15);
     main.setPadding(new Insets(15));
     main.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
@@ -504,7 +557,7 @@ private void showFullHistoryKH(String id) {
         addInfo(g, row++, "Mã:", kh.getMaKH(), "Tên:", kh.getTenKH());
         addInfo(g, row++, "SÄT:", kh.getSoDT(), "Email:", kh.getEmail() != null ? kh.getEmail() : "");
         addInfo(g, row++, "Äá»a chá»:", kh.getDiaChi() != null ? kh.getDiaChi() : "", "Loại:", kh.getThanhVien() != null ? kh.getThanhVien() : "");
-        addInfo(g, row++, "NgÃ y ÄK:", kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "", "", "");
+        addInfo(g, row++, "Ngày ÄK:", kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "", "", "");
         double tot = ls.stream().mapToDouble(HoaDon::getTongTienThanhToan).sum();
         HBox s = new HBox();
         s.setAlignment(Pos.CENTER_RIGHT);
@@ -525,7 +578,7 @@ private void showFullHistoryKH(String id) {
     TableColumn<HoaDon, String> c1 = new TableColumn<>("Mã");
     c1.setCellValueFactory(new PropertyValueFactory<>("maHD"));
     c1.setPrefWidth(100);
-    TableColumn<HoaDon, String> c2 = new TableColumn<>("NgÃ y");
+    TableColumn<HoaDon, String> c2 = new TableColumn<>("Ngày");
     c2.setCellValueFactory(cellData -> {
         HoaDon h = cellData.getValue();
         return new SimpleStringProperty(h.getNgayLap() != null ? h.getNgayLap().format(dateTimeFormatter) : "N/A");
@@ -559,7 +612,7 @@ private void showFullHistoryKH(String id) {
         }
     });
     if (ls.isEmpty()) {
-        tb.setPlaceholder(new Label("Khách hÃ ng chưa có hóa Äơn."));
+        tb.setPlaceholder(new Label("Khách hàng chưa có hóa Äơn."));
     }
     main.getChildren().addAll(ht, tb);
     d.getDialogPane().setContent(main);
@@ -599,7 +652,7 @@ private void handleXuatExcelHoaDon() {
         try (Workbook wb = new XSSFWorkbook(); FileOutputStream out = new FileOutputStream(f)) {
             Sheet s = wb.createSheet("Hóa Äơn");
             Row h = s.createRow(0);
-            String[] cols = {"Mã", "NgÃ y", "PTTT", "SÄT", "Tá»ng"};
+            String[] cols = {"Mã", "Ngày", "PTTT", "SÄT", "Tá»ng"};
             for (int i = 0; i < cols.length; i++) h.createCell(i).setCellValue(cols[i]);
             int r = 1;
             for (HoaDonDisplay hd : danhSachHoaDon) {
@@ -611,7 +664,7 @@ private void handleXuatExcelHoaDon() {
                 rw.createCell(4).setCellValue(hd.getTongTien());
             }
             wb.write(out);
-            alert("ThÃ nh công", "Äã xuáº¥t Excel");
+            alert("Thành công", "Äã xuáº¥t Excel");
         } catch (Exception e) {
         alert("Lá»i", e.getMessage());
     }
@@ -624,9 +677,9 @@ private void handleXuatExcelKhachHang() {
     File f = fc.showSaveDialog(tblKhachHang.getScene().getWindow());
     if (f != null) {
         try (Workbook wb = new XSSFWorkbook(); FileOutputStream out = new FileOutputStream(f)) {
-            Sheet s = wb.createSheet("Khách hÃ ng");
+            Sheet s = wb.createSheet("Khách hàng");
             Row h = s.createRow(0);
-            String[] cols = {"Mã", "Tên", "SÄT", "Äá»a chá»", "Email", "NgÃ y", "Loại", "Tá»ng"};
+            String[] cols = {"Mã", "Tên", "SÄT", "Äá»a chá»", "Email", "Ngày", "Loại", "Tá»ng"};
             for (int i = 0; i < cols.length; i++) h.createCell(i).setCellValue(cols[i]);
             int r = 1;
             for (KhachHangDisplay k : danhSachKhachHang) {
@@ -641,7 +694,7 @@ private void handleXuatExcelKhachHang() {
                 rw.createCell(7).setCellValue(k.getTongTienHD());
             }
             wb.write(out);
-            alert("ThÃ nh công", "Äã xuất Excel");
+            alert("Thành công", "Äã xuất Excel");
         } catch (Exception e) {
         alert("Lỗi", e.getMessage());
     }

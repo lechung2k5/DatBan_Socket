@@ -14,15 +14,8 @@ import entity.PTTThanhToan;
 // === IMPORT MỚI CHO IN TRỰC TIẾP ===
 import entity.TaiKhoan; // << MỚI: Để lấy thông tin NV đăng nhập
 import javafx.application.Platform; // << MỚI: Để chạy alert từ thread
- // << MỚI
- // << MỚI
-// << MỚI
-// << MỚI
-// << MỚI: Để lấy thông tin NV đăng nhập
- // << MỚI
- // << MỚI
-// << MỚI
- // << MỚI
+import network.RealTimeClient;
+import java.util.ArrayList;
 import java.io.InputStream; // << MỚI
 // ======================================
 import javafx.collections.FXCollections;
@@ -101,6 +94,7 @@ public class HoaDonUI {
     @FXML private Label lblThueVATValue;
     @FXML private Label lblTienDatCocValue;
     @FXML private Label lblKhuyenMaiValue;
+    @FXML private Label lblPTTTValue; // 🔥 MỚI
     @FXML private Label lblTongTienThanhToanValue;
     // === BIẾN QUẢN LÝ DỮ LIỆU ===
     // private HoaDonDAO hoaDonDAO; // Removed
@@ -136,6 +130,14 @@ public class HoaDonUI {
         btnSearch.setOnAction(event -> filterData());
         txtSearch.setOnAction(event -> filterData());
         loadAndFilterData();
+        // 🔥 Real-time listener
+        RealTimeClient.getInstance().addListener(event -> {
+            if (event.getType() == CommandType.UPDATE_INVOICE || 
+                event.getType() == CommandType.CHECK_OUT ||
+                event.getType() == CommandType.CREATE_ORDER) {
+                Platform.runLater(() -> loadAndFilterData());
+            }
+        });
         btnXuatExcel.setOnAction(e -> xuatExcel());
         // 🔥 THAY ĐỔI LOGIC NÚT IN
         btnInHoaDon.setOnAction(e -> {
@@ -205,6 +207,12 @@ private void loadAndFilterData() {
     Response res = Client.send(CommandType.GET_INVOICES_ALL, null);
     if (res.getStatusCode() == 200) {
         List<HoaDon> list = JsonUtil.fromJsonList(JsonUtil.toJson(res.getData()), HoaDon.class);
+        // 🔥 Fallback calculation for zeroed financial fields
+        for (HoaDon hd : list) {
+            if (hd.getTongTienThanhToan() == 0 && hd.getTongCongMonAn() > 0) {
+                hd.calculateTotals();
+            }
+        }
         allHoaDonList.setAll(list);
     }
     datePickerFilter.setValue(null); // << Reset DatePicker khi tải lại
@@ -273,35 +281,50 @@ private void setupTableChiTietHoaDon() {
     tableChiTietHD.getColumns().addAll(columnsArr);
     tableChiTietHD.setItems(danhSachChiTietHD);
 }
-private void hienThiThongTinHoaDon(HoaDon hoaDon) {
-    if (hoaDon == null) {
-        lblMaHDValue.setText("..."); lblMaKHValue.setText("..."); lblNgayValue.setText("...");
-        lblThuNganValue.setText("..."); lblBanValue.setText("..."); lblGioVaoValue.setText("...");
-        lblGioRaValue.setText("..."); lblTongCongMonAnValue.setText("0 VNĐ"); lblPhiDichVuValue.setText("0 VNĐ");
-        lblThueVATValue.setText("0 VNĐ"); lblTienDatCocValue.setText("0 VNĐ"); lblKhuyenMaiValue.setText("0 VNĐ");
-        lblTongTienThanhToanValue.setText("0 VNĐ");
-        danhSachChiTietHD.clear();
-        return;
+
+    private void hienThiThongTinHoaDon(HoaDon hoaDon) {
+        if (hoaDon == null) {
+            lblMaHDValue.setText("..."); lblMaKHValue.setText("..."); lblNgayValue.setText("...");
+            lblThuNganValue.setText("..."); lblBanValue.setText("..."); lblGioVaoValue.setText("...");
+            lblGioRaValue.setText("..."); lblTongCongMonAnValue.setText("0 VNĐ"); lblPhiDichVuValue.setText("0 VNĐ");
+            lblThueVATValue.setText("0 VNĐ"); lblTienDatCocValue.setText("0 VNĐ"); lblKhuyenMaiValue.setText("0 VNĐ");
+            lblPTTTValue.setText("...");
+            lblTongTienThanhToanValue.setText("0 VNĐ");
+            danhSachChiTietHD.clear();
+            return;
+        }
+        
+        // 🔥 Gọi API lấy chi tiết trước để có dữ liệu tính toán fallback
+        Response res = Client.sendWithParams(CommandType.GET_INVOICE_DETAILS, java.util.Map.of("maHD", hoaDon.getMaHD()));
+        List<ChiTietHoaDon> chiTietList = new ArrayList<>();
+        if (res.getStatusCode() == 200) {
+            chiTietList = JsonUtil.fromJsonList(JsonUtil.toJson(res.getData()), ChiTietHoaDon.class);
+            danhSachChiTietHD.setAll(chiTietList);
+        }
+
+        // 🔥 FALLBACK CALCULATION: Nếu dữ liệu tài chính trong DB bị thiếu (bằng 0)
+        if (hoaDon.getTongCongMonAn() == 0 && !chiTietList.isEmpty()) {
+            double totalFood = chiTietList.stream().mapToDouble(ChiTietHoaDon::getThanhTien).sum();
+            hoaDon.setTongCongMonAn(totalFood);
+            // Entity HoaDon sẽ tự động tính các trường khác qua calculateTotals() nếu được set đúng
+        }
+
+        lblMaHDValue.setText(hoaDon.getMaHD());
+        lblMaKHValue.setText(hoaDon.getSoDienThoaiKH() != null ? hoaDon.getSoDienThoaiKH() : "N/A");
+        lblNgayValue.setText(hoaDon.getNgayLap() != null ? hoaDon.getNgayLap().format(dateFormatter) : "N/A");
+        lblThuNganValue.setText(hoaDon.getTenNhanVien() != null ? hoaDon.getTenNhanVien() : "N/A");
+        lblBanValue.setText(hoaDon.getMaBan() != null ? hoaDon.getMaBan() : "N/A");
+        lblGioVaoValue.setText(hoaDon.getGioVao() != null ? hoaDon.getGioVao().format(timeFormatter) : "N/A");
+        lblGioRaValue.setText(hoaDon.getGioRa() != null ? hoaDon.getGioRa().format(timeFormatter) : "N/A");
+        
+        lblTongCongMonAnValue.setText(String.format("%,.0f VNĐ", hoaDon.getTongCongMonAn()));
+        lblPhiDichVuValue.setText(String.format("%,.0f VNĐ", hoaDon.getPhiDichVu()));
+        lblThueVATValue.setText(String.format("%,.0f VNĐ", hoaDon.getThueVAT()));
+        lblTienDatCocValue.setText(String.format("%,.0f VNĐ", hoaDon.getTienCoc()));
+        lblKhuyenMaiValue.setText(String.format("%,.0f VNĐ", hoaDon.getKhuyenMai()));
+        lblPTTTValue.setText(hoaDon.getHinhThucTT() != null ? hoaDon.getHinhThucTT().getDisplayName() : "N/A");
+        lblTongTienThanhToanValue.setText(String.format("%,.0f VNĐ", hoaDon.getTongTienThanhToan()));
     }
-    lblMaHDValue.setText(hoaDon.getMaHD());
-    lblMaKHValue.setText(hoaDon.getSoDienThoaiKH() != null ? hoaDon.getSoDienThoaiKH() : "N/A");
-    lblNgayValue.setText(hoaDon.getNgayLap() != null ? hoaDon.getNgayLap().format(dateFormatter) : "N/A");
-    lblThuNganValue.setText(hoaDon.getTenNhanVien() != null ? hoaDon.getTenNhanVien() : "N/A");
-    lblBanValue.setText(hoaDon.getMaBan() != null ? hoaDon.getMaBan() : "N/A");
-    lblGioVaoValue.setText(hoaDon.getGioVao() != null ? hoaDon.getGioVao().format(timeFormatter) : "N/A");
-    lblGioRaValue.setText(hoaDon.getGioRa() != null ? hoaDon.getGioRa().format(timeFormatter) : "N/A");
-    lblTongCongMonAnValue.setText(String.format("%,.0f VNĐ", hoaDon.getTongCongMonAn()));
-    lblPhiDichVuValue.setText(String.format("%,.0f VNĐ", hoaDon.getPhiDichVu()));
-    lblThueVATValue.setText(String.format("%,.0f VNĐ", hoaDon.getThueVAT()));
-    lblTienDatCocValue.setText(String.format("%,.0f VNĐ", hoaDon.getTienCoc()));
-    lblKhuyenMaiValue.setText(String.format("%,.0f VNĐ", hoaDon.getKhuyenMai()));
-    lblTongTienThanhToanValue.setText(String.format("%,.0f VNĐ", hoaDon.getTongTienThanhToan()));
-    Response res = Client.sendWithParams(CommandType.GET_INVOICE_DETAILS, java.util.Map.of("invoiceId", hoaDon.getMaHD()));
-    if (res.getStatusCode() == 200) {
-        List<ChiTietHoaDon> chiTietList = JsonUtil.fromJsonList(JsonUtil.toJson(res.getData()), ChiTietHoaDon.class);
-        danhSachChiTietHD.setAll(chiTietList);
-    }
-}
 // ... (Hàm xuatExcel và các hàm helper của nó (createHeaderStyle, createCurrencyStyle, v.v.) giữ nguyên) ...
 private void xuatExcel() {
     ObservableList<HoaDon> dataToExport = tableHoaDon.getItems();

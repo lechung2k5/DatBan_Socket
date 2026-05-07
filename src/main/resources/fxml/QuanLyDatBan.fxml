@@ -200,18 +200,24 @@
                         <TableColumn fx:id="colOrderHuy" text="Xóa" prefWidth="60" style="-fx-alignment: CENTER;"/>
                      </columns>
                  </TableView>
-				<HBox alignment="CENTER_LEFT" spacing="10">
-                    <Button fx:id="btnSuaMon" mnemonicParsing="false" text="Sửa" styleClass="action-button-edit" />
-                    <Button fx:id="btnDoiBan" mnemonicParsing="false" text="Đổi Bàn" styleClass="action-button-switch" />
-                    <Button fx:id="btnTachBan" mnemonicParsing="false" text="Tách Bàn" styleClass="action-button-split" />
-                    <Button fx:id="btnGopBan" mnemonicParsing="false" text="Gộp Bàn" styleClass="action-button-merge" />
-                    <Button fx:id="btnHuyBan" mnemonicParsing="false" text="Hủy Bàn" styleClass="action-button-cancel" />
+                <VBox spacing="8" style="-fx-padding: 10 0 0 0;">
+                    <!-- Hàng 1: Thao tác chính trên bàn -->
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Button fx:id="btnSuaMon" mnemonicParsing="false" text="Sửa món" styleClass="action-button-edit" />
+                        <Button fx:id="btnDoiBan" mnemonicParsing="false" text="Đổi Bàn" styleClass="action-button-switch" />
+                        <Button fx:id="btnTachBan" mnemonicParsing="false" text="Tách Bàn" styleClass="action-button-split" />
+                        <Button fx:id="btnGopBan" mnemonicParsing="false" text="Gộp Bàn" styleClass="action-button-merge" />
+                        <Button fx:id="btnHuyBan" mnemonicParsing="false" text="Hủy Bàn" styleClass="action-button-cancel" />
+                        <Button fx:id="btnLamMoi" mnemonicParsing="false" text="Làm mới" styleClass="action-button-refresh" />
+                    </HBox>
                     
-                    <Region HBox.hgrow="ALWAYS" />
-                    
-                    <Button fx:id="btnLuuDatHang" text="Lưu đặt hàng" styleClass="action-button-save"/>
-                    <Button fx:id="btnThanhToan" text="Thanh toán" styleClass="confirm-button"/>
-                 </HBox>
+                    <!-- Hàng 2: Lưu và Thanh toán -->
+                    <HBox alignment="CENTER_RIGHT" spacing="8">
+                        <Button fx:id="btnLuuMon" text="Lưu món" styleClass="action-button-save-items"/>
+                        <Button fx:id="btnLuuDatHang" text="Lưu đặt hàng" styleClass="action-button-save"/>
+                        <Button fx:id="btnThanhToan" text="Thanh toán" styleClass="confirm-button"/>
+                    </HBox>
+                </VBox>
             </VBox>
          </VBox>
       </content>

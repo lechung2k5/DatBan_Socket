@@ -89,6 +89,7 @@
                      <HBox> <Label text="Thuế VAT (8%): " styleClass="info-title"/> <Label fx:id="lblThueVATValue" styleClass="info-value"/> </HBox>
                      <HBox> <Label text="Tiền đặt cọc bàn: " styleClass="info-title"/> <Label fx:id="lblTienDatCocValue" styleClass="info-value"/> </HBox>
                      <HBox> <Label text="Khuyến mãi: " styleClass="info-title"/> <Label fx:id="lblKhuyenMaiValue" styleClass="info-value"/> </HBox>
+                     <HBox> <Label text="Hình thức thanh toán: " styleClass="info-title"/> <Label fx:id="lblPTTTValue" styleClass="info-value"/> </HBox>
                  </VBox>
                  <HBox> <Label text="Tổng tiền thanh toán: " styleClass="total-title"/> <Label fx:id="lblTongTienThanhToanValue" styleClass="total-value"/> </HBox>
                  <Region VBox.vgrow="ALWAYS"/>

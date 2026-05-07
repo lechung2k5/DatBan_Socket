@@ -26,6 +26,10 @@ public class PaymentService {
             String maBan = (String) request.getParam("maBan");
             String maUuDai = (String) request.getParam("maUuDai");
             Double totalAmount = Double.valueOf(String.valueOf(request.getParam("totalAmount")));
+            Double totalFood = request.getParam("totalFood") != null ? Double.valueOf(String.valueOf(request.getParam("totalFood"))) : 0.0;
+            Double serviceFee = request.getParam("serviceFee") != null ? Double.valueOf(String.valueOf(request.getParam("serviceFee"))) : 0.0;
+            Double vat = request.getParam("vat") != null ? Double.valueOf(String.valueOf(request.getParam("vat"))) : 0.0;
+            Double discount = request.getParam("discount") != null ? Double.valueOf(String.valueOf(request.getParam("discount"))) : 0.0;
 
             // 1. Xử lý tách bàn nếu có thông tin (Split-and-Pay)
             String maHDGoc = (String) request.getParam("maHDGoc");
@@ -48,14 +52,14 @@ public class PaymentService {
             List<HoaDon> subInvoices = invoiceDAO.findByParentId(maHD);
             
             // 4. Thanh toán hóa đơn chính
-            invoiceDAO.checkout(maHD, pttt != null ? pttt : "TIEN_MAT", maNV, totalAmount);
+            invoiceDAO.checkout(maHD, pttt != null ? pttt : "TIEN_MAT", maNV, totalAmount, totalFood, serviceFee, vat, discount);
             if (maBan != null && !maBan.isEmpty()) {
                 tableDAO.updateStatus(maBan, "Trong");
             }
 
             // 5. Thanh toán tất cả hóa đơn phụ và giải phóng bàn của chúng
             for (HoaDon sub : subInvoices) {
-                invoiceDAO.checkout(sub.getMaHD(), pttt != null ? pttt : "TIEN_MAT", maNV, 0.0); 
+                invoiceDAO.checkout(sub.getMaHD(), pttt != null ? pttt : "TIEN_MAT", maNV, 0.0, 0.0, 0.0, 0.0, 0.0); 
                 if (sub.getMaBan() != null && !sub.getMaBan().isEmpty()) {
                     tableDAO.updateStatus(sub.getMaBan(), "Trong");
                 }
@@ -66,8 +70,8 @@ public class PaymentService {
             CacheService.invalidateTables();
             
             // 🔥 Broadcast sự kiện cập nhật bàn và hóa đơn
-            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Bàn đã được giải phóng sau thanh toán"));
-            Service.broadcast(new RealTimeEvent(CommandType.CHECK_OUT, "Hóa đơn đã được thanh toán"));
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + (maBan != null ? maBan : "ALL")));
+            Service.broadcast(new RealTimeEvent(CommandType.CHECK_OUT, "[INVOICE]:" + maHD));
             
             System.out.println("[PaymentService] Thanh toán thành công: " + maHD);
             return Response.ok("Thanh toán thành công");
@@ -84,6 +88,9 @@ public class PaymentService {
             
             invoiceDAO.updateStatus(maHD, "Dat", false);
             
+            // 🔥 Broadcast sự kiện xác nhận cọc (coi như cập nhật hóa đơn)
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "[INVOICE]:" + maHD));
+
             System.out.println("[PaymentService] Xác nhận cọc thành công: " + maHD);
             return Response.ok("Xác nhận tiền cọc thành công");
         } catch (Exception e) {

@@ -30,6 +30,7 @@ public Response handleUpdate(Request request) {
         UuDai ud = JsonUtil.convertValue(request.getParam("promo"), UuDai.class);
         promoDAO.insert(ud);
         CacheService.invalidatePromos(); // Xóa cache
+        network.Service.broadcast(new network.RealTimeEvent(network.CommandType.UPDATE_PROMO, "[PROMO]:" + ud.getMaUuDai()));
         return Response.ok("Thao tác ưu đãi thành công");
     } catch (Exception e) {
     return Response.error("Lỗi cập nhật ưu đãi: " + e.getMessage());
@@ -49,6 +50,7 @@ public Response handleDelete(Request request) {
         String id = (String) request.getParam("id");
         promoDAO.delete(id);
         CacheService.invalidatePromos();
+        network.Service.broadcast(new network.RealTimeEvent(network.CommandType.UPDATE_PROMO, "[PROMO]:" + id));
         return Response.ok("Xóa ưu đãi thành công");
     } catch (Exception e) {
     return Response.error("Lỗi: " + e.getMessage());

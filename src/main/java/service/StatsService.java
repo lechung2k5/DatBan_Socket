@@ -268,4 +268,20 @@ return Response.ok(result);
 return Response.error(e.getMessage());
 }
 }
+public Response handleGetTableCounts(Request request) {
+    try {
+        List<entity.Ban> tables = tableDAO.findAll();
+        Map<String, Integer> counts = new HashMap<>();
+        counts.put("TRONG", 0);
+        counts.put("DANG_SU_DUNG", 0);
+        counts.put("DA_DAT", 0);
+        for (entity.Ban b : tables) {
+            String status = (b.getTrangThai() != null) ? b.getTrangThai().name() : "TRONG";
+            counts.put(status, counts.getOrDefault(status, 0) + 1);
+        }
+        return Response.ok(counts);
+    } catch (Exception e) {
+        return Response.error("Lỗi đếm số lượng bàn: " + e.getMessage());
+    }
+}
 }

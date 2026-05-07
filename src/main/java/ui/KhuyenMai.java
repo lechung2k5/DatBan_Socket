@@ -46,6 +46,13 @@ public class KhuyenMai {
         setupInputValidation();
         setupTableSelectionEvent();
         resetFormState();
+
+        // 🔥 LẮNG NGHE REAL-TIME (Tải lại danh sách khuyến mãi khi có thay đổi)
+        network.RealTimeClient.getInstance().addListener(event -> {
+            if (event.getType() == CommandType.UPDATE_PROMO) {
+                javafx.application.Platform.runLater(this::loadDataFromDatabase);
+            }
+        });
     }
     // ==================== SETUP CÃC THÃNH PHáº¦N ====================
     private void setupTableColumns() {

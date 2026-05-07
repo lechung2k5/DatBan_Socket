@@ -252,9 +252,6 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.1</version>
-                <configuration>
-                    <mainClass>ui.MainLauncher</mainClass>
-                </configuration>
             </plugin>
         </plugins>
     </build>
