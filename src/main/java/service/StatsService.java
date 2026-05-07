@@ -110,20 +110,27 @@ public Response handleUpdateShift(Request request) {
     try {
         entity.CaTruc ca = utils.JsonUtil.convertValue(request.getParam("shift"), entity.CaTruc.class);
         shiftDAO.upsert(ca);
+        // 🔥 Broadcast RealTimeEvent đúng kiểu để Client nhận được
+        network.Service.broadcast(new network.RealTimeEvent(network.CommandType.UPDATE_SHIFT, "Ca trực được cập nhật"));
         return Response.ok("Cập nhật ca trực thành công");
     } catch (Exception e) {
-    return Response.error("Lỗi: " + e.getMessage());
-}
+        System.err.println("[StatsService] Lỗi handleUpdateShift: " + e.getMessage());
+        e.printStackTrace();
+        return Response.error("Lỗi: " + e.getMessage());
+    }
 }
 public Response handleDeleteShift(Request request) {
     try {
         String maCa = (String) request.getParam("maCa");
         shiftDAO.delete(maCa);
+        // 🔥 Broadcast RealTimeEvent đúng kiểu để Client nhận được
+        network.Service.broadcast(new network.RealTimeEvent(network.CommandType.DELETE_SHIFT, "Ca trực được xóa"));
         return Response.ok("Xóa ca trực thành công");
     } catch (Exception e) {
-    return Response.error("Lỗi: " + e.getMessage());
+        return Response.error("Lỗi: " + e.getMessage());
+    }
 }
-}
+
 public Response handleGetWeeklyShiftsAll(Request request) {
     try {
         String startStr = (String) request.getParam("start");

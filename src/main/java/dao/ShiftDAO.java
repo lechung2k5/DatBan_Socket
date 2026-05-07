@@ -1,171 +1,171 @@
 package dao;
-import db.ConnectDB;
+import db.DynamoDBConfig;
 import entity.CaTruc;
 import entity.NhanVien;
-import java.sql.*;
-import java.time.Duration;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
 public class ShiftDAO {
+    private final DynamoDbClient db = DynamoDBConfig.getClient();
+    private static final String TBL = "Shifts";
+    private static boolean tableEnsured = false;
+
+    public ShiftDAO() {
+        ensureTableExists();
+    }
+
+    // ─── Tự động tạo bảng nếu chưa tồn tại ───────────────────────────────
+    private synchronized void ensureTableExists() {
+        if (tableEnsured) return;
+        try {
+            db.describeTable(DescribeTableRequest.builder().tableName(TBL).build());
+            System.out.println("[ShiftDAO] Bảng " + TBL + " đã tồn tại.");
+        } catch (ResourceNotFoundException e) {
+            System.out.println("[ShiftDAO] Bảng " + TBL + " chưa tồn tại. Đang tạo...");
+            db.createTable(CreateTableRequest.builder()
+                .tableName(TBL)
+                .keySchema(KeySchemaElement.builder().attributeName("maCa").keyType(KeyType.HASH).build())
+                .attributeDefinitions(AttributeDefinition.builder()
+                    .attributeName("maCa")
+                    .attributeType(ScalarAttributeType.S)
+                    .build())
+                .billingMode(BillingMode.PAY_PER_REQUEST)
+                .build());
+            // Chờ bảng được tạo xong
+            db.waiter().waitUntilTableExists(DescribeTableRequest.builder().tableName(TBL).build());
+            System.out.println("[ShiftDAO] Đã tạo bảng " + TBL + " thành công!");
+        } catch (Exception e) {
+            System.err.println("[ShiftDAO] Lỗi khi kiểm tra/tạo bảng: " + e.getMessage());
+        }
+        tableEnsured = true;
+    }
+
+    // ─── Lấy ca trực theo tuần của 1 nhân viên ────────────────────────────
     public List<CaTruc> findWeeklyByEmployee(LocalDate startOfWeek, String maNV) {
-        List<CaTruc> list = new ArrayList<>();
         LocalDate endOfWeek = startOfWeek.plusDays(6);
-        String sql = "SELECT CT.*, NV.tenNV FROM CaTruc CT " +
-        "JOIN NhanVien NV ON CT.maNV = NV.maNV " +
-        "WHERE CT.ngay BETWEEN ? AND ? AND CT.maNV = ?";
-        try (Connection con = ConnectDB.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setDate(1, Date.valueOf(startOfWeek));
-            ps.setDate(2, Date.valueOf(endOfWeek));
-            ps.setString(3, maNV);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    NhanVien nv = new NhanVien();
-                    nv.setMaNV(rs.getString("maNV"));
-                    nv.setHoTen(rs.getString("tenNV"));
-                    CaTruc ca = new CaTruc(
-                    rs.getString("maCa"),
-                    rs.getDate("ngay").toLocalDate(),
-                    rs.getTime("gioBatDau").toLocalTime(),
-                    rs.getTime("gioKetThuc").toLocalTime(),
-                    nv
-                    );
-                    list.add(ca);
+        return scanByRange(startOfWeek, endOfWeek).stream()
+            .filter(ca -> ca.getNhanVien() != null && maNV.equals(ca.getNhanVien().getMaNV()))
+            .collect(Collectors.toList());
+    }
+
+    // ─── Lấy ca trực theo tháng của 1 nhân viên ───────────────────────────
+    public List<CaTruc> findMonthlyByEmployee(String maNV, LocalDate startOfMonth, LocalDate endOfMonth) {
+        return scanByRange(startOfMonth, endOfMonth).stream()
+            .filter(ca -> ca.getNhanVien() != null && maNV.equals(ca.getNhanVien().getMaNV()))
+            .collect(Collectors.toList());
+    }
+
+    // ─── Lấy tất cả ca trực trong 1 tuần (dành cho Admin) ─────────────────
+    public List<CaTruc> findAllByWeek(LocalDate startOfWeek) {
+        LocalDate endOfWeek = startOfWeek.plusDays(6);
+        return scanByRange(startOfWeek, endOfWeek);
+    }
+
+    // ─── Tính tổng số giờ lịch trong khoảng thời gian ─────────────────────
+    public double getScheduledHours(String maNV, LocalDate start, LocalDate end) {
+        return findMonthlyByEmployee(maNV, start, end).stream()
+            .mapToLong(ca -> {
+                java.time.Duration d = java.time.Duration.between(ca.getGioBatDau(), ca.getGioKetThuc());
+                if (d.isNegative()) d = d.plusHours(24);
+                return d.toMinutes();
+            })
+            .sum() / 60.0;
+    }
+
+    // ─── Upsert (Thêm hoặc cập nhật) ──────────────────────────────────────
+    public void upsert(CaTruc ca) {
+        if (ca.getMaCa() == null || ca.getMaCa().isEmpty()) {
+            ca.setMaCa(generateNewId());
+        }
+        Map<String, AttributeValue> item = new HashMap<>();
+        item.put("maCa",       AttributeValue.builder().s(ca.getMaCa()).build());
+        item.put("ngay",       AttributeValue.builder().s(ca.getNgay().toString()).build());
+        item.put("gioBatDau",  AttributeValue.builder().s(ca.getGioBatDau().toString()).build());
+        item.put("gioKetThuc", AttributeValue.builder().s(ca.getGioKetThuc().toString()).build());
+        if (ca.getNhanVien() != null) {
+            item.put("maNV", AttributeValue.builder().s(ca.getNhanVien().getMaNV()).build());
+            if (ca.getNhanVien().getHoTen() != null && !ca.getNhanVien().getHoTen().isEmpty()) {
+                item.put("tenNV", AttributeValue.builder().s(ca.getNhanVien().getHoTen()).build());
+            }
+        }
+        db.putItem(PutItemRequest.builder().tableName(TBL).item(item).build());
+        System.out.println("[ShiftDAO] ✅ Đã lưu ca trực: " + ca.getMaCa() +
+            " | NV: " + (ca.getNhanVien() != null ? ca.getNhanVien().getMaNV() : "null") +
+            " | Ngày: " + ca.getNgay());
+    }
+
+    // ─── Xóa ca trực ──────────────────────────────────────────────────────
+    public void delete(String maCa) {
+        db.deleteItem(DeleteItemRequest.builder()
+            .tableName(TBL)
+            .key(Map.of("maCa", AttributeValue.builder().s(maCa).build()))
+            .build());
+        System.out.println("[ShiftDAO] ✅ Đã xóa ca trực: " + maCa);
+    }
+
+    // ─── Helper: Scan theo khoảng ngày ────────────────────────────────────
+    private List<CaTruc> scanByRange(LocalDate start, LocalDate end) {
+        List<CaTruc> list = new ArrayList<>();
+        try {
+            ScanResponse res = db.scan(ScanRequest.builder()
+                .tableName(TBL)
+                .filterExpression("#ngay BETWEEN :start AND :end")
+                .expressionAttributeNames(Map.of("#ngay", "ngay"))
+                .expressionAttributeValues(Map.of(
+                    ":start", AttributeValue.builder().s(start.toString()).build(),
+                    ":end",   AttributeValue.builder().s(end.toString()).build()
+                ))
+                .build());
+            for (Map<String, AttributeValue> item : res.items()) {
+                list.add(mapToCaTruc(item));
+            }
+        } catch (Exception e) {
+            System.err.println("[ShiftDAO] Lỗi scan: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // ─── Helper: Map DynamoDB item → CaTruc ───────────────────────────────
+    private CaTruc mapToCaTruc(Map<String, AttributeValue> item) {
+        CaTruc ca = new CaTruc();
+        if (item.containsKey("maCa"))       ca.setMaCa(item.get("maCa").s());
+        if (item.containsKey("ngay"))       ca.setNgay(LocalDate.parse(item.get("ngay").s()));
+        if (item.containsKey("gioBatDau"))  ca.setGioBatDau(LocalTime.parse(item.get("gioBatDau").s()));
+        if (item.containsKey("gioKetThuc")) ca.setGioKetThuc(LocalTime.parse(item.get("gioKetThuc").s()));
+        if (item.containsKey("maNV")) {
+            NhanVien nv = new NhanVien();
+            nv.setMaNV(item.get("maNV").s());
+            if (item.containsKey("tenNV")) nv.setHoTen(item.get("tenNV").s());
+            ca.setNhanVien(nv);
+        }
+        return ca;
+    }
+
+    // ─── Helper: Sinh mã ca mới không trùng ───────────────────────────────
+    private String generateNewId() {
+        try {
+            ScanResponse res = db.scan(ScanRequest.builder()
+                .tableName(TBL)
+                .projectionExpression("maCa")
+                .build());
+            int maxNum = 0;
+            for (Map<String, AttributeValue> item : res.items()) {
+                String ma = item.get("maCa").s();
+                if (ma != null && ma.startsWith("CA")) {
+                    try {
+                        int num = Integer.parseInt(ma.substring(2));
+                        if (num > maxNum) maxNum = num;
+                    } catch (NumberFormatException ignored) {}
                 }
             }
-        } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return list;
-}
-public List<CaTruc> findMonthlyByEmployee(String maNV, LocalDate startOfMonth, LocalDate endOfMonth) {
-    List<CaTruc> list = new ArrayList<>();
-    String sql = "SELECT CT.*, NV.tenNV FROM CaTruc CT " +
-    "JOIN NhanVien NV ON CT.maNV = NV.maNV " +
-    "WHERE CT.ngay BETWEEN ? AND ? AND CT.maNV = ?";
-    try (Connection con = ConnectDB.getConnection();
-    PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setDate(1, Date.valueOf(startOfMonth));
-        ps.setDate(2, Date.valueOf(endOfMonth));
-        ps.setString(3, maNV);
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                NhanVien nv = new NhanVien();
-                nv.setMaNV(rs.getString("maNV"));
-                nv.setHoTen(rs.getString("tenNV"));
-                CaTruc ca = new CaTruc(
-                rs.getString("maCa"),
-                rs.getDate("ngay").toLocalDate(),
-                rs.getTime("gioBatDau").toLocalTime(),
-                rs.getTime("gioKetThuc").toLocalTime(),
-                nv
-                );
-                list.add(ca);
-            }
+            return String.format("CA%03d", maxNum + 1);
+        } catch (Exception e) {
+            return "CA" + System.currentTimeMillis();
         }
-    } catch (SQLException e) {
-    e.printStackTrace();
-}
-return list;
-}
-public double getScheduledHours(String maNV, LocalDate start, LocalDate end) {
-    long totalMinutes = 0;
-    String sql = "SELECT gioBatDau, gioKetThuc FROM CaTruc WHERE maNV = ? AND ngay BETWEEN ? AND ?";
-    try (Connection con = ConnectDB.getConnection();
-    PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setString(1, maNV);
-        ps.setDate(2, Date.valueOf(start));
-        ps.setDate(3, Date.valueOf(end));
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                LocalTime begin = rs.getTime("gioBatDau").toLocalTime();
-                LocalTime endT = rs.getTime("gioKetThuc").toLocalTime();
-                Duration d = Duration.between(begin, endT);
-                if (d.isNegative()) d = d.plusHours(24);
-                totalMinutes += d.toMinutes();
-            }
-        }
-    } catch (SQLException e) {
-    e.printStackTrace();
-}
-return totalMinutes / 60.0;
-}
-public List<CaTruc> findAllByWeek(LocalDate startOfWeek) {
-    List<CaTruc> list = new ArrayList<>();
-    LocalDate endOfWeek = startOfWeek.plusDays(6);
-    String sql = "SELECT CT.*, NV.tenNV FROM CaTruc CT " +
-    "JOIN NhanVien NV ON CT.maNV = NV.maNV " +
-    "WHERE CT.ngay BETWEEN ? AND ?";
-    try (Connection con = ConnectDB.getConnection();
-    PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setDate(1, Date.valueOf(startOfWeek));
-        ps.setDate(2, Date.valueOf(endOfWeek));
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                NhanVien nv = new NhanVien();
-                nv.setMaNV(rs.getString("maNV"));
-                nv.setHoTen(rs.getString("tenNV"));
-                CaTruc ca = new CaTruc(
-                rs.getString("maCa"),
-                rs.getDate("ngay").toLocalDate(),
-                rs.getTime("gioBatDau").toLocalTime(),
-                rs.getTime("gioKetThuc").toLocalTime(),
-                nv
-                );
-                list.add(ca);
-            }
-        }
-    } catch (SQLException e) {
-    e.printStackTrace();
-}
-return list;
-}
-public void upsert(CaTruc ca) throws SQLException {
-    if (ca.getMaCa() == null || ca.getMaCa().isEmpty()) {
-        ca.setMaCa(generateNewId());
     }
-    String sql = "IF EXISTS (SELECT 1 FROM CaTruc WHERE maCa = ?) " +
-    "UPDATE CaTruc SET ngay=?, gioBatDau=?, gioKetThuc=?, maNV=? WHERE maCa=? " +
-    "ELSE INSERT INTO CaTruc (maCa, ngay, gioBatDau, gioKetThuc, maNV) VALUES (?,?,?,?,?)";
-    try (Connection con = ConnectDB.getConnection();
-    PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setString(1, ca.getMaCa());
-        ps.setDate(2, Date.valueOf(ca.getNgay()));
-        ps.setTime(3, Time.valueOf(ca.getGioBatDau()));
-        ps.setTime(4, Time.valueOf(ca.getGioKetThuc()));
-        ps.setString(5, ca.getNhanVien().getMaNV());
-        ps.setString(6, ca.getMaCa());
-        ps.setString(7, ca.getMaCa());
-        ps.setDate(8, Date.valueOf(ca.getNgay()));
-        ps.setTime(9, Time.valueOf(ca.getGioBatDau()));
-        ps.setTime(10, Time.valueOf(ca.getGioKetThuc()));
-        ps.setString(11, ca.getNhanVien().getMaNV());
-        ps.executeUpdate();
-    }
-}
-public void delete(String maCa) throws SQLException {
-    String sql = "DELETE FROM CaTruc WHERE maCa = ?";
-    try (Connection con = ConnectDB.getConnection();
-    PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setString(1, maCa);
-        ps.executeUpdate();
-    }
-}
-private String generateNewId() {
-    String sql = "SELECT TOP 1 maCa FROM CaTruc ORDER BY maCa DESC";
-    try (Connection con = ConnectDB.getConnection();
-    Statement st = con.createStatement();
-    ResultSet rs = st.executeQuery(sql)) {
-        if (rs.next()) {
-            String lastId = rs.getString(1);
-            int num = Integer.parseInt(lastId.substring(2)) + 1;
-            return String.format("CA%03d", num);
-        }
-    } catch (Exception e) {
-    e.printStackTrace();
-}
-return "CA001";
-}
 }

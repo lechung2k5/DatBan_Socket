@@ -43,6 +43,13 @@ public class PhanCaTrucUI {
         activeNhanVienList = FXCollections.observableArrayList();
         loadActiveEmployees();
         updateSchedule();
+        
+        // 🔥 LẮNG NGHE REAL-TIME 
+        network.RealTimeClient.getInstance().addListener(event -> {
+            if (event.getType() == CommandType.UPDATE_SHIFT || event.getType() == CommandType.DELETE_SHIFT) {
+                Platform.runLater(this::updateSchedule);
+            }
+        });
     }
     private void loadActiveEmployees() {
         Response res = Client.send(CommandType.GET_EMPLOYEES, null);

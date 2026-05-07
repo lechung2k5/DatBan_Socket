@@ -79,6 +79,14 @@ public class DashboardController {
         refreshData();
         setupTooltips();
         kiemTraVaCapNhatTrangThaiKiemKe();
+        
+        // 🔥 LẮNG NGHE REAL-TIME 
+        network.RealTimeClient.getInstance().addListener(event -> {
+            if (event.getType() == CommandType.UPDATE_SHIFT || event.getType() == CommandType.DELETE_SHIFT) {
+                Platform.runLater(this::updateWeeklyCalendar); // Chỉ cần cập nhật Lịch làm việc
+            }
+        });
+
         if (rootDashboardVBox != null) {
             rootDashboardVBox.sceneProperty().addListener((obs, oldScene, newScene) -> {
                 if (newScene == null) {
@@ -127,7 +135,7 @@ public class DashboardController {
         Platform.runLater(this::refreshData);
     }
 @FXML
-private void refreshData() {
+public void refreshData() {
     updateWeeklyCalendar();
     setupTableMap();
     updateKpiGioLam();
@@ -415,18 +423,33 @@ private void updateWeeklyCalendar() {
     weeklyCalendarGrid.getChildren().clear();
     TaiKhoan currentUser = MainApp.getLoggedInUser();
     if (currentUser == null || currentUser.getNhanVien() == null) return;
+
+    boolean isAdmin = currentUser.getVaiTro() != null &&
+        (currentUser.getVaiTro() == entity.VaiTro.ADMIN ||
+         currentUser.getVaiTro() == entity.VaiTro.QUAN_LY);
     String loggedInMaNV = currentUser.getNhanVien().getMaNV();
-    // Lấy ca trực trong tuần qua API
+    System.out.println("[Dashboard] VaiTro=" + currentUser.getVaiTro() + " | isAdmin=" + isAdmin + " | MaNV=" + loggedInMaNV);
+
+    // 🔥 Admin lấy tất cả ca trực, Nhân viên chỉ lấy ca của mình
     List<CaTruc> caTrucTrongTuan = new ArrayList<>();
-    Response resShift = Client.sendWithParams(CommandType.GET_WEEKLY_SHIFTS, Map.of(
-    "start", startOfWeek.toString(),
-    "maNV", loggedInMaNV
-    ));
-    if (resShift.getStatusCode() == 200) {
-        caTrucTrongTuan = JsonUtil.fromJsonList(JsonUtil.toJson(resShift.getData()), CaTruc.class);
+    if (isAdmin) {
+        Response resShift = Client.sendWithParams(CommandType.GET_WEEKLY_SHIFTS_ALL,
+            Map.of("start", startOfWeek.toString()));
+        if (resShift.getStatusCode() == 200) {
+            caTrucTrongTuan = JsonUtil.fromJsonList(JsonUtil.toJson(resShift.getData()), CaTruc.class);
+        }
+    } else {
+        Response resShift = Client.sendWithParams(CommandType.GET_WEEKLY_SHIFTS,
+            Map.of("start", startOfWeek.toString(), "maNV", loggedInMaNV));
+        if (resShift.getStatusCode() == 200) {
+            caTrucTrongTuan = JsonUtil.fromJsonList(JsonUtil.toJson(resShift.getData()), CaTruc.class);
+        }
     }
+
     String[] daysOfWeek = {"Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"};
     String[] rowHeaders = {"Ca làm", "Sáng", "Chiều", "Tối"};
+
+    // --- Tiêu đề ngày ---
     LocalDate currentDayHeader = startOfWeek;
     for (int i = 0; i < daysOfWeek.length; i++) {
         String dateStr = currentDayHeader.format(DateTimeFormatter.ofPattern("dd/MM"));
@@ -436,41 +459,69 @@ private void updateWeeklyCalendar() {
         weeklyCalendarGrid.add(dayLabel, i + 1, 0);
         currentDayHeader = currentDayHeader.plusDays(1);
     }
+
+    // --- Tiêu đề hàng ---
     for (int i = 0; i < rowHeaders.length; i++) {
         Label timeLabel = new Label(rowHeaders[i]);
         timeLabel.getStyleClass().add(i == 0 ? "time-slot-label-header" : "time-slot-label");
         timeLabel.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         weeklyCalendarGrid.add(timeLabel, 0, i);
     }
+
+    // --- Điền nội dung ô ---
     for (int col = 0; col < daysOfWeek.length; col++) {
         LocalDate dateOfCell = startOfWeek.plusDays(col);
         for (int row = 1; row < rowHeaders.length; row++) {
             String timeSlotOfCell = rowHeaders[row];
             LocalTime startTimeSlot = getTimeSlotStartTime(timeSlotOfCell);
             List<CaTruc> shiftsInCell = caTrucTrongTuan.stream()
-            .filter(ca -> ca.getNgay().equals(dateOfCell) && ca.getGioBatDau().equals(startTimeSlot))
-            .collect(Collectors.toList());
-            VBox cellContainer = new VBox(5);
+                .filter(ca -> ca.getNgay().equals(dateOfCell) && ca.getGioBatDau().equals(startTimeSlot))
+                .collect(Collectors.toList());
+
+            VBox cellContainer = new VBox(3);
             cellContainer.getStyleClass().add("day-cell");
+            cellContainer.setPadding(new Insets(6));
+
             if (!shiftsInCell.isEmpty()) {
                 Map<String, List<CaTruc>> shiftsGroupedByTime = shiftsInCell.stream()
-                .collect(Collectors.groupingBy(ca -> ca.getGioBatDau().format(DateTimeFormatter.ofPattern("HH:mm")) + " - " + ca.getGioKetThuc().format(DateTimeFormatter.ofPattern("HH:mm"))));
+                    .collect(Collectors.groupingBy(ca ->
+                        ca.getGioBatDau().format(DateTimeFormatter.ofPattern("HH:mm")) + " - " +
+                        ca.getGioKetThuc().format(DateTimeFormatter.ofPattern("HH:mm"))));
+
                 shiftsGroupedByTime.forEach((timeString, shiftsGroup) -> {
-                    CaTruc mauCa = shiftsGroup.get(0);
-                    java.time.Duration thoiLuong = java.time.Duration.between(mauCa.getGioBatDau(), mauCa.getGioKetThuc());
-                    if (thoiLuong.isNegative()) thoiLuong = thoiLuong.plusHours(24);
                     Label timeLabel = new Label(timeString);
-                    timeLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-                    Label durationLabel = new Label("Tổng: " + thoiLuong.toHours() + "h");
-                    durationLabel.getStyleClass().add("shift-duration-label");
-                    cellContainer.getChildren().addAll(timeLabel, durationLabel);
-                    cellContainer.setStyle("-fx-background-color: #dbf6e6; -fx-border-color: #27ae60;");
+                    timeLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 12px;");
+                    cellContainer.getChildren().add(timeLabel);
+
+                    if (isAdmin) {
+                        // Admin: Hiển thị danh sách tên nhân viên
+                        for (CaTruc ca : shiftsGroup) {
+                            if (ca.getNhanVien() != null && ca.getNhanVien().getHoTen() != null) {
+                                Label nvLabel = new Label("• " + ca.getNhanVien().getHoTen());
+                                nvLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #27ae60;");
+                                nvLabel.setWrapText(true);
+                                cellContainer.getChildren().add(nvLabel);
+                            }
+                        }
+                        cellContainer.setStyle("-fx-background-color: #eafaf1; -fx-border-color: #27ae60; -fx-border-radius: 4; -fx-background-radius: 4;");
+                    } else {
+                        // Nhân viên: Hiển thị tổng giờ
+                        java.time.Duration thoiLuong = java.time.Duration.between(
+                            shiftsGroup.get(0).getGioBatDau(), shiftsGroup.get(0).getGioKetThuc());
+                        if (thoiLuong.isNegative()) thoiLuong = thoiLuong.plusHours(24);
+                        Label durationLabel = new Label("Tổng: " + thoiLuong.toHours() + "h");
+                        durationLabel.getStyleClass().add("shift-duration-label");
+                        cellContainer.getChildren().add(durationLabel);
+                        cellContainer.setStyle("-fx-background-color: #dbf6e6; -fx-border-color: #27ae60;");
+                    }
                 });
             }
+
             weeklyCalendarGrid.add(cellContainer, col + 1, row);
         }
     }
 }
+
 private LocalTime getTimeSlotStartTime(String timeSlot) {
     switch (timeSlot.toLowerCase()) {
         case "sáng": return LocalTime.of(8, 0);
