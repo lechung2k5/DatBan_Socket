@@ -49,7 +49,7 @@ public class NhanVien implements Serializable {
         if (ngaySinh == null) ngaySinh = new SimpleStringProperty(ngaySinh_entity != null ? ngaySinh_entity.toString() : "");
         if (diaChi == null) diaChi = new SimpleStringProperty(diaChi_entity);
         if (gioiTinh == null) gioiTinh = new SimpleStringProperty(gioiTinh_entity ? "Nam" : "Nữ");
-        if (trangThai == null) trangThai = new SimpleStringProperty(trangThai_entity ? "Đang làm" : "Nghỉ");
+        if (trangThai == null) trangThai = new SimpleStringProperty(trangThai_entity ? "Đang làm" : "Nghỉ việc");
         if (caLamYeuThich == null) caLamYeuThich = new SimpleStringProperty(caLamYeuThich_entity);
         if (chucVu == null) chucVu = new SimpleStringProperty(chucVu_entity);
         if (matKhau == null) matKhau = new SimpleStringProperty(matKhau_entity);

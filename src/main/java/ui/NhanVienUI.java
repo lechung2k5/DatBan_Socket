@@ -62,7 +62,11 @@ public class NhanVienUI {
         colMaNV.setCellValueFactory(new PropertyValueFactory<>("maNV"));
         colHoTen.setCellValueFactory(new PropertyValueFactory<>("hoTen"));
         colSDT.setCellValueFactory(new PropertyValueFactory<>("sdt"));
-        colChucVu.setCellValueFactory(new PropertyValueFactory<>("chucVu"));
+        colChucVu.setCellValueFactory(cellData -> {
+            String dbValue = cellData.getValue().getChucVu();
+            VaiTro vt = VaiTro.fromString(dbValue);
+            return new javafx.beans.property.SimpleStringProperty(vt != null ? vt.getTenVaiTro() : dbValue);
+        });
         colNgaySinh.setCellValueFactory(new PropertyValueFactory<>("ngaySinh"));
         // ð¥ THAY Äá»I QUAN TRá»NG: Bind cá»t vào "caLamYeuThich"
         colCaLam.setCellValueFactory(new PropertyValueFactory<>("caLamYeuThich"));
@@ -212,7 +216,7 @@ private void handleXoa(ActionEvent event) { // Nút "Xóa"
     confirm.setContentText("Bạn có chắc chắn muốn xóa nhân viên '" + currentSelectedNhanVien.getHoTen() + "'?");
     Optional<ButtonType> result = confirm.showAndWait();
     if (result.isPresent() && result.get() == ButtonType.OK) {
-        currentSelectedNhanVien.setTrangThai("Nghỉ");
+        currentSelectedNhanVien.setTrangThai("Nghỉ việc");
         Response res = Client.sendWithParams(CommandType.UPDATE_EMPLOYEE, Map.of("employee", currentSelectedNhanVien));
         if (res.getStatusCode() == 200) {
             showInfoAlert("Thành công", "Đã xóa (ngừng hoạt động) nhân viên!");
@@ -266,7 +270,8 @@ private void showNhanVienDetails(NhanVien nhanVien) {
     txtMaNV.setText(nhanVien.getMaNV());
     txtHoTen.setText(nhanVien.getHoTen());
     txtSDT.setText(nhanVien.getSdt());
-    cbxChucVu.setValue(nhanVien.getChucVu());
+    VaiTro vt = VaiTro.fromString(nhanVien.getChucVu());
+    cbxChucVu.setValue(vt != null ? vt.getTenVaiTro() : nhanVien.getChucVu());
     cbxTrangThai.setValue(nhanVien.getTrangThai());
     pfMatKhau.setText("");
     pfMatKhau.setPromptText("Để trống nếu không muốn đổi mật khẩu");
@@ -289,7 +294,8 @@ private NhanVien createNhanVienFromForm() {
     }
     nv.setHoTen(txtHoTen.getText().trim());
     nv.setSdt(txtSDT.getText().trim());
-    nv.setChucVu(cbxChucVu.getValue());
+    VaiTro vt = VaiTro.fromString(cbxChucVu.getValue());
+    nv.setChucVu(vt != null ? vt.getValueInDB() : cbxChucVu.getValue());
     if (dpNgaySinh.getValue() != null) {
         nv.setNgaySinh(dpNgaySinh.getValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     } else {
