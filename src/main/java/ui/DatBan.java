@@ -14,6 +14,8 @@ import entity.UuDai;
 import network.CommandType;
 import network.Response;
 import network.Client;
+import network.RealTimeClient;
+import network.RealTimeEvent;
 import utils.ClientSessionManager;
 // Import JavaFX
 import java.io.IOException;
@@ -491,6 +493,45 @@ public class DatBan implements Initializable {
                         event.consume();
                     }
                 });
+        
+        // 🔥 Đăng ký lắng nghe sự kiện Real-time từ Server
+        RealTimeClient.getInstance().addListener(event -> {
+            System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + event.getType());
+            if (event.getType() == CommandType.UPDATE_TABLE_STATUS || 
+                event.getType() == CommandType.CHECK_OUT || 
+                event.getType() == CommandType.CREATE_ORDER) {
+                
+                // Refresh dữ liệu trên giao diện
+                loadTableGrids();
+                loadBookingCards();
+            }
+        });
+    }
+    
+        // 🔥 Đăng ký lắng nghe sự kiện Real-time từ Server
+        RealTimeClient.getInstance().addListener(event -> {
+            System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + event.getType());
+            if (event.getType() == CommandType.UPDATE_TABLE_STATUS || 
+                event.getType() == CommandType.CHECK_OUT || 
+                event.getType() == CommandType.CREATE_ORDER) {
+                
+                // Refresh dữ liệu trên giao diện
+                loadTableGrids();
+                loadBookingCards();
+            }
+        });
+    });
+
+        // 🔥 Đăng ký lắng nghe sự kiện Real-time từ Server
+        RealTimeClient.getInstance().addListener(event -> {
+            System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + event.getType());
+            if (event.getType() == CommandType.UPDATE_TABLE_STATUS || 
+                event.getType() == CommandType.CHECK_OUT || 
+                event.getType() == CommandType.CREATE_ORDER) {
+                
+                // Refresh dữ liệu trên giao diện
+                loadTableGrids();
+                loadBookingCards();
             }
         });
     }
@@ -2523,6 +2564,45 @@ public class DatBan implements Initializable {
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
                 setGraphic(empty ? null : btn);
+        
+        // 🔥 Đăng ký lắng nghe sự kiện Real-time từ Server
+        RealTimeClient.getInstance().addListener(event -> {
+            System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + event.getType());
+            if (event.getType() == CommandType.UPDATE_TABLE_STATUS || 
+                event.getType() == CommandType.CHECK_OUT || 
+                event.getType() == CommandType.CREATE_ORDER) {
+                
+                // Refresh dữ liệu trên giao diện
+                loadTableGrids();
+                loadBookingCards();
+            }
+        });
+    }
+    
+        // 🔥 Đăng ký lắng nghe sự kiện Real-time từ Server
+        RealTimeClient.getInstance().addListener(event -> {
+            System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + event.getType());
+            if (event.getType() == CommandType.UPDATE_TABLE_STATUS || 
+                event.getType() == CommandType.CHECK_OUT || 
+                event.getType() == CommandType.CREATE_ORDER) {
+                
+                // Refresh dữ liệu trên giao diện
+                loadTableGrids();
+                loadBookingCards();
+            }
+        });
+    });
+
+        // 🔥 Đăng ký lắng nghe sự kiện Real-time từ Server
+        RealTimeClient.getInstance().addListener(event -> {
+            System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + event.getType());
+            if (event.getType() == CommandType.UPDATE_TABLE_STATUS || 
+                event.getType() == CommandType.CHECK_OUT || 
+                event.getType() == CommandType.CREATE_ORDER) {
+                
+                // Refresh dữ liệu trên giao diện
+                loadTableGrids();
+                loadBookingCards();
             }
         });
     }

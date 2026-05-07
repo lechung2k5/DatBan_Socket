@@ -5,6 +5,9 @@ import dao.TableDAO;
 import utils.JsonUtil;
 import network.Request;
 import network.Response;
+import network.Service;
+import network.RealTimeEvent;
+import network.CommandType;
 import java.util.List;
 /**
 * TableService - QuáÂºÂ£n lÃÂ½ tráÂºÂ¡ng thÃÂ¡i bÃÂ n ÃÆn vÃÂ  sÃÂ¡ ÃâáÂ»â phÃÂ²ng
@@ -51,8 +54,15 @@ public class TableService {
     return Response.error("ThiáÂºÂ¿u tham sáÂ»â maBan");
 }
 // Quan tráÂ»Âng: Invalidate cache ÃâáÂ»Æ client khÃÂ¡c tháÂºÂ¥y sáÂ»Â± thay ÃâáÂ»â¢i ngay láÂºÂ­p táÂ»Â©c
-CacheService.invalidateTables();
-return Response.ok("CáÂºÂ­p nháÂºÂ­t tráÂºÂ¡ng thÃÂ¡i bÃÂ n thÃÂ nh cÃÂ´ng");
+
+
+        // Quan trọng: Invalidate cache để client khác thấy sự thay đổi ngay lập tức
+        CacheService.invalidateTables();
+        
+        // 🔥 Broadcast sự kiện cập nhật bàn tới tất cả client
+        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật trạng thái bàn"));
+        
+        return Response.ok("Cập nhật trạng thái bàn thành công");
 } catch (Exception e) {
 System.err.println("[TableService] LáÂ»âi updateStatus: " + e.getMessage());
 return Response.error("LáÂ»âi cáÂºÂ­p nháÂºÂ­t bÃ n: " + e.getMessage());

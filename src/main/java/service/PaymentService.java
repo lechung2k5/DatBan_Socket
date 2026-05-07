@@ -4,6 +4,9 @@ import dao.InvoiceDAO;
 import dao.TableDAO;
 import network.Request;
 import network.Response;
+import network.Service;
+import network.RealTimeEvent;
+import network.CommandType;
 import utils.JsonUtil;
 import java.util.List;
 import entity.HoaDon;
@@ -58,7 +61,14 @@ public class PaymentService {
                 }
             }
 
+            
+            
             CacheService.invalidateTables();
+            
+            // 🔥 Broadcast sự kiện cập nhật bàn và hóa đơn
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Bàn đã được giải phóng sau thanh toán"));
+            Service.broadcast(new RealTimeEvent(CommandType.CHECK_OUT, "Hóa đơn đã được thanh toán"));
+            
             System.out.println("[PaymentService] Thanh toán thành công: " + maHD);
             return Response.ok("Thanh toán thành công");
         } catch (Exception e) {

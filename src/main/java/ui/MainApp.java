@@ -16,6 +16,8 @@ import java.time.LocalDate;
 import java.util.prefs.Preferences;
 import java.time.format.DateTimeParseException;
 import java.util.prefs.BackingStoreException; // Thêm import này
+import network.RealTimeClient;
+
 public class MainApp extends Application {
     private Stage primaryStage;
     private Stage preloaderStage;
@@ -208,6 +210,8 @@ return -1.0; // Trả về -1 nếu không khớp hoặc chưa lưu
 }
 // --- Hàm main (giữ nguyên) ---
 public static void main(String[] args) {
+    // 🔥 Khởi động bộ lắng nghe Real-time
+    RealTimeClient.getInstance().start();
     launch(args);
 }
 }
