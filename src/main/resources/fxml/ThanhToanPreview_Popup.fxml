@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.ComboBox?> 
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Priority?>
+
+
+<VBox fx:controller="ui.ThanhToanPreviewController" alignment="TOP_CENTER" spacing="15.0" styleClass="popup-container" stylesheets="@../css/DatBan.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+   
+   <fx:define>
+      <ToggleGroup fx:id="paymentGroup" /> 
+   </fx:define>
+   
+   <padding>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+   </padding>
+   <Label styleClass="receipt-main-title" text="XÁC NHẬN THANH TOÁN" />
+   <Label fx:id="lblMaHD" style="-fx-font-weight: bold;" text="SỐ HĐ: HDXXXXXX" />
+   
+   <GridPane hgap="10" vgap="5" style="-fx-padding: 0 5 0 5;">
+        <columnConstraints>
+           <ColumnConstraints percentWidth="50" />
+           <ColumnConstraints percentWidth="50" />
+       </columnConstraints>
+       <Label fx:id="lblNgay" text="Ngày: N/A" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+       <Label fx:id="lblGioVao" text="Giờ vào: N/A" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+       
+       <Label fx:id="lblThuNgan" text="Thu ngân: N/A" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+       <Label fx:id="lblGioRa" text="Giờ ra: N/A" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+       
+       <Label fx:id="lblKhachHang" text="Khách hàng: N/A" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+   </GridPane>
+
+   
+   <TableView fx:id="tblMonAnThanhToan" prefHeight="200.0" VBox.vgrow="ALWAYS" style="-fx-border-color: #ddd;">
+      <columns>
+         <TableColumn fx:id="colStt" prefWidth="30.0" text="STT" />
+         <TableColumn fx:id="colTenMon" prefWidth="120.0" text="Tên món" />
+         <TableColumn fx:id="colSL" prefWidth="40.0" text="SL" />
+         <TableColumn fx:id="colDonGia" prefWidth="80.0" text="Đơn giá" />
+         <TableColumn fx:id="colThanhTien" prefWidth="100.0" text="Thành tiền" />
+      </columns>
+   </TableView>
+
+   
+   <VBox spacing="8.0" styleClass="receipt-summary-group">
+      <Label fx:id="lblBan" style="-fx-font-style: italic;" text="Bàn: Bxxx" />
+      <HBox>
+         <Label styleClass="receipt-summary-label" text="Tổng tiền món ăn:" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblTongMonAn" text="0 Đ" />
+      </HBox>
+      <HBox>
+         <Label styleClass="receipt-summary-label" text="Phí dịch vụ (5%):" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblPhiDV" text="0 Đ" />
+      </HBox>
+      <HBox>
+         <Label styleClass="receipt-summary-label" text="Thuế VAT (8%):" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblThueVAT" text="0 Đ" />
+      </HBox>
+      <HBox>
+         <Label styleClass="receipt-summary-label" text="Tiền đặt cọc:" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblTienCoc" text="0 Đ" />
+      </HBox>
+      
+      <HBox styleClass="receipt-total" style="-fx-border-color: #333; -fx-border-width: 1 0 0 0; -fx-padding: 8 0 0 0;">
+         <Label styleClass="receipt-total-label" text="TỔNG TIỀN TRƯỚC KM:" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblTongTruocKM" styleClass="receipt-total-value" text="0 Đ" />
+      </HBox>
+      <VBox spacing="5" style="-fx-padding: 10 0 5 0;">
+    <Label text="Chọn Ưu đãi Áp dụng:" styleClass="receipt-title-small"/>
+    <ComboBox fx:id="promoComboBoxPreview" prefWidth="Infinity" />
+	</VBox>
+   </VBox>
+   
+   <VBox spacing="8.0" styleClass="receipt-summary-group-2" style="-fx-padding: 10 0 0 0;">
+      <HBox>
+         <Label styleClass="receipt-summary-label" text="Khách hàng thành viên:" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblThanhVien" text="N/A" />
+      </HBox>
+      <HBox>
+         <Label styleClass="receipt-summary-label" text="Ưu đãi áp dụng:" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblUuDaiApDung" text="0 Đ" />
+      </HBox>
+      
+      <HBox styleClass="receipt-final-total" style="-fx-border-color: #333; -fx-border-width: 1 0 0 0; -fx-padding: 8 0 0 0;">
+         <Label styleClass="receipt-total-label" text="TỔNG THANH TOÁN:" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblTongThanhToan" styleClass="receipt-total-value" text="0 Đ" />
+      </HBox>
+      
+      <HBox styleClass="receipt-final-total" style="-fx-padding: 5 0 0 0;">
+         <Label styleClass="receipt-total-label" text="SỐ TIỀN KHÁCH TRẢ:" />
+         <Region HBox.hgrow="ALWAYS" />
+         <Label fx:id="lblSoTienKhachTra" styleClass="receipt-total-value" text="0 Đ" />
+      </HBox>
+   </VBox>
+   
+   <VBox spacing="8.0">
+      <Label styleClass="form-title" text="CHỌN PHƯƠNG THỨC THANH TOÁN" alignment="CENTER" maxWidth="Infinity" style="-fx-padding: 15 0 0 0;"/>
+      <HBox spacing="10.0" alignment="CENTER">
+         <ToggleButton fx:id="btnTienMat" selected="true" styleClass="payment-method-button, cash" text="Tiền mặt" toggleGroup="$paymentGroup" />
+         <ToggleButton fx:id="btnNganHang" styleClass="payment-method-button, bank" text="Ngân hàng" toggleGroup="$paymentGroup" />
+         <ToggleButton fx:id="btnMoMo" styleClass="payment-method-button, momo" text="MoMo" toggleGroup="$paymentGroup" />
+      </HBox>
+   </VBox>
+
+   <HBox alignment="CENTER" spacing="15.0" style="-fx-padding: 10 0 0 0;">
+      <Button fx:id="btnHuy" mnemonicParsing="false" styleClass="action-button-cancel" text="Hủy" />
+      
+      <Button fx:id="btnInHoaDon" mnemonicParsing="false" styleClass="print-button-large" text="In Hóa đơn" /> 
+      
+      
+   </HBox>
+</VBox>

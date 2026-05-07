@@ -1,0 +1,209 @@
+package service;
+import entity.ChiTietHoaDon;
+import entity.HoaDon;
+import dao.InvoiceDAO;
+import utils.JsonUtil;
+import network.Request;
+import network.Response;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+/**
+* OrderService - Quản lý nghiệp vụ đặt bàn và gọi món
+*/
+public class OrderService {
+    private final InvoiceDAO invoiceDAO = new InvoiceDAO();
+
+    public Response handleGenerateId(Request request) {
+        try {
+            return Response.ok(invoiceDAO.generateNextId());
+        } catch (Exception e) {
+            return Response.error("Lỗi sinh mã: " + e.getMessage());
+        }
+    }
+
+    public Response handleCreateOrder(Request request) {
+        try {
+            HoaDon hd = JsonUtil.convertValue(request.getParam("hoaDon"), HoaDon.class);
+            List<ChiTietHoaDon> chiTiet = JsonUtil.fromJsonList(
+            JsonUtil.toJson(request.getParam("chiTiet")),
+            ChiTietHoaDon.class
+            );
+            // ─── Tự động tạo/cập nhật khách hàng nếu có thông tin ───
+            if (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null) {
+                new dao.CustomerDAO().insert(hd.getKhachHang()); // DAO insert đã có logic check tồn tại (hoặc nên có)
+            }
+            invoiceDAO.insert(hd, chiTiet);
+            System.out.println("[OrderService] Đã tạo hóa đơn: " + hd.getMaHD());
+            return Response.ok("Tạo đơn hàng thành công");
+        } catch (Exception e) {
+        System.err.println("[OrderService] Lỗi handleCreateOrder: " + e.getMessage());
+        return Response.error("Lỗi khi tạo đơn hàng: " + e.getMessage());
+    }
+}
+public Response handleGetInvoice(Request request) {
+    try {
+        String maHD = (String) request.getParam("maHD");
+        HoaDon hd = invoiceDAO.findById(maHD);
+        if (hd != null) return Response.ok(hd);
+        return Response.error("Không tìm thấy hóa đơn: " + maHD);
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleGetInvoicesToday(Request request) {
+    try {
+        Object dateParam = request.getParam("date");
+        LocalDate date = (dateParam instanceof String) ? LocalDate.parse((String) dateParam) : LocalDate.now();
+        List<HoaDon> list = invoiceDAO.findByDate(date);
+        return Response.ok(list);
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleGetInvoicesPending(Request request) {
+    try {
+        List<HoaDon> list = invoiceDAO.findPending();
+        return Response.ok(list);
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleGetActiveInvoices(Request request) {
+    try {
+        String type = (String) request.getParam("type");
+        if ("ACTIVE_TABLE_IDS".equals(type)) {
+            return Response.ok(invoiceDAO.findActiveTableIds());
+        }
+        String status = (String) request.getParam("status");
+        return Response.ok(invoiceDAO.findByStatus(status));
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleUpdateInvoicePromo(Request request) {
+    try {
+        String maHD = (String) request.getParam("maHD");
+        String maUuDai = (String) request.getParam("maUuDai");
+        Double giaTri = Double.valueOf(String.valueOf(request.getParam("giaTri")));
+        invoiceDAO.updatePromo(maHD, maUuDai, giaTri);
+        return Response.ok("Cập nhật khuyến mãi thành công");
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleUpdateInvoice(Request request) {
+    try {
+        String maHD = (String) request.getParam("maHD");
+        String soDT = (String) request.getParam("soDT");
+        Double tienCoc = request.getParam("tienCoc") != null ? Double.valueOf(String.valueOf(request.getParam("tienCoc"))) : null;
+        String maBan = (String) request.getParam("maBan");
+        String gioVao = (String) request.getParam("gioVao");
+        String status = (String) request.getParam("trangThai");
+        String itemsJson = (String) request.getParam("itemsJson");
+        
+        invoiceDAO.updateInfoExtended(maHD, soDT, tienCoc, maBan, gioVao, status, itemsJson);
+        return Response.ok("Cập nhật thông tin hóa đơn thành công");
+    } catch (Exception e) {
+        return Response.error("Lỗi: " + e.getMessage());
+    }
+}
+public Response handleCancelInvoice(Request request) {
+    try {
+        String maHD = (String) request.getParam("maHD");
+        String trangThai = (String) request.getParam("trangThai");
+        boolean setGioRa = Boolean.TRUE.equals(request.getParam("setGioRa"));
+        // 1. Lấy thông tin hóa đơn để biết mã bàn
+        HoaDon hd = invoiceDAO.findById(maHD);
+        // 2. Cập nhật trạng thái hóa đơn
+        invoiceDAO.updateStatus(maHD, trangThai, setGioRa);
+        // 3. Nếu có bàn, giải phóng bàn
+        if (hd != null && hd.getMaBan() != null && !hd.getMaBan().isEmpty()) {
+            new dao.TableDAO().updateStatus(hd.getMaBan(), "Trong");
+            utils.CacheService.invalidateTables();
+        }
+        return Response.ok("Hủy/Cập nhật hóa đơn thành công");
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleGetInvoicesByCustomer(Request request) {
+    try {
+        String maKH = (String) request.getParam("maKH");
+        return Response.ok(invoiceDAO.findByCustomer(maKH));
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleMergeInvoices(Request request) {
+    try {
+        String targetId = (String) request.getParam("targetId");
+        String sourceId = (String) request.getParam("sourceId");
+        invoiceDAO.mergeItems(targetId, sourceId);
+        return Response.ok("Gộp hóa đơn thành công");
+    } catch (Exception e) {
+    return Response.error("Lỗi gộp: " + e.getMessage());
+}
+}
+public Response handleCleanupMerged(Request request) {
+    try {
+        String maHD = (String) request.getParam("maHD");
+        invoiceDAO.deleteMerged(maHD);
+        return Response.ok("Dọn dẹp hóa đơn gộp thành công");
+    } catch (Exception e) {
+    return Response.error("Lỗi dọn dẹp: " + e.getMessage());
+}
+}
+public Response handleGetInvoiceDetails(Request request) {
+    try {
+        String maHD = (String) request.getParam("maHD");
+        return Response.ok(invoiceDAO.getChiTietHoaDon(maHD));
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleSplitInvoice(Request request) {
+    try {
+        String sourceId = (String) request.getParam("sourceId");
+        String targetId = (String) request.getParam("targetId");
+        List<ChiTietHoaDon> itemsToMove = JsonUtil.fromJsonList(
+        JsonUtil.toJson(request.getParam("itemsToMove")),
+        ChiTietHoaDon.class
+        );
+        if (targetId == null || targetId.isEmpty() || targetId.startsWith("TMP")) {
+            HoaDon sourceHd = invoiceDAO.findById(sourceId);
+            HoaDon newHd = new HoaDon();
+            newHd.setMaHD(invoiceDAO.generateNextId());
+            newHd.setNgayLap(LocalDateTime.now());
+            newHd.setGioVao(sourceHd.getGioVao());
+            newHd.setKhachHang(sourceHd.getKhachHang());
+            newHd.setTrangThai("HoaDonTam");
+            newHd.setTenNhanVien(sourceHd.getTenNhanVien());
+            newHd.setMaHDGoc(sourceId);
+            invoiceDAO.insert(newHd, new ArrayList<>());
+            targetId = newHd.getMaHD();
+        }
+        invoiceDAO.splitItems(sourceId, targetId, itemsToMove);
+        return Response.ok(targetId);
+    } catch (Exception e) {
+    return Response.error("Lỗi tách: " + e.getMessage());
+}
+}
+public Response handleGetInvoicesAll(Request request) {
+    try {
+        return Response.ok(invoiceDAO.findAll());
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+public Response handleGetSubInvoices(Request request) {
+    try {
+        String maHDGoc = (String) request.getParam("maHDGoc");
+        if (maHDGoc == null || maHDGoc.isEmpty()) return Response.error("Thiếu mã hóa đơn gốc");
+        return Response.ok(invoiceDAO.findByParentId(maHDGoc));
+    } catch (Exception e) {
+    return Response.error("Lỗi: " + e.getMessage());
+}
+}
+}

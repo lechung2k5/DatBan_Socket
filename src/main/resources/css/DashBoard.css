@@ -1,0 +1,409 @@
+/* Style cho phần nội dung chính của dashboard */
+.dashboard-container {
+    -fx-background-color: transparent;
+    -fx-padding: 25px;
+    -fx-spacing: 25px;
+}
+
+/* Tiêu đề màn hình chính */
+.screen-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+/* Phần kiểm kê tiền mặt */
+.cash-check-container {
+    -fx-background-color: #f8f9fa; /* Màu xám nhạt */
+    -fx-background-radius: 10px;
+    -fx-padding: 20px;
+    -fx-spacing: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0.2, 0, 2);
+}
+
+.cash-check-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #34495e;
+}
+
+.cash-check-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #7f8c8d;
+}
+
+.cash-check-field {
+    -fx-background-color: #fff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #ced4da; /* Viền xám */
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-padding: 8px;
+}
+
+.cash-check-button {
+    -fx-background-color: #2c3e50; /* Xanh đậm */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+    -fx-padding: 8px 16px;
+}
+
+.cash-check-button:hover {
+    -fx-background-color: #34495e;
+}
+
+/* Các ô thống kê */
+.stats-card-revenue, .stats-card-dayoff, .stats-card-serving, .stats-card-reserved, .stats-card-hours {
+    -fx-background-color: #ffffff;
+    -fx-padding: 20px;
+    -fx-background-radius: 15px;
+    -fx-min-width: 200px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0.2, 0, 2);
+    -fx-spacing: 10px;
+}
+/* Container chung cho các phần mới */
+.new-features-container {
+    -fx-background-color: #fff;
+    -fx-background-radius: 15px; /* Bo góc 15px */
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.3, 0, 4); /* Bóng xịn */
+}
+
+/* Container cho bản đồ bàn ăn */
+.table-map-container {
+    -fx-background-color: #fff;
+    -fx-background-radius: 15px; /* Bo góc 15px */
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.3, 0, 4); /* Bóng xịn */
+}
+
+/* Container cho KPI cá nhân */
+.kpi-container {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 15px; /* Bo góc 15px */
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.3, 0, 4); /* Bóng xịn */
+}
+/* Lưới bàn ăn */
+.table-map-grid {
+    -fx-hgap: 10;
+    -fx-vgap: 10;
+}
+
+/* Style cho các nút bàn */
+.table-link {
+    -fx-font-size: 16px;
+    -fx-padding: 10px;
+    -fx-background-color: #f39c12; /* Cam nhạt cho link bàn */
+    -fx-background-radius: 8px; /* Bo góc */
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
+.table-link:hover {
+    -fx-background-color: #e07a10; /* Cam đậm hơn khi hover */
+}
+
+.table-link:pressed {
+    -fx-background-color: #d35400; /* Cam tối hơn khi nhấn */
+}
+
+/* Tiêu đề các phần */
+.section-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50; /* Màu đen nhạt cho tiêu đề */
+}
+
+/* Canvas KPI */
+.kpi-canvas {
+    -fx-background-color: #fff;
+}
+
+/* Nhãn chi tiết KPI */
+.kpi-detail-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #f39c12; /* Cam nhạt cho nhãn chi tiết */
+    -fx-alignment: center;
+}
+.stats-card-revenue {
+    -fx-background-color: linear-gradient(to right, #f39c12, #e67e22);
+    -fx-text-fill: white;
+}
+.stats-card-dayoff {
+    -fx-background-color: linear-gradient(to right, #2ecc71, #27ae60);
+    -fx-text-fill: white;
+}
+.stats-card-serving {
+    -fx-background-color: linear-gradient(to right, #3498db, #2980b9);
+    -fx-text-fill: white;
+}
+.stats-card-reserved {
+    -fx-background-color: linear-gradient(to right, #9b59b6, #8e44ad);
+    -fx-text-fill: white;
+}
+.stats-card-hours {
+    -fx-background-color: linear-gradient(to right, #f1c40f, #f39c12);
+    -fx-text-fill: white;
+}
+
+
+.stats-label {
+    -fx-font-size: 16px;
+    -fx-text-fill: #757575;
+}
+
+.stats-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #424242;
+}
+
+.stats-card-revenue .stats-label, .stats-card-revenue .stats-value,
+.stats-card-dayoff .stats-label, .stats-card-dayoff .stats-value,
+.stats-card-serving .stats-label, .stats-card-serving .stats-value,
+.stats-card-reserved .stats-label, .stats-card-reserved .stats-value,
+.stats-card-hours .stats-label, .stats-card-hours .stats-value {
+    -fx-text-fill: white;
+}
+
+/* Lịch */
+.calendar-container {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 15px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.3, 0, 4);
+}
+
+.calendar-header-label {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.weekly-calendar-grid {
+    -fx-background-color: #ecf0f1;
+    -fx-hgap: 10;
+    -fx-vgap: 10;
+    -fx-padding: 10px;
+}
+
+.day-of-week-label {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-padding: 15px;
+    -fx-background-radius: 8px;
+    -fx-font-size: 14px;
+    -fx-min-width: 150px;
+    -fx-max-width: 150px;
+    -fx-wrap-text: true;
+}
+
+.day-cell {
+    -fx-min-height: 120px;
+    -fx-min-width: 150px;
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 15px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.3, 0, 4);
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 15px;
+    -fx-alignment: top-left;
+}
+
+.day-cell:hover {
+    -fx-background-color: #f5f5f5;
+    -fx-cursor: hand;
+}
+
+.shift-info {
+    -fx-font-size: 14px;
+    -fx-text-fill: #2c3e50;
+    -fx-wrap-text: true;
+}
+
+/* --- 🔥 STYLE MỚI ĐàTHÊM VÀO --- */
+/* Style cho nhãn tổng giờ làm trong ca */
+.shift-duration-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555; /* Màu xám đậm */
+    -fx-font-style: italic; /* In nghiêng */
+}
+
+/* Các nút điều hướng */
+.calendar-nav-button {
+    -fx-background-color: #2980b9;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+    -fx-padding: 8px 16px;
+}
+.calendar-nav-button:hover {
+    -fx-background-color: #3498db;
+}
+
+/* DatePicker */
+.date-picker-control {
+    -fx-background-color: #fff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #ced4da;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-pref-width: 120px;
+    -fx-pref-height: 30px;
+    -fx-font-size: 12px;
+}
+/* === Khung tổng popup === */
+.date-picker-popup {
+    -fx-background-color: white;
+    -fx-background-radius: 4px;
+    -fx-border-color: #c0c0c0;
+    -fx-border-radius: 4px;
+    -fx-padding: 4;
+}
+
+/* === Thanh tháng/năm ở đầu popup === */
+.date-picker-popup .month-year-pane {
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #d0d0d0;
+    -fx-border-width: 0 0 1 0;
+    -fx-font-size: 12px;
+    -fx-font-weight: normal;
+    -fx-padding: 4 8;
+}
+
+/* === Nút chuyển tháng/năm (mũi tên) === */
+.date-picker-popup .left-arrow,
+.date-picker-popup .right-arrow {
+    -fx-background-color: transparent;
+    -fx-padding: 4;
+}
+.date-picker-popup .left-arrow:hover,
+.date-picker-popup .right-arrow:hover {
+    -fx-background-color: #e0e0e0;
+}
+
+/* === Ô ngày === */
+.date-picker-popup .day-cell {
+    -fx-background-color: white;
+    -fx-border-color: transparent;
+    -fx-alignment: center;
+    -fx-font-size: 12px;
+    -fx-padding: 2;
+    -fx-background-radius: 3;
+    -fx-min-width: 28px;
+    -fx-min-height: 24px;
+}
+
+/* Hover nhẹ */
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #e3f2fd;
+}
+
+/* Ngày được chọn */
+.date-picker-popup .day-cell:selected {
+    -fx-background-color: #2196f3;
+    -fx-text-fill: white;
+}
+
+/* Ngày hôm nay */
+.date-picker-popup .day-cell.today {
+    -fx-border-color: #2196f3;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3;
+}
+/* Thêm các style này vào file DashBoard.css */
+
+/* Style cho ô tiêu đề góc trên bên trái ("Ca làm") */
+.time-slot-label-header {
+    -fx-min-height: 50px; /* Đặt chiều cao tối thiểu */
+    -fx-min-width: 100px; /* Đặt chiều rộng tối thiểu */
+    -fx-background-color: #b9d6fd; /* Màu nền của grid */
+    -fx-background-radius: 8px;
+    -fx-padding: 15px;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-text-fill: #2c3e50;
+    -fx-alignment: center;
+}
+
+/* Style cho các ô tiêu đề hàng (Sáng, Chiều, Tối) */
+.time-slot-label {
+    -fx-min-height: 120px; /* Giống .day-cell */
+    -fx-min-width: 100px;  /* Đặt chiều rộng tối thiểu */
+    -fx-background-color: #b9d6fd; /* Giống .day-cell */
+    -fx-background-radius: 15px; /* Giống .day-cell */
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.3, 0, 4); /* Giống .day-cell */
+    -fx-border-color: #e0e0e0; /* Giống .day-cell */
+    -fx-border-width: 1px;
+    -fx-border-radius: 15px;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-text-fill: #34495e;
+    -fx-alignment: center; /* Căn giữa cho đẹp */
+}
+/* === STYLE MỚI CHO PHẦN TÓM TẮT TIỀN MẶT === */
+
+/* Container chính */
+.cash-summary-container {
+    -fx-background-color: #f8f9fa; /* Nền xám nhạt giống Kiểm kê đầu ca */
+    -fx-background-radius: 10px;  /* Bo góc */
+    -fx-padding: 15px 20px;       /* Padding bên trong */
+    -fx-spacing: 8px;            /* Khoảng cách giữa các dòng */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0.2, 0, 2); /* Bóng đổ nhẹ */
+    -fx-border-color: #e0e0e0;     /* Viền nhẹ (tùy chọn) */
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+}
+
+/* Nhãn tiêu đề (vd: "Tiền mặt đầu ca:") */
+.cash-summary-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #555555; /* Màu chữ xám đậm */
+    -fx-font-weight: 500;   /* Hơi đậm */
+    -fx-min-width: 180px;   /* Đặt chiều rộng cố định để căn chỉnh */
+    -fx-pref-width: 180px;
+}
+
+/* Nhãn tiêu đề đậm (vd: "Tiền mặt dự kiến:") */
+.cash-summary-label-bold {
+    -fx-font-size: 15px;    /* To hơn chút */
+    -fx-text-fill: #2c3e50; /* Màu chữ tiêu đề */
+    -fx-font-weight: bold;  /* Đậm */
+    -fx-min-width: 180px;   /* Đặt chiều rộng cố định */
+    -fx-pref-width: 180px;
+}
+
+/* Giá trị tiền (cỡ nhỏ) */
+.cash-summary-value-small {
+    -fx-font-size: 14px;
+    -fx-text-fill: #333333; /* Màu chữ đen nhạt */
+    -fx-font-weight: normal;
+    -fx-alignment: center-right; /* Căn phải giá trị */
+    -fx-pref-width: 150px;       /* Chiều rộng để căn phải */
+}
+
+/* Giá trị tiền (cỡ lớn, đậm - cho dòng Dự kiến) */
+.cash-summary-value-bold {
+    -fx-font-size: 16px;     /* To hơn */
+    -fx-text-fill: #e67e22;  /* Màu cam nhấn mạnh */
+    -fx-font-weight: bold;   /* Đậm */
+    -fx-alignment: center-right; /* Căn phải */
+    -fx-pref-width: 150px;        /* Chiều rộng để căn phải */
+}
+
+/* Đường kẻ ngang (Style cho HBox chứa dòng Dự kiến) */
+/* Bạn có thể thêm class="summary-divider" vào HBox đó trong FXML nếu muốn tách riêng */
+.cash-summary-container > .hbox:last-child { /* Áp dụng cho HBox cuối cùng */
+    -fx-border-color: #dddddd transparent transparent transparent; /* Viền xám nhạt phía trên */
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 10px 0 0 0; /* Padding phía trên đường kẻ */
+    -fx-margin: 8px 0 0 0;  /* Margin phía trên đường kẻ */
+}

@@ -1,0 +1,152 @@
+/* Styling for the DoiBanPopup window with a modern, professional look */
+
+/* Root popup container */
+.popup-root {
+    -fx-background-color: #ffffff; /* Clean white background */
+    -fx-border-color: #e0e0e0; /* Subtle gray border */
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0.2, 0, 2); /* Soft shadow */
+    -fx-padding: 20px; /* Consistent padding */
+}
+
+/* Popup title */
+.popup-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a1a1a; /* Darker text for better contrast */
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; /* Modern font stack */
+    -fx-padding: 0 0 15px 0; /* Spacing below title */
+}
+
+/* Labels for form fields */
+.popup-root .label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #4a4a4a; /* Softer dark gray for labels */
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Buttons */
+.confirm-button, .cancel-button, #btnTimBanTrong {
+    -fx-background-radius: 6px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+    -fx-padding: 10px 20px;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-cursor: hand; /* Hand cursor on hover */
+    -fx-transition: all 0.2s ease-in-out; /* Smooth transition for hover effects */
+}
+
+/* Confirm button (Blue) */
+.confirm-button {
+    -fx-background-color: #007bff; /* Vibrant blue */
+}
+.confirm-button:hover {
+    -fx-background-color: #0056b3; /* Darker blue on hover */
+}
+.confirm-button:pressed {
+    -fx-background-color: #004085; /* Even darker when pressed */
+}
+
+/* Cancel button (Gray) */
+.cancel-button {
+    -fx-background-color: #6c757d; /* Neutral gray */
+}
+.cancel-button:hover {
+    -fx-background-color: #5a6268; /* Darker gray on hover */
+}
+.cancel-button:pressed {
+    -fx-background-color: #494f54; /* Darker when pressed */
+}
+
+/* Find empty table button (Green accent) */
+#btnTimBanTrong {
+    -fx-background-color: #28a745; /* Green for action */
+}
+#btnTimBanTrong:hover {
+    -fx-background-color: #218838; /* Darker green on hover */
+}
+#btnTimBanTrong:pressed {
+    -fx-background-color: #1c6c30; /* Darker when pressed */
+}
+
+/* ListView styling */
+.list-view {
+    -fx-background-color: #f8f9fa; /* Light gray background */
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 5px;
+}
+
+/* ListView cell styling */
+.list-view .list-cell {
+    -fx-padding: 8px;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-text-fill: #333333;
+    -fx-background-color: transparent;
+}
+
+/* Selected list cell */
+.list-view .list-cell:selected {
+    -fx-background-color: #e7f1ff; /* Soft blue for selection */
+    -fx-text-fill: #1a1a1a;
+}
+
+/* Disabled list cell (for busy tables) */
+.list-view .list-cell:disabled {
+    -fx-background-color: #fce4e4; /* Light red for busy tables */
+    -fx-opacity: 0.7;
+}
+
+/* Hover effect for list cells */
+.list-view .list-cell:hover {
+    -fx-background-color: #f1f3f5; /* Subtle hover effect */
+}
+
+/* DatePicker styling */
+.date-picker {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 4px;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* TextField styling */
+.text-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 4px;
+    -fx-padding: 8px;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Focus effect for DatePicker and TextField */
+.date-picker:focused, .text-field:focused {
+    -fx-border-color: #007bff; /* Blue border on focus */
+    -fx-border-width: 1.5px;
+}
+
+/* GridPane spacing */
+.grid-pane {
+    -fx-hgap: 12px;
+    -fx-vgap: 8px;
+}
+
+/* HBox for buttons */
+.hbox {
+    -fx-spacing: 10px;
+}
+
+/* Add subtle animation for button transitions */
+.button {
+    -fx-transition: -fx-background-color 0.2s ease-in-out, -fx-scale-x 0.2s ease-in-out, -fx-scale-y 0.2s ease-in-out;
+}
+.button:hover {
+    -fx-scale-x: 1.02; /* Slight scale-up effect on hover */
+    -fx-scale-y: 1.02;
+}

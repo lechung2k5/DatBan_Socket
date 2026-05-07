@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane stylesheets="@../css/KhachHang.css" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.KhachHang">
+   <children>
+      <AnchorPane styleClass="inner-panel" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <VBox spacing="15.0" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="20.0">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="20.0">
+                     <children>
+                        <Label styleClass="screen-title" text="Quản lý khách hàng" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="filterComboBox" prefWidth="180.0" promptText="VIP, 
+Thành viên..." />
+                        <HBox alignment="CENTER_LEFT" styleClass="search-field">
+                           <children>
+                              <ImageView fitHeight="18.0" fitWidth="18.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../icons/iconTraCuu.png" />
+                                 </image>
+                                 <HBox.margin>
+                                    <Insets left="5.0" right="5.0" />
+                                 </HBox.margin>
+                              </ImageView>
+                              <TextField fx:id="txtSearch" prefWidth="200.0" promptText="Tìm theo SĐT..." />
+                           </children>
+                        </HBox>
+                        <Button fx:id="btnTim" mnemonicParsing="false" text="Tìm" styleClass="search-button" />
+                     </children>
+                  </HBox>
+                  <VBox styleClass="main-content-box" VBox.vgrow="ALWAYS">
+                     <children>
+                        <Label styleClass="section-title" text="Danh sách khách hàng" />
+                        <AnchorPane styleClass="table-container" prefHeight="280.0" VBox.vgrow="ALWAYS">
+                           <children>
+                              <TableView fx:id="tblKhachHang" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+                                 <columns>
+                                    <TableColumn fx:id="colMaKH" prefWidth="80.0" text="Mã KH" />
+                                    <TableColumn fx:id="colHoTen" prefWidth="180.0" text="Họ tên" />
+                                    <TableColumn fx:id="colSDT" prefWidth="120.0" text="Số điện thoại" />
+                                    <TableColumn fx:id="colDiaChi" prefWidth="200.0" text="Địa chỉ" />
+                                    <TableColumn fx:id="colEmail" prefWidth="180.0" text="Email" />
+                                    <TableColumn fx:id="colNgayDangKy" prefWidth="120.0" text="Ngày đăng ký" />
+                                    <TableColumn fx:id="colLoaiKH" prefWidth="100.0" text="Loai KH" />
+                                    <TableColumn fx:id="colTongTien" prefWidth="120.0" text="Tổng tiền HĐ" />
+                                    <TableColumn fx:id="colXemLichSu" prefWidth="120.0" text="Lịch sử HĐ" />
+                                 </columns>
+                              </TableView>
+                           </children>
+                        </AnchorPane>
+                        
+                        <GridPane hgap="30.0" vgap="45.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="NEVER" minWidth="10.0" />
+                              <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+                              <ColumnConstraints hgrow="NEVER" minWidth="10.0" />
+                              <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints minHeight="10.0" />
+                              <RowConstraints minHeight="10.0" />
+                              <RowConstraints minHeight="10.0" />
+                           </rowConstraints>
+                           <children>
+                              <Label styleClass="form-label" text="Họ tên:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                              <TextField fx:id="txtHoTen" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                              
+                              <Label styleClass="form-label" text="Địa chỉ:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                              <TextField fx:id="txtDiaChi" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+
+                              <Label styleClass="form-label" text="Số điện thoại:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                              <TextField fx:id="txtSDT" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              
+                              <Label styleClass="form-label" text="Email:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                              <TextField fx:id="txtEmail" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+
+                              <Label styleClass="form-label" text="Ngày đăng ký:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                              <DatePicker fx:id="datePickerNgayDangKy" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                           </children>
+                           <VBox.margin>
+                              <Insets top="20.0" />
+                           </VBox.margin>
+                        </GridPane>
+                        <HBox fx:id="actionButtonBox" alignment="CENTER" spacing="20.0">
+                           <children>
+                              <Button fx:id="btnThem" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Thêm" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnXoa" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Xóa" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnSua" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Sửa" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnXoaTrang" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Xóa trắng" HBox.hgrow="ALWAYS" />
+                           </children>
+                           <VBox.margin>
+                              <Insets top="30.0" />
+                           </VBox.margin>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Node?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<AnchorPane stylesheets="@../css/ThongKe.css" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.ThongKe">
+   <children>
+      <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <ScrollPane fitToWidth="true" fitToHeight="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <content>
+                  <VBox spacing="20.0" styleClass="inner-panel">
+                     <padding>
+                        <Insets bottom="20.0" left="30.0" right="30.0" top="20.0" />
+                     </padding>
+                     <children>
+                        <HBox alignment="CENTER_LEFT">
+                           <children>
+                              <Label styleClass="screen-title" text="Thống kê &amp; Báo cáo" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                           <children>
+                              <VBox styleClass="card" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label styleClass="kpi-title" text="NGÀY HIỆN TẠI" />
+                                    <Label fx:id="lblNgayHienTai" styleClass="kpi-value" text="dd/MM/yyyy" />
+                                 </children>
+                              </VBox>
+                              <VBox styleClass="card" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label styleClass="kpi-title" text="TỔNG HÓA ĐƠN (HÔM NAY)" />
+                                    <Label fx:id="lblTongHoaDon" styleClass="kpi-value" text="0" />
+                                 </children>
+                              </VBox>
+                              <VBox styleClass="card" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label styleClass="kpi-title" text="TỔNG DOANH THU (HÔM NAY)" />
+                                    <Label fx:id="lblTongDoanhThu" styleClass="kpi-value" text="0" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="filter-bar">
+                           <children>
+                              <Label text="Hiển thị:" styleClass="section-label" />
+                              <ComboBox fx:id="viewSelectorCombo" prefWidth="250.0" />
+                           </children>
+                        </HBox>
+                        <AnchorPane VBox.vgrow="ALWAYS">
+                           <children>
+                              <VBox fx:id="frameHoaDon" styleClass="colored-card" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <Label styleClass="card-title" text="Số lượng hóa đơn" />
+                                          <Region HBox.hgrow="ALWAYS" />
+                                          <HBox styleClass="filter-controls-hbox">
+                                             <children>
+                                                <Label text="Ngày:" />
+                                                <ComboBox fx:id="cbHoaDonNgay" prefWidth="90.0" />
+                                                <Label text="Tháng:" />
+                                                <ComboBox fx:id="cbHoaDonThang" prefWidth="90.0" />
+                                                <Label text="Năm:" />
+                                                <ComboBox fx:id="cbHoaDonNam" prefWidth="100.0" />
+                                                <Button fx:id="btnLocHoaDon" text="Lọc" styleClass="view-button" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </HBox>
+                                    <TableView fx:id="tblHoaDon" VBox.vgrow="ALWAYS">
+                                       <columns>
+                                          <TableColumn fx:id="colMaHoaDon" prefWidth="120.0" text="Mã hóa đơn" />
+                                          <TableColumn fx:id="colThoiGianVao" prefWidth="170.0" text="Thời gian vào bàn" />
+                                          <TableColumn fx:id="colTongTien" prefWidth="150.0" text="Tổng tiền" />
+                                          <TableColumn fx:id="colXemChiTiet" prefWidth="100.0" text="Xem chi tiết" />
+                                       </columns>
+                                       <VBox.margin>
+                                          <Insets top="10.0" />
+                                       </VBox.margin>
+                                    </TableView>
+                                    <HBox alignment="CENTER_LEFT" styleClass="note-section">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                             <children>
+                                                <VBox>
+                                                   <children>
+                                                      <Label text="Tổng số hóa đơn:" styleClass="summary-stat-label" />
+                                                      <Label fx:id="lblHoaDon_TongSoHD" styleClass="summary-stat-value" text="0" />
+                                                   </children>
+                                                </VBox>
+                                                <VBox>
+                                                   <children>
+                                                      <Label text="Tổng doanh thu:" styleClass="summary-stat-label" />
+                                                      <Label fx:id="lblHoaDon_TongDoanhThu" styleClass="summary-stat-value" text="0 ₫" />
+                                                   </children>
+                                                </VBox>
+                                             </children>
+                                          </HBox>
+                                          <Region HBox.hgrow="ALWAYS" />
+                                          <Button fx:id="btnExportHoaDon" text="Xuất Excel" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              <VBox fx:id="frameMonAn" styleClass="colored-card" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <Label styleClass="card-title" text="Món bán chạy" />
+                                          <Region HBox.hgrow="ALWAYS" />
+                                          <HBox styleClass="filter-controls-hbox">
+                                             <children>
+                                                <Label text="Ngày:" />
+                                                <ComboBox fx:id="cbMonAnNgay" prefWidth="90.0" />
+                                                <Label text="Tháng:" />
+                                                <ComboBox fx:id="cbMonAnThang" prefWidth="90.0" />
+                                                <Label text="Năm:" />
+                                                <ComboBox fx:id="cbMonAnNam" prefWidth="100.0" />
+                                                <Button fx:id="btnLocMonAn" text="Lọc" styleClass="view-button" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </HBox>
+                                    <GridPane hgap="20" VBox.vgrow="ALWAYS">
+                                       <columnConstraints>
+                                          <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0" />
+                                          <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0" />
+                                       </columnConstraints>
+                                       <rowConstraints>
+                                          <RowConstraints vgrow="ALWAYS" />
+                                       </rowConstraints>
+                                       <children>
+                                          <TableView fx:id="tblMonBanChay" VBox.vgrow="ALWAYS" GridPane.columnIndex="0">
+                                             <columns>
+                                                <TableColumn fx:id="colSTT" prefWidth="50.0" text="STT" />
+                                                <TableColumn fx:id="colTenMon" prefWidth="200.0" text="Tên món" />
+                                                <TableColumn fx:id="colSoLuong" prefWidth="130.0" text="Số lượng đã bán" />
+                                                <TableColumn fx:id="colDoanhThuMon" prefWidth="140.0" text="Doanh thu" />
+                                             </columns>
+                                             <GridPane.margin>
+                                                <Insets top="10.0" />
+                                             </GridPane.margin>
+                                          </TableView>
+                                          <VBox alignment="CENTER" spacing="10" VBox.vgrow="ALWAYS" GridPane.columnIndex="1">
+                                             <children>
+                                                <Label styleClass="card-title" text="Top 5 Doanh Thu Cao Nhất" />
+                                                <PieChart fx:id="pieChartMonAn" VBox.vgrow="ALWAYS" minHeight="350.0" />
+                                             </children>
+                                             <GridPane.margin>
+                                                <Insets top="10.0" />
+                                             </GridPane.margin>
+                                          </VBox>
+                                       </children>
+                                       <VBox.margin>
+                                          <Insets top="10.0" />
+                                       </VBox.margin>
+                                    </GridPane>
+                                    <HBox alignment="CENTER_LEFT" styleClass="note-section">
+                                       <children>
+                                          <VBox spacing="3">
+                                             <children>
+                                                <Label styleClass="text-success" text="✔ Nên: giữ chất lượng, tạo combo, nhập nguyên liệu." />
+                                                <Label styleClass="text-danger" text="❌ Không nên: để hết hàng, bỏ qua phân tích món ít bán." />
+                                             </children>
+                                          </VBox>
+                                          <Region HBox.hgrow="ALWAYS" />
+                                          <Button fx:id="btnExportMonAn" text="Xuất Excel" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              <VBox fx:id="frameDoanhThu" styleClass="colored-card" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <Label styleClass="card-title" text="Biểu đồ Doanh thu theo tuần" />
+                                          <Region HBox.hgrow="ALWAYS" />
+                                          <DatePicker fx:id="dpDoanhThuNgay" prefWidth="130.0" promptText="Chọn ngày" />
+                                          <Button fx:id="btnDoanhThuHienTai" text="Hiện tại" styleClass="view-button" />
+                                          <Button fx:id="btnDoanhThuTroVe" text="&lt; Trở về" styleClass="view-button" />
+                                          <Button fx:id="btnDoanhThuTiep" text="Tiếp &gt;" styleClass="view-button" />
+                                       </children>
+                                       <VBox.margin>
+                                          <Insets bottom="10.0" />
+                                       </VBox.margin>
+                                    </HBox>
+                                    <LineChart fx:id="chartDoanhThu" legendVisible="true" VBox.vgrow="ALWAYS">
+                                       <xAxis>
+                                          <CategoryAxis label="Ngày trong tuần" side="BOTTOM" />
+                                       </xAxis>
+                                       <yAxis>
+                                          <NumberAxis label="Doanh thu (VNĐ)" side="LEFT" />
+                                       </yAxis>
+                                    </LineChart>
+                                    <HBox alignment="CENTER_LEFT" styleClass="note-section">
+                                       <children>
+                                          <VBox spacing="5">
+                                             <children>
+                                                <Label styleClass="text-success" text="✔ Nên: khuyến mãi giờ vàng, so sánh theo ngày/tuần." />
+                                                <Label styleClass="text-danger" text="❌ Không nên: dồn hết nguồn lực vào cuối tuần." />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              <VBox fx:id="frameKhuVuc" styleClass="colored-card" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <Label styleClass="card-title" text="So sánh doanh thu theo khu vực bàn" />
+                                          <Region HBox.hgrow="ALWAYS" />
+                                          <DatePicker fx:id="dpKhuVucNgay" prefWidth="130.0" promptText="Chọn ngày" />
+                                          <Button fx:id="btnKhuVucHienTai" text="Hiện tại" styleClass="view-button" />
+                                          <Button fx:id="btnKhuVucTroVe" text="&lt; Trở về" styleClass="view-button" />
+                                          <Button fx:id="btnKhuVucTiep" text="Tiếp &gt;" styleClass="view-button" />
+                                       </children>
+                                       <VBox.margin>
+                                          <Insets bottom="10.0" />
+                                       </VBox.margin>
+                                    </HBox>
+                                    <BarChart fx:id="chartKhuVuc" VBox.vgrow="ALWAYS">
+                                       <xAxis>
+                                          <CategoryAxis side="BOTTOM" />
+                                       </xAxis>
+                                       <yAxis>
+                                          <NumberAxis side="LEFT" />
+                                       </yAxis>
+                                    </BarChart>
+                                    <HBox alignment="CENTER_LEFT" styleClass="note-section">
+                                       <children>
+                                          <VBox spacing="5">
+                                             <children>
+                                                <Label styleClass="text-success" text="✔ Nên: cải thiện khu vực ít khách, điều chỉnh bố trí." />
+                                                <Label styleClass="text-danger" text="❌ Không nên: chỉ tập trung 1 khu vực, để chênh lệch quá lớn." />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </children>
+                  </VBox>
+               </content>
+            </ScrollPane>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>

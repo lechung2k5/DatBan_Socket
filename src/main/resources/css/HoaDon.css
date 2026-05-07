@@ -1,0 +1,118 @@
+
+.clear-date-button {
+    -fx-background-color: transparent; /* Bỏ màu nền */
+    -fx-border-color: transparent; /* Bỏ viền */
+    -fx-padding: 5px; /* Giảm padding để nút nhỏ lại */
+    -fx-cursor: hand;
+    -fx-background-radius: 50%; /* Làm tròn nút */
+    -fx-min-width: 28px; /* Đặt kích thước cố định */
+    -fx-min-height: 28px;
+    -fx-pref-width: 28px;
+    -fx-pref-height: 28px;
+}
+.clear-date-button:hover {
+    -fx-background-color: #e0e0e0; /* Thêm hiệu ứng hover nhẹ */
+}
+.clear-date-button:pressed {
+    -fx-background-color: #d0d0d0; /* Hiệu ứng khi nhấn */
+}
+/* ==================== CHUNG ==================== */
+.root-pane { }
+.screen-title { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #A0522D; -fx-padding: 0; }
+
+/* ==================== PANEL ==================== */
+.left-panel, .right-panel { -fx-background-color: rgba(255, 161, 0, 0.4); 
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 5);
+} 
+
+/* ==================== TIÊU ĐỀ (PANEL PHẢI) ==================== */
+.title-container { -fx-background-color: #FFDAB9; -fx-background-radius: 20px; -fx-padding: 8px 20px; -fx-alignment: center; }
+.info-title-main, .info-value-main { -fx-font-size: 16px; -fx-text-fill: #333; }
+.info-title-main { -fx-font-weight: bold; } .info-value-main { -fx-font-weight: normal; }
+.info-title, .info-value { -fx-font-size: 14px; -fx-text-fill: #333; }
+.info-title { -fx-font-weight: bold; } .info-value { -fx-font-weight: normal; }
+.total-title, .total-value { -fx-font-size: 18px; -fx-text-fill: #d84315; }
+.total-title { -fx-font-weight: bold; } .total-value { -fx-font-weight: bold; }
+
+/* ==================== TIÊU ĐỀ VÀ THANH TÌM KIẾM (PANEL TRÁI) ==================== */
+.screen-title-new { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4a4a4a; }
+.filter-combo-new { -fx-background-color: white; -fx-background-radius: 20px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 3); -fx-font-size: 13px; -fx-padding: 5px 10px 5px 15px; }
+
+/* Removed .search-container-new as it's no longer used for styling */
+/* Removed .search-icon-new style */
+
+/* ✅ SỬA STYLE TEXTFIELD TÌM KIẾM (Thêm icon làm background) */
+.search-field-new {
+    -fx-background-color: white; /* Make background white */
+    -fx-font-size: 13px;
+    /* -fx-pref-width: 180px; */ /* Let HBox manage width or keep prefWidth */
+    -fx-prompt-text-fill: #a0a0a0; /* Lighter prompt text */
+
+    /* Icon as background */
+    -fx-background-image: url('../icons/iconTraCuu.png'); /* ❗ CHECK PATH */
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: left 10px center; /* Position icon inside */
+    -fx-background-size: 15px 15px; /* Icon size */
+
+    /* Padding: top, right, bottom, left (Increase left for icon) */
+    -fx-padding: 8px 10px 8px 35px;
+
+    /* Standard border and radius */
+    -fx-border-color: #ced4da; /* Light gray border */
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px; /* Fully rounded */
+    -fx-border-width: 1px;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1); /* Subtle shadow */
+}
+.search-field-new:focused {
+    -fx-border-color: #80bdff; /* Blue border on focus */
+    -fx-effect: dropshadow(gaussian, rgba(0, 123, 255, 0.25), 5, 0, 0, 1);
+}
+
+/* ✅ SỬA STYLE NÚT TÌM KIẾM (Nút riêng biệt) */
+.search-button-new {
+    -fx-background-color: #007bff; /* Blue background */
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-graphic: null; /* No icon on button */
+    -fx-min-height: 34px; /* Match TextField height visually */
+    -fx-padding: 8px 15px; /* Adjust padding */
+    -fx-background-radius: 20px; /* Fully rounded */
+    -fx-border-radius: 20px;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 3, 0, 0, 1);
+}
+.search-button-new:hover {
+    -fx-background-color: #0056b3; /* Darker blue on hover */
+}
+.search-button-new:pressed {
+    -fx-background-color: #004085; /* Even darker blue when pressed */
+}
+
+/* ==================== NÚT BẤM (BUTTON) ==================== */
+/* ... (excel-button, print-button, view-button styles remain the same) ... */
+.excel-button, .print-button { -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 5px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 3, 0, 0, 2); -fx-background-repeat: no-repeat; -fx-background-position: left 12px center; -fx-background-size: 20px 20px; -fx-padding: 8px 20px 8px 40px; -fx-cursor: hand; }
+.excel-button { -fx-background-color: #4CAF50; -fx-background-image: url('../icons/iconexcel.png'); } /* ❗ CHECK PATH */
+.excel-button:hover { -fx-background-color: #66BB6A; }
+.print-button { -fx-background-color: #ff9100; -fx-background-image: url('../icons/iconPrint.png'); } /* ❗ CHECK PATH */
+.print-button:hover { -fx-background-color: #ffb84d; }
+.view-button { -fx-background-color: #ff9100; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 4px 12px; -fx-background-radius: 5px; -fx-cursor: hand; }
+.view-button:hover { -fx-background-color: #ffa726; }
+
+
+/* ==================== BẢNG (TABLEVIEW) ==================== */
+/* ... (table styles remain the same) ... */
+.table-view { -fx-border-color: #dcdcdc; -fx-border-radius: 5px; -fx-background-radius: 5px; }
+.table-view .column-header-background { -fx-background-color: #d7ccc8; -fx-background-radius: 5px 5px 0 0; -fx-background-insets: 0; -fx-padding: 5px; }
+.table-view .column-header .label { -fx-text-fill: #4e342e; -fx-font-weight: bold; -fx-font-size: 13px; -fx-alignment: CENTER_LEFT; -fx-padding: 0 0 0 10px; }
+.table-view .table-column:last-child .column-header .label { -fx-alignment: CENTER; -fx-padding: 0; }
+.table-view .table-cell { -fx-alignment: CENTER_LEFT; -fx-padding: 5px 10px; -fx-border-color: transparent transparent #e0e0e0 transparent; -fx-font-size: 13px; }
+.table-view .table-column:last-child .table-cell { -fx-alignment: CENTER; -fx-padding: 5px; }
+.table-view .table-row-cell:last-child .table-cell { -fx-border-color: transparent; }
+.table-view:focused .table-row-cell:selected { -fx-background-color: #FFF3E0; -fx-text-fill: #333; }
+.table-view:focused .table-row-cell:selected .table-cell { -fx-text-fill: #333; }

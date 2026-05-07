@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:controller="ui.ManHinhChinh" prefHeight="720.0" prefWidth="1280.0" stylesheets="@../css/manHinhChinh.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+      <HBox alignment="CENTER_LEFT" style="-fx-background-color: #FFFFFF; -fx-border-width: 0 0 1 0; -fx-border-color: #E0E0E0; -fx-padding: 2 0;">
+          <children>
+              <MenuBar styleClass="menu-bar">
+                  <menus>
+                     <Menu mnemonicParsing="false" text="Hệ thống">
+                         <graphic>
+                             <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true"> <image><Image url="@/icons/menubar/icons8-system-50.png" /></image> </ImageView>
+                         </graphic>
+                        <items>
+                            <MenuItem fx:id="doiMatKhauMenuItem" mnemonicParsing="false" text="Đổi mật khẩu" onAction="#handleDoiMatKhau"/>
+                            <MenuItem fx:id="toggleThemeMenuItem" mnemonicParsing="false" text="Chuyển chế độ Tối" onAction="#handleToggleTheme"/>
+                           <SeparatorMenuItem mnemonicParsing="false" />
+                            <MenuItem fx:id="dangXuatMenuItem" mnemonicParsing="false" text="Đăng xuất" onAction="#handleDangXuat"/>
+                            <MenuItem fx:id="thoatMenuItem" mnemonicParsing="false" text="Thoát" onAction="#handleThoat"/>
+                        </items>
+                      </Menu>
+                     <Menu mnemonicParsing="false" text="Tiện ích">
+                          <graphic>
+                             <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true"> <image><Image url="@/icons/menubar/icons8-utilities-50.png" /></image> </ImageView>
+                          </graphic>
+                        <items>
+                          <MenuItem fx:id="guiChuongTrinhTVMenuItem" mnemonicParsing="false" text="Gửi Chương trình Thành viên" onAction="#handleGuiChuongTrinhTV"/>
+                          <Menu text="Quản lý Tài chính">
+							    <MenuItem text="Chốt ca &amp; Kiểm kê" onAction="#handleXemLogKiemKeTienMat" />
+							    
+							    <MenuItem text="Xem Nhật ký kiểm kê" onAction="#handleXemNhatKyKiemKe" />
+							</Menu>
+                        </items>
+                      </Menu>
+                     <Menu mnemonicParsing="false" text="Trợ giúp">
+                         <graphic>
+                              <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true"> <image><Image url="@/icons/menubar/icons8-support-50.png" /></image> </ImageView>
+                          </graphic>
+                        <items>
+                          <MenuItem fx:id="huongDanMenuItem" mnemonicParsing="false" text="Hướng dẫn sử dụng" onAction="#handleHuongDan"/>
+                            <MenuItem fx:id="gioiThieuMenuItem" mnemonicParsing="false" text="Giới thiệu phần mềm" onAction="#handleGioiThieu"/>
+                        </items>
+                      </Menu>
+                  </menus>
+              </MenuBar>
+          </children>
+         <padding>
+            <Insets left="10.0" />
+         </padding>
+      </HBox>
+   </top>
+
+   <center>
+        <BorderPane>
+            <top>
+                <HBox fx:id="topBar" alignment="CENTER_LEFT" styleClass="top-bar" spacing="10.0">
+                  <children>
+                        <HBox styleClass="logo-container" alignment="CENTER_LEFT" spacing="10.0">
+                            <children>
+                                <ImageView fx:id="logoImageView" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                                    <image> <Image url="@/images/LOGO TU HUU.png"/> </image>
+                                </ImageView>
+                                <Label text="TỨ HỮU" styleClass="logo-text"/>
+                            </children>
+                        </HBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <ImageView fx:id="profileImage" fitHeight="30.0" fitWidth="30.0" preserveRatio="true" styleClass="profile-image"> <image> <Image url="@/icons/iconUserPlaceholder.png"/> </image> </ImageView>
+                        <VBox styleClass="user-info" alignment="CENTER_LEFT">
+                           <children>
+                                <Label fx:id="userNameLabel" text="Tên nhân viên" styleClass="user-name"/>
+                                <Label fx:id="userRoleLabel" text="Chức vụ" styleClass="user-role"/>
+                           </children>
+                        </VBox>
+                    </children>
+                    <padding> <Insets top="5.0" right="20.0" bottom="5.0" left="20.0"/> </padding>
+                </HBox>
+            </top>
+            <left>
+                <VBox fx:id="sidebar" styleClass="sidebar" spacing="10.0" BorderPane.alignment="CENTER">
+                    <children>
+                        <VBox fx:id="menuItems" styleClass="menu-items" spacing="10.0">
+                           <children>
+                                <Button fx:id="manHinhChinhButton" onAction="#handleManHinhChinh" text="Màn hình chính" styleClass="menu-button-active">
+                                    <graphic><ImageView fx:id="manHinhChinhIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconHome.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="quanLyDatBanButton" onAction="#handleQuanLyDatBan" text="Quản lý đặt bàn" styleClass="menu-button">
+                                   <graphic><ImageView fx:id="quanLyDatBanIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconDatBan.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="quanLyThongKeButton" onAction="#handleQuanLyThongKe" text="Quản lý thống kê" styleClass="menu-button">
+                                    <graphic><ImageView fx:id="quanLyThongKeIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconThongKe.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="quanLyThucDonButton" onAction="#handleQuanLyThucDon" text="Quản lý thực đơn" styleClass="menu-button">
+                                    <graphic><ImageView fx:id="quanLyThucDonIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconThucDon.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="quanLyHoaDonButton" onAction="#handleQuanLyHoaDon" text="Quản lý hóa đơn" styleClass="menu-button">
+                                    <graphic><ImageView fx:id="quanLyHoaDonIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconHoaDon.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="quanLyNhanVienButton" onAction="#handleQuanLyNhanVien" text="Quản lý nhân viên" styleClass="menu-button">
+                                    <graphic><ImageView fx:id="quanLyNhanVienIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconNhanVien.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="quanLyKhachHangButton" onAction="#handleQuanLyKhachHang" text="Quản lý khách hàng" styleClass="menu-button">
+                                    <graphic><ImageView fx:id="quanLyKhachHangIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconKhachHang.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="quanLyKhuyenMaiButton" onAction="#handleQuanLyKhuyenMai" text="Quản lý khuyến mãi" styleClass="menu-button">
+                                    <graphic><ImageView fx:id="quanLyKhuyenMaiIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconKhuyenMai.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="quanLyTraCuuButton" onAction="#handleQuanLyTraCuu" text="Quản lý tra cứu" styleClass="menu-button">
+                                   <graphic><ImageView fx:id="quanLyTraCuuIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconTraCuu.png"/></image></ImageView></graphic>
+                                </Button>
+                                <Button fx:id="dangXuatButton" onAction="#handleDangXuat" text="Đăng xuất" styleClass="menu-button">
+                                   <graphic><ImageView fx:id="dangXuatIcon" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true"><image><Image url="@/icons/iconDangXuat.png"/></image></ImageView></graphic>
+                                </Button>
+                           </children>
+                        </VBox>
+                     </children>
+                    <padding><Insets top="10.0" /></padding>
+                </VBox>
+            </left>
+            <center>
+                <BorderPane fx:id="contentArea" styleClass="content-area"/>
+             </center>
+        </BorderPane>
+    </center>
+</BorderPane>

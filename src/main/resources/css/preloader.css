@@ -1,0 +1,6 @@
+.neon-arc {
+    -fx-effect: dropshadow(gaussian, #FF8C00, 15, 0.7, 0, 0); 
+    
+    /* 🔥 THÊM DÒNG NÀY: */
+    -fx-smooth: true; /* Yêu cầu render mượt, chống răng cưa */
+}

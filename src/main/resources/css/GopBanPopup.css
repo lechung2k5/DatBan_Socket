@@ -1,0 +1,88 @@
+/* ==================== GopBanPopup.css ==================== */
+
+/* Cấu trúc chung của Popup */
+.root {
+    -fx-background-color: #f5f5f5; /* Nền xám nhẹ */
+    -fx-border-color: #ff9100; /* Màu cam chủ đạo cho border */
+    -fx-border-width: 2px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 5);
+    -fx-font-size: 13px;
+    -fx-font-family: "System";
+}
+
+.popup-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4e342e; /* Màu nâu đậm */
+    -fx-padding: 0 0 5px 0;
+}
+
+/* Thông tin Hóa đơn Master */
+.vbox {
+    -fx-padding: 10px;
+    -fx-spacing: 5px;
+}
+#lblHDMaster {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-text-fill: #d81b60; /* Màu hồng nổi bật */
+    -fx-background-color: #fff3e0; /* Nền cam nhạt */
+    -fx-padding: 8px;
+    -fx-background-radius: 4px;
+}
+
+/* ListView - Danh sách Hóa đơn có thể Gộp */
+.list-view {
+    -fx-border-color: #ccc;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+/* Item trong ListView */
+.list-cell {
+    -fx-padding: 10px 15px;
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 1px 0;
+    -fx-border-color: #eee;
+}
+
+/* Hover effect */
+.list-cell:filled:hover {
+    -fx-background-color: #fffde7; /* Vàng rất nhạt */
+    -fx-cursor: hand;
+}
+
+/* Selected item style (cho Checkbox) */
+.check-box:selected .box {
+    -fx-background-color: #ff9100; /* Màu cam khi được check */
+    -fx-border-color: #ff9100;
+}
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+/* --- NÚT HÀNH ĐỘNG (BOTTOM) --- */
+.h-box {
+    -fx-padding: 10px 0 0 0;
+}
+
+.cancel-button {
+    -fx-background-color: #bdbdbd; /* Xám */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 20px;
+    -fx-background-radius: 6px;
+}
+
+.confirm-button {
+    -fx-background-color: #4e342e; /* Nâu đậm */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 20px;
+    -fx-background-radius: 6px;
+}
+.confirm-button:hover {
+    -fx-background-color: #ff9100; /* Cam khi hover */
+}

@@ -1,0 +1,81 @@
+/* TienMat.css */
+
+.cash-payment-popup-root {
+    -fx-background-color: #ffffff;
+    -fx-padding: 20px;
+}
+.popup-title {
+    -fx-font-size: 1.5em;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-padding: 0 0 10px 0;
+}
+.cash-preset-button {
+    -fx-background-color: #ffffff; 
+    -fx-text-fill: #0d6efd; 
+    -fx-font-weight: 500;
+    -fx-font-size: 0.95em;
+    -fx-padding: 10px 15px;
+    -fx-border-radius: 5px; 
+    -fx-background-radius: 5px;
+    -fx-border-color: #0d6efd; 
+    -fx-border-width: 1px;
+}
+.cash-preset-button:selected,
+.cash-preset-button:selected:hover {
+    -fx-background-color: #ff9900;
+    -fx-text-fill: white;
+    -fx-border-color: #ff9900;
+}
+.input-label {
+    -fx-font-size: 1.05em;
+    -fx-text-fill: #333333;
+    -fx-font-weight: 500;
+    -fx-padding: 0 10px 0 0;
+}
+.text-field {
+    -fx-background-color: #ffffff; 
+    -fx-border-color: #ced4da; 
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-size: 1.1em;
+    -fx-padding: 8px 10px;
+    -fx-font-weight: 500;
+}
+.input-field-cash-return {
+    -fx-background-color: #f5f5f5; 
+    -fx-text-fill: #2f9e44; 
+    -fx-font-weight: bold;
+}
+.input-field-error {
+    -fx-border-color: #dc3545; 
+    -fx-border-width: 2px;
+}
+/* ================== NÚT XÁC NHẬN (CẬP NHẬT) ================== */
+
+.confirm-button-large {
+    -fx-background-color: #ff9900; /* Màu cam chính */
+    -fx-text-fill: white;
+    -fx-font-size: 1.2em;
+    -fx-font-weight: bold;
+    -fx-padding: 12px 0;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-cursor: hand;
+    -fx-pref-width: 100%; /* Đảm bảo nút chiếm toàn bộ chiều ngang */
+    -fx-min-width: 100%;
+}
+
+.confirm-button-large:hover {
+    -fx-background-color: #e68a00; /* Màu cam đậm hơn khi hover */
+}
+
+/* 🔥 STYLE CHO TRẠNG THÁI VÔ HIỆU HÓA (Mờ nhưng dễ nhìn) */
+.confirm-button-large:disabled {
+    -fx-background-color: #cccccc; /* Nền xám nhạt nhưng rõ ràng hơn */
+    -fx-text-fill: #666666;        /* Màu chữ xám đậm hơn để dễ đọc */
+    -fx-border-color: #bbbbbb;
+    -fx-border-width: 1px;
+    -fx-opacity: 0.7; /* Giảm độ mờ để nút vẫn thấy rõ */
+}

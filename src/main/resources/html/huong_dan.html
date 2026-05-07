@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Tứ Hữu System - Tài liệu Hướng Dẫn Sử Dụng Cơ Bản</title>
+    <style>
+        /* --- PHONG CÁCH MIỀN TÂY BIỂN KHƠI --- */
+        :root {
+            --ocean-deep: #073b4c; /* Xanh biển sâu - Đậm tình */
+            --ocean-light: #118ab2; /* Xanh lơ thanh thoát */
+            --viet-gold: #ffd166;  /* Vàng nắng phù sa */
+            --lotus-pink: #ef476f; /* Hồng sen điểm xuyết */
+            --bg-light: #fefae0;   /* Màu kem giấy cũ - Thanh thoát */
+            --wood-brown: #606c38; /* Màu tre nứa/gỗ trầm */
+            --text-main: #283618;  /* Nâu đen vỏ cây */
+            --border-soft: rgba(7, 59, 76, 0.15);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            font-family: 'Segoe UI', 'Playfair Display', serif;
+            display: flex; height: 100vh; overflow: hidden;
+        }
+
+        /* Hiệu ứng vân gỗ/sóng nước nhẹ nhàng cho nền */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://www.transparenttextures.com/patterns/pinstriped-suit.png'); /* Giả lập vân tre */
+            opacity: 0.3; z-index: -1;
+        }
+
+        /* --- SIDEBAR MÀU BIỂN SÂU --- */
+        .sidebar {
+            width: 360px; min-width: 360px;
+            background: var(--ocean-deep);
+            border-right: 4px solid var(--wood-brown);
+            overflow-y: auto; display: flex; flex-direction: column;
+            padding: 30px 20px;
+        }
+
+        .sidebar h2 {
+            color: var(--viet-gold); font-size: 1.4rem; text-transform: uppercase;
+            letter-spacing: 2px; border-bottom: 2px solid var(--viet-gold);
+            padding-bottom: 15px; margin-bottom: 30px; text-align: center;
+        }
+
+        .nav-header {
+            font-size: 0.9rem; font-weight: bold; color: var(--viet-gold);
+            text-transform: uppercase; margin-top: 20px; margin-bottom: 10px;
+            display: block; opacity: 0.8;
+        }
+
+        .nav-link {
+            display: block; padding: 12px 15px; color: #fff;
+            text-decoration: none; font-size: 0.95rem; border-radius: 10px;
+            transition: all 0.4s ease; margin-bottom: 5px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link:hover {
+            background: var(--viet-gold); color: var(--ocean-deep);
+            padding-left: 25px; transform: scale(1.02);
+        }
+
+        /* --- NỘI DUNG CHÍNH --- */
+        .main-content {
+            flex: 1; overflow-y: auto; padding: 60px;
+            scroll-behavior: smooth;
+        }
+
+        .container { max-width: 950px; margin: 0 auto; }
+
+        .hero-banner {
+            text-align: center; margin-bottom: 80px;
+            border: 2px solid var(--ocean-deep);
+            padding: 60px; border-radius: 50px 5px 50px 5px; /* Bo góc kiểu lá sen */
+            background: #fff;
+            box-shadow: 10px 10px 0px var(--ocean-deep);
+        }
+
+        h1 { font-size: 3rem; color: var(--ocean-deep); margin: 0; font-family: 'Playfair Display', serif; }
+        
+        .section-card {
+            background: #fff; border-radius: 25px;
+            padding: 50px; margin-bottom: 60px;
+            border: 1px solid var(--border-soft);
+            box-shadow: 0 15px 35px rgba(7, 59, 76, 0.05);
+            position: relative;
+        }
+
+        /* Trang trí góc thẻ bằng biểu tượng sóng nước */
+        .section-card::after {
+            content: "~~~"; position: absolute; bottom: 15px; right: 25px;
+            color: var(--ocean-light); font-weight: bold; opacity: 0.4;
+        }
+
+        h2 { color: var(--ocean-deep); font-size: 2rem; border-bottom: 3px solid var(--viet-gold); display: inline-block; padding-bottom: 10px; }
+        h3 { color: var(--ocean-light); margin-top: 40px; font-size: 1.6rem; }
+        h4 { color: var(--wood-brown); font-size: 1.3rem; margin-top: 30px; }
+
+        .step-container { margin: 30px 0; }
+        .step-item { display: flex; align-items: flex-start; margin-bottom: 20px; }
+
+        /* Step num kiểu hạt ngọc đại dương */
+        .step-num {
+            background: linear-gradient(135deg, var(--ocean-deep), var(--ocean-light));
+            color: white; min-width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; margin-right: 20px; flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(7, 59, 76, 0.3);
+        }
+
+        .img-placeholder {
+            width: 100%; border-radius: 20px; border: 4px double var(--border-soft);
+            overflow: hidden; background: #fdfdfd; padding: 10px;
+            margin: 35px 0; text-align: center;
+        }
+
+        .img-placeholder img {
+            width: 100%; border-radius: 15px; display: block;
+            transition: transform 0.5s ease;
+        }
+        
+        .img-placeholder:hover img { transform: scale(1.02); }
+
+        .img-label {
+            display: block; margin-top: 15px; color: var(--wood-brown);
+            font-style: italic; font-size: 0.9rem; font-weight: 500;
+        }
+
+        .table-pro {
+            width: 100%; border-collapse: collapse; margin: 30px 0;
+            background: #fff; border-radius: 15px; overflow: hidden;
+            border: 1px solid var(--border-soft);
+        }
+        .table-pro th { background: var(--ocean-deep); color: #fff; padding: 15px; }
+        .table-pro td { padding: 15px; border-bottom: 1px solid var(--border-soft); }
+
+        .step-box {
+            background: rgba(17, 138, 178, 0.05);
+            border-left: 5px solid var(--ocean-light);
+            padding: 25px; border-radius: 0 15px 15px 0;
+            margin: 25px 0; font-style: italic;
+        }
+
+        footer {
+            text-align: center; padding: 80px; color: var(--ocean-deep);
+            border-top: 2px solid var(--viet-gold); opacity: 0.8;
+        }
+
+        /* Tùy chỉnh Scrollbar kiểu gỗ tre */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-light); }
+        ::-webkit-scrollbar-thumb { background: var(--wood-brown); border-radius: 10px; border: 2px solid var(--bg-light); }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>DASHBOARD MANUAL</h2>
+    
+    <div class="nav-group">
+        <span class="nav-header">I. THÔNG TIN CHUNG</span>
+        <a href="#intro" class="nav-link">Giới thiệu ứng dụng</a>
+        <a href="#config" class="nav-link">Cấu hình hệ thống</a>
+    </div>
+
+    <div class="nav-group">
+        <span class="nav-header">II. NHÂN VIÊN THU NGÂN</span>
+        <a href="#f411" class="nav-link">1.1 Tạo đặt bàn</a>
+        <a href="#f412" class="nav-link">1.2 Hủy đặt bàn</a>
+        <a href="#f413" class="nav-link">1.3 Đổi bàn</a>
+        <a href="#f414" class="nav-link">1.4 Gọi món</a>
+        <a href="#f415" class="nav-link">1.5 Tách bàn</a>
+        <a href="#f416" class="nav-link">1.6 Gộp bàn</a>
+        <a href="#f417" class="nav-link">1.7 Thanh toán hóa đơn</a>
+        <a href="#f418" class="nav-link">1.8 Xuất Excel & In HD</a>
+        <a href="#f419" class="nav-link">1.9 Thêm khách hàng</a>
+        <a href="#f4110" class="nav-link">1.10 Xóa khách hàng</a>
+        <a href="#f4111" class="nav-link">1.11 Sửa khách hàng</a>
+        <a href="#f4112" class="nav-link">1.12 Xóa trắng</a>
+    </div>
+
+    <div class="nav-group">
+        <span class="nav-header">III. NGƯỜI QUẢN LÝ</span>
+        <a href="#f421" class="nav-link">2.1 Thống kê</a>
+        <a href="#f422" class="nav-link">2.2 Báo cáo</a>
+        <a href="#f423" class="nav-link">2.3 Thêm món mới</a>
+        <a href="#f424" class="nav-link">2.4 Xóa món thực đơn</a>
+        <a href="#f425" class="nav-link">2.5 Sửa món thực đơn</a>
+        <a href="#f426" class="nav-link">2.6 Xóa trắng thông tin</a>
+        <a href="#f427" class="nav-link">2.7 Thêm nhân viên mới</a>
+        <a href="#f428" class="nav-link">2.8 Sửa thông tin NV</a>
+        <a href="#f429" class="nav-link">2.9 Xóa nhân viên</a>
+        <a href="#f4210" class="nav-link">2.10 Phân chia ca trực</a>
+        <a href="#f4211" class="nav-link">2.11 Thêm khuyến mãi</a>
+        <a href="#f4212" class="nav-link">2.12 Sửa khuyến mãi</a>
+        <a href="#f4213" class="nav-link">2.13 Xóa khuyến mãi</a>
+        <a href="#f4214" class="nav-link">2.14 Tra cứu hóa đơn</a>
+        <a href="#f4215" class="nav-link">2.15 Tra cứu khách hàng</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="container">
+        <div class="cover-page">
+            <h1>NHÀ HÀNG TỨ HỮU</h1>
+            <p style="font-size: 1.5rem; color: var(--neon-purple);">TÀI LIỆU HƯỚNG DẪN SỬ DỤNG  V1.0</p>
+            <p>Thực hiện: NHÓM 08</p>
+        </div>
+
+        <section id="intro" class="section-card">
+            <h2>GIỚI THIỆU ỨNG DỤNG</h2>
+            <p>Với mong muốn đem lại sự thuận tiện và nhanh chóng trong quá trình đặt bàn, quản lý phục vụ cũng như theo dõi hoạt động kinh doanh tại Nhà hàng Tứ Hữu, nhóm đã tiến hành xây dựng ứng dụng quản lý đặt bàn. Ứng dụng ra đời nhằm giảm bớt những sai sót do quản lý thủ công, nâng cao hiệu quả vận hành và mang lại trải nghiệm chuyên nghiệp hơn cho khách hàng.</p>
+            <p>Ứng dụng cung cấp nhiều tiện ích giúp việc đặt bàn trở nên dễ dàng và chính xác hơn như kiểm tra nhanh tình trạng bàn, theo dõi lịch đặt chỗ, quản lý thực đơn, hóa đơn, khách hàng và doanh thu. Ngoài ra hệ thống còn hỗ trợ các thao tác thống kê để phân tích và đánh giá hiệu quả kinh doanh.</p>
+            <p>Một điểm nhấn quan trọng của ứng dụng là chương trình khách hàng thành viên với ba cấp độ: <b>Silver, Gold và Diamond</b>. Hệ thống không chỉ tự động tích điểm dựa trên chi tiêu, mà còn cho phép áp dụng ưu đãi tương ứng với từng cấp bậc.</p>
+        </section>
+
+        <section id="config" class="section-card">
+            <h2>CẤU HÌNH PHẦN CỨNG - PHẦN MỀM</h2>
+            <h4 id="hw">2.1 Phần cứng</h4>
+            <table class="table-custom">
+                <tr><th>CPU</th><td>Intel Core i5, 2.3 GHz </td></tr>
+                <tr><th>RAM</th><td>8 GB </td></tr>
+                <tr><th>HDD</th><td>360 GB </td></tr>
+                <tr><th>Architecture</th><td>64 bit </td></tr>
+            </table>
+
+            <h4 id="sw">2.2 Phần mềm</h4>
+            <table>
+                <tr><th>Phần mềm</th><th>Phiên bản</th><th>Loại</th></tr>
+                <tr><td>Eclipse IDE</td><td>21.0</td><td>IDE cho Java </td></tr>
+                <tr><td>MS SQL Server</td><td>19.0.1084.56</td><td>Hệ quản trị CSDL </td></tr>
+                <tr><td>Windows 10</td><td>10</td><td>Hệ điều hành </td></tr>
+            </table>
+        </section>
+
+        <h2>CÁC CHỨC NĂNG CHÍNH</h2>
+        <h3>1 Chức năng của nhân viên thu ngân</h3>
+
+        <section id="f411" class="section-card">
+            <h4>1.1 Tạo đặt bàn</h4>
+            <div class="step-box">
+                <div class="step-item"><div class="step-num">1</div>Nhập thông tin thời gian, số lượng người và khu vực khách mong muốn.</div>
+                <div class="step-item"><div class="step-num">2</div>Nhấn nút tìm, hiển thị số bàn tương ứng.</div>
+                <div class="step-item"><div class="step-num">3</div>Chọn bàn phù hợp và nhấn xác nhận.</div>
+                <div class="step-item"><div class="step-num">4</div>Nhập thông tin khách hàng và chọn món trước (nếu khách yêu cầu).</div>
+                <div class="step-item"><div class="step-num">5</div>Nhấn lưu đặt hàng, xác nhận cọc và nhấn nhận bàn ngay khi khách đến.</div>
+            </div>
+            <div class="img-placeholder"><img src="../images/huongdan/image12.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+                <img src="../images/huongdan/image32.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+            </div>
+        </section>
+
+        <section id="f412" class="section-card">
+            <h4>1.2 Hủy đặt bàn</h4>
+            <div class="step-box">
+                <div class="step-item"><div class="step-num">1</div>Tra cứu bàn cần hủy theo số điện thoại.</div>
+                <div class="step-item"><div class="step-num">2</div>Hiển thị bàn theo số điện thoại.</div>
+                <div class="step-item"><div class="step-num">3</div>Chọn bàn cần hủy và nhấn hủy bàn.</div>
+                <div class="step-item"><div class="step-num">4</div>Nhấn xác nhận hủy để hủy bàn.</div>
+            </div>
+             <div class="img-placeholder"><img src="../images/huongdan/image8.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+                <img src="../images/huongdan/image16.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+            </div>
+        </section>
+     <section id="f413" class="section-card">
+    <h4>1.3 Đổi bàn</h4>
+    <div class="step-box">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            Tra cứu bàn cần đổi theo số điện thoại. 
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            Hiển thị bàn theo số điện thoại. 
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            Chọn bàn cần đổi và nhấn đổi bàn. 
+        </div>
+        <div class="step-item">
+            <div class="step-num">4</div>
+            Chọn bàn muốn đổi và nhấn xác nhận đổi. 
+        </div>
+    </div>
+<div class="img-placeholder"><img src="../images/huongdan/image8.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+                <img src="../images/huongdan/image22.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+            </div>
+</section>
+<section id="f414" class="section-card">
+    <h2>1.4 Gọi món</h2>
+    
+    <p>Chức năng này cho phép nhân viên ghi nhận yêu cầu món ăn và đồ uống của khách hàng trực tiếp vào hệ thống dựa trên sơ đồ bàn đang phục vụ.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn bàn đang phục vụ ở danh sách đặt bàn.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Chọn bàn muốn gọi món, nhập số lượng và nhấn nút chọn ở món muốn gọi.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Nhấn nút <b>Sửa</b> để hoàn tất quá trình gọi món vào hóa đơn của bàn.</div>
+        </div>
+    </div>
+
+<div class="img-placeholder"><img src="../images/huongdan/image26.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+               
+            </div>
+
+    <div class="step-box" style="border-left-color: var(--primary);">
+        <b>Lưu ý nghiệp vụ:</b> Hệ thống sẽ tự động tính toán hóa đơn bao gồm món ăn, đồ uống, thuế VAT và phí dịch vụ dựa trên danh sách món đã được gọi thành công.
+    </div>
+</section>
+
+        <section id="f415" class="section-card">
+    <h2>1.5 Tách bàn</h2>
+    
+    <p>Chức năng tách bàn cho phép nhân viên xử lý các tình huống khách hàng ngồi cùng bàn nhưng muốn thanh toán riêng lẻ hoặc một nhóm khách tách ra ngồi bàn khác. Hệ thống hỗ trợ tách một phần món ăn từ hóa đơn gốc sang một hóa đơn mới hoàn toàn mà vẫn đảm bảo tính chính xác của dữ liệu.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn bàn muốn tách bàn ở danh sách đặt bàn đang phục vụ.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn nút <b>Tách bàn</b> trên thanh công cụ chức năng.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Tại giao diện tách, chọn các món ăn cụ thể muốn tách và nhấn nút <b>Chuyển</b> (sang danh sách hóa đơn mới).</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">4</div>
+            <div>Kiểm tra lại số lượng món được tách và nhấn <b>Thanh toán hóa đơn mới</b> hoặc <b>Lưu hóa đơn gốc</b> để hoàn tất quy trình.</div>
+        </div>
+    </div>
+
+   <div class="img-placeholder"><img src="../images/huongdan/image5.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+                <img src="../images/huongdan/image31.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+            </div>
+
+    <div class="step-box" style="border-left-color: var(--neon-purple);">
+        <b>Lưu ý nghiệp vụ:</b> Hệ thống sẽ tự động cập nhật lại trạng thái bàn và tính toán lại tổng tiền cho cả hóa đơn gốc và hóa đơn mới ngay sau khi lệnh chuyển món được thực hiện thành công.
+    </div>
+</section>
+<section id="f416" class="section-card">
+    <h2>1.6 Gộp bàn</h2>
+    
+    <p>Chức năng gộp bàn cho phép nhân viên kết hợp nhiều bàn đang có khách ngồi thành một hóa đơn duy nhất. Điều này giúp nhân viên dễ dàng nắm bắt tình trạng hoạt động, giảm thiểu nhầm lẫn và tăng hiệu quả làm việc khi xử lý các nhóm khách lớn ngồi nhiều khu vực khác nhau.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn bàn muốn gộp bàn ở danh sách đặt bàn.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn nút <b>Gộp bàn</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Chọn các bàn muốn gộp và nhấn <b>Xác nhận gộp</b>.</div>
+        </div>
+    </div>
+
+   <div class="img-placeholder"><img src="../images/huongdan/image30.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+                <img src="../images/huongdan/image9.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+            </div>
+
+    <div class="step-box" style="border-left-color: var(--neon-purple);">
+        <b>Lưu ý hệ thống:</b> Sau khi gộp bàn thành công, hệ thống sẽ tự động cập nhật trạng thái các bàn phụ về "Trống" và chuyển toàn bộ danh sách món ăn sang bàn đích để quản lý tập trung.
+    </div>
+</section>
+        <section id="f417" class="section-card">
+            <h4>1.7 Thanh toán hóa đơn</h4>
+            <div class="step-box">
+                <div class="step-item"><div class="step-num">1</div>Chọn hóa đơn cần thanh toán ở mục Danh sách đặt bàn.</div>
+                <div class="step-item"><div class="step-num">2</div>Nhấn Thanh toán.</div>
+                <div class="step-item"><div class="step-num">3</div>Chọn phương thức thanh toán và nhấn xác nhận.</div>
+            </div>
+            <div class="img-placeholder"><img src="../images/huongdan/image17.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+        </section>
+
+        
+<section id="f418" class="section-card">
+    <h2>1.8 Xuất Excel và In hóa đơn</h2>
+    
+    <p>Hệ thống cho phép nhân viên truy xuất lại dữ liệu hóa đơn đã thanh toán để phục vụ việc lưu trữ nội bộ dưới dạng tệp tin Excel hoặc cung cấp lại hóa đơn giấy cho khách hàng khi có yêu cầu. Quá trình này giúp đảm bảo tính minh bạch và hỗ trợ công tác kiểm tra đối soát dữ liệu nhanh chóng.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Tìm hóa đơn theo số điện thoại tại mục <b>Quản lý hóa đơn</b> và nhấn tìm.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Chọn hóa đơn tương ứng hiển thị trong danh sách kết quả.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Nhấn <b>Xuất Excel</b> để lưu tệp dữ liệu hoặc nhấn <b>In hóa đơn</b> để xuất bản cứng ra máy in.</div>
+        </div>
+    </div>
+
+            <div class="img-placeholder"><img src="../images/huongdan/image40.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+
+    <div class="step-box" style="border-left-color: #238636; background: rgba(35, 134, 54, 0.05);">
+        <b>Lưu ý kỹ thuật:</b> Tệp Excel xuất ra sẽ chứa đầy đủ thông tin về món ăn, số lượng, đơn giá, thuế VAT và tổng tiền thanh toán để phục vụ công tác kế toán.
+    </div>
+</section>
+<section id="f419" class="section-card">
+    <h2>1.9 Thêm khách hàng</h2>
+    
+    <p>Hệ thống cho phép nhân viên ghi nhận thông tin khách hàng mới vào cơ sở dữ liệu. Việc này giúp nhà hàng quản lý chương trình thành viên với ba cấp độ: Silver, Gold và Diamond để tích điểm và áp dụng ưu đãi tự động dựa trên chi tiêu của khách hàng.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Điền thông tin khách hàng (Họ tên, Số điện thoại, Địa chỉ...) tại mục <b>Quản lý khách hàng</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Kiểm tra lại tính chính xác của dữ liệu đã nhập.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Nhấn <b>Thêm</b> để ghi nhận khách hàng mới vào hệ thống.</div>
+        </div>
+    </div>
+
+                <div class="img-placeholder"><img src="../images/huongdan/image13.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+
+    <div class="step-box" style="border-left-color: var(--neon-purple);">
+        <b>Lợi ích:</b> Thông tin khách hàng và lịch sử giao dịch được lưu trữ đầy đủ giúp nhân viên tiết kiệm thời gian và tăng độ chính xác khi phục vụ những lần tiếp theo.
+    </div>
+</section>
+<section id="f4110" class="section-card">
+    <h2>1.10 Xóa khách hàng</h2>
+    
+    <p>Chức năng này cho phép nhân viên loại bỏ các hồ sơ khách hàng không còn hoạt động hoặc được nhập liệu sai sót khỏi hệ thống để làm sạch cơ sở dữ liệu.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Tìm kiếm khách hàng cần xóa theo Tên hoặc Số điện thoại tại danh sách khách hàng.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Chọn khách hàng tương ứng trong bảng hiển thị.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Nhấn <b>Xóa</b> và xác nhận yêu cầu để hoàn tất việc gỡ bỏ thông tin.</div>
+        </div>
+    </div>
+
+                    <div class="img-placeholder"><img src="../images/huongdan/image3.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+
+<section id="f4111" class="section-card">
+    <h2>1.11 Sửa thông tin khách hàng</h2>
+    
+    <p>Cập nhật lại các thông tin thay đổi của khách hàng như số điện thoại mới, địa chỉ hoặc điều chỉnh thông tin cá nhân bị sai lệch trong quá trình nhập liệu ban đầu.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn khách hàng cần cập nhật thông tin từ danh sách khách hàng.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhập các thông tin mới cần thay đổi vào các ô nhập liệu tương ứng.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Nhấn <b>Sửa</b> để hệ thống cập nhật và lưu trữ thông tin mới.</div>
+        </div>
+    </div>
+
+                        <div class="img-placeholder"><img src="../images/huongdan/image36.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+
+<section id="f4112" class="section-card">
+    <h2>1.12 Xóa trắng thông tin khách hàng</h2>
+    
+    <p>Đây là phím tắt hỗ trợ nhân viên nhanh chóng làm mới (reset) các ô nhập liệu về trạng thái trống để bắt đầu nhập thông tin cho một khách hàng mới mà không cần xóa tay từng dòng.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Tại màn hình Quản lý khách hàng, nhấn nút <b>Xóa trắng</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Tất cả các trường thông tin (Họ tên, SĐT, Địa chỉ...) sẽ tự động được làm trống để sẵn sàng cho lần nhập liệu tiếp theo.</div>
+        </div>
+    </div>
+
+                        <div class="img-placeholder"><img src="../images/huongdan/image10.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+        <section id="f421" class="section-card">
+    <h2>2.1 Thống kê</h2>
+    
+    <p>Chức năng này giúp người quản lý có cái nhìn tổng quát về hiệu suất kinh doanh thông qua việc phân tích dữ liệu hóa đơn và mức độ ưa chuộng của các món ăn trong thực đơn.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn hiển thị theo <b>Số lượng hóa đơn</b> hoặc <b>Món bán chạy</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Lọc theo tiêu chí <b>Ngày \ Tháng \ Năm</b> và nhấn nút <b>Lọc</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Nhấn <b>Xuất Excel</b> để lưu trữ dữ liệu thống kê phục vụ công tác báo cáo.</div>
+        </div>
+    </div>
+
+                           <div class="img-placeholder"><img src="../images/huongdan/image19.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+
+<section id="f422" class="section-card">
+    <h2>2.2 Báo cáo</h2>
+    
+    <p>Hệ thống hỗ trợ trực quan hóa dữ liệu kinh doanh dưới dạng biểu đồ, giúp quản lý dễ dàng so sánh tăng trưởng doanh thu giữa các khu vực và thời điểm khác nhau.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn hiển thị theo <b>Biểu đồ doanh thu</b> hoặc <b>Doanh thu khu vực</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Chọn tiêu chí lọc theo <b>Ngày \ Tháng \ Năm</b> để hệ thống truy xuất dữ liệu tương ứng.</div>
+        </div>
+    </div>
+
+                               <div class="img-placeholder"><img src="../images/huongdan/image38.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+
+<section id="f423" class="section-card">
+    <h2>2.3 Thêm món mới vào thực đơn</h2>
+    
+    <p>Quản lý có quyền cập nhật danh mục ẩm thực của nhà hàng bằng cách bổ sung các món ăn hoặc đồ uống mới vào thực đơn chính thức.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Nhấn <b>Thêm</b> tại màn hình Quản lý thực đơn.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Điền đầy đủ thông tin món mới (Tên món, Loại món, Đơn giá, Hình ảnh minh họa...).</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Nhấn <b>Lưu</b> để cập nhật món ăn vào danh sách phục vụ.</div>
+        </div>
+    </div>
+
+    <div class="img-placeholder"><img src="../images/huongdan/image24.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+
+<section id="f424" class="section-card">
+    <h2>2.4 Xóa món trong thực đơn</h2>
+    
+    <p>Chức năng này giúp loại bỏ những món ăn không còn kinh doanh hoặc bị nhập sai danh mục khỏi hệ thống thực đơn của nhà hàng.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn món cần xóa tại bảng danh sách của màn hình Quản lý thực đơn.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn <b>Xóa</b> để thực hiện lệnh gỡ bỏ món ăn khỏi danh mục hiện hành.</div>
+        </div>
+    </div>
+
+    <div class="img-placeholder"><img src="../images/huongdan/image21.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+
+<section id="f425" class="section-card">
+    <h2>2.5 Sửa món trong thực đơn</h2>
+    
+    <p>Cập nhật lại các thông tin thay đổi của món ăn như điều chỉnh đơn giá theo thị trường hoặc thay đổi mô tả món ăn.</p>
+
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn món cần sửa tại màn hình Quản lý thực đơn.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn nút <b>Sửa</b> để mở khóa các trường thông tin.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Điền thông tin mới (ví dụ: đơn giá mới) và nhấn <b>Lưu</b> để hoàn tất.</div>
+        </div>
+    </div>
+
+    <div class="img-placeholder"><img src="../images/huongdan/image34.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+<section id="f426" class="section-card">
+    <h2>2.6 Xóa trắng thông tin</h2>
+    <p>Chức năng này giúp người quản lý nhanh chóng làm rỗng các trường nhập liệu trên form để chuẩn bị cho việc nhập mới, tránh việc phải xóa thủ công từng ô dữ liệu.</p>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Nhấn nút <b>Xóa trắng</b> để xóa toàn bộ thông tin đang hiển thị trên các ô nhập liệu.</div>
+        </div>
+    </div>
+    <div class="img-placeholder"><img src="../images/huongdan/image10.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+
+</section>
+
+<section id="f427" class="section-card">
+    <h2>2.7 Thêm nhân viên mới</h2>
+    <p>Quản lý thực hiện ghi nhận nhân sự mới vào hệ thống để cấp tài khoản vận hành và theo dõi ca trực.</p>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn mục <b>Danh sách nhân viên</b> tại màn hình Quản lý nhân viên.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn nút <b>Xóa rỗng</b> để làm sạch form nhập liệu.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Điền đầy đủ thông tin nhân viên (Họ tên, SĐT, Chức vụ...) và nhấn nút <b>Thêm</b> để hoàn tất.</div>
+        </div>
+    </div>
+    <div class="img-placeholder"><img src="../images/huongdan/image1.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+        <img src="../images/huongdan/image15.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"> </div>
+
+</section>
+
+<section id="f428" class="section-card">
+    <h2>2.8 Sửa thông tin nhân viên</h2>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Tìm kiếm nhân viên cần sửa theo tên hoặc mã nhân viên tại thanh tìm kiếm.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Chọn nhân viên cần sửa thông tin từ danh sách hiển thị.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Điền thông tin mới vào các trường tương ứng và nhấn <b>Sửa</b>.</div>
+        </div>
+    </div>
+    <div class="img-placeholder"><img src="../images/huongdan/image39.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"></div>
+
+</section>
+
+<section id="f429" class="section-card">
+    <h2>2.9 Xóa nhân viên</h2>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Tìm kiếm nhân viên cần xóa theo tên hoặc mã nhân viên.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Chọn nhân viên cần xóa khỏi danh sách.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Nhấn <b>Xóa</b> để gỡ bỏ nhân viên khỏi hệ thống quản lý.</div>
+        </div>
+    </div>
+    <div class="img-placeholder"><img src="../images/huongdan/image2.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"></div>
+
+</section>
+
+<section id="f4210" class="section-card">
+    <h2>2.10 Phân chia ca trực</h2>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn mục <b>Phân ca trực</b> tại menu Quản lý nhân viên.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Chọn ca trực mong muốn trong danh sách và nhấn <b>Đăng ký</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Điền các thông tin chi tiết về ca trực và nhấn <b>Xác nhận</b>.</div>
+        </div>
+    </div>
+    <div class="img-placeholder"><img src="../images/huongdan/image29.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+        <img src="../images/huongdan/image37.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"> </div>
+</section>
+
+<section id="f4211" class="section-card">
+    <h2>2.11 Thêm khuyến mãi</h2>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Nhấn nút <b>Thêm</b> tại màn hình Quản lý khuyến mãi.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Điền thông tin chương trình (Tên KM, mức giảm, thời gian) và nhấn <b>Lưu</b>.</div>
+        </div>
+    </div>
+ <div class="img-placeholder"><img src="../images/huongdan/image25.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+        <img src="../images/huongdan/image18.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"> </div>
+</section>
+
+<section id="f4212" class="section-card">
+    <h2>2.12 Sửa khuyến mãi</h2>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn chương trình khuyến mãi cần sửa trong danh sách.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn nút <b>Sửa</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Điền thông tin điều chỉnh mới và nhấn <b>Lưu</b>.</div>
+        </div>
+    </div>
+    <div class="img-placeholder"><img src="../images/huongdan/image35.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+        <img src="../images/huongdan/image6.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"> </div>
+</section>
+
+<section id="f4213" class="section-card">
+    <h2>2.13 Xóa khuyến mãi</h2>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Chọn khuyến mãi cần gỡ bỏ tại màn hình Quản lý khuyến mãi.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn nút <b>Xóa</b> để loại bỏ chương trình khuyến mãi.</div>
+        </div>
+    </div>
+        <div class="img-placeholder"><img src="../images/huongdan/image33.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"></div>
+
+</section>
+
+<section id="f4214" class="section-card">
+    <h2>2.14 Tra cứu hóa đơn</h2>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Tìm hóa đơn theo <b>Số điện thoại</b> hoặc <b>Mã hóa đơn</b> tại mục hóa đơn trong màn hình Quản lý tra cứu.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn <b>Xem</b> để hiển thị chi tiết hóa đơn, tại đây có thể chọn <b>In hóa đơn</b>.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Tắt màn hình chi tiết và nhấn <b>Xuất Excel</b> để trích xuất dữ liệu báo cáo.</div>
+        </div>
+    </div>
+    <div class="img-placeholder"><img src="../images/huongdan/image27.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);">
+        <img src="../images/huongdan/image11.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"> 
+    <img src="../images/huongdan/image28.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"></div>
+</section>
+
+<section id="f4215" class="section-card">
+    <h2>2.15 Tra cứu khách hàng</h2>
+    <div class="step-container">
+        <div class="step-item">
+            <div class="step-num">1</div>
+            <div>Tìm khách hàng theo <b>Số điện thoại</b> hoặc <b>Tên khách</b> tại mục khách hàng trong màn hình Quản lý tra cứu.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">2</div>
+            <div>Nhấn <b>Xem</b> để truy xuất chi tiết hồ sơ thông tin khách hàng.</div>
+        </div>
+        <div class="step-item">
+            <div class="step-num">3</div>
+            <div>Tắt màn hình chi tiết và nhấn <b>Xuất Excel</b> để lưu trữ danh sách khách hàng.</div>
+        </div>
+    </div>
+           <div class="img-placeholder"><img src="../images/huongdan/image20.jpg" alt="" style="width:100%; border-radius:10px; border: 1px solid var(--border);"></div>
+
+</section>
+
+        <footer>
+            <p>© 2025 NHÀ HÀNG TỨ HỮU - SYSTEM DOCUMENTATION</p>
+            <p>IUH - KHOA CÔNG NGHỆ THÔNG TIN - NHÓM 08 - DHKTPM19ATT</p>
+        </footer>
+    </div>
+</div>
+
+<script>
+    // Xử lý hiệu ứng nhảy mượt khi nhấn Sidebar
+    document.querySelectorAll('.nav-link').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            document.querySelector(targetId).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane stylesheets="@../css/ThucDon.css" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.ThucDon">
+   <children>
+      <AnchorPane fx:id="innerPanel" styleClass="inner-panel" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <VBox spacing="10.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="20.0">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="20.0">
+                     <children>
+                        <Label styleClass="screen-title" text="Quản lý thực đơn" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <HBox alignment="CENTER_LEFT" styleClass="search-field">
+                           <children>
+                              <ImageView fitHeight="18.0" fitWidth="18.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../icons/iconTraCuu.png" />
+                                 </image>
+                              </ImageView>
+                              <TextField fx:id="txtSearch" prefWidth="180.0" promptText="Nhập tên món" />
+                           </children>
+                        </HBox>
+                        <Button fx:id="btnTim" mnemonicParsing="false" text="Tìm" styleClass="search-button" />
+                     </children>
+                  </HBox>
+                  <VBox styleClass="main-content-box" VBox.vgrow="ALWAYS">
+                     <children>
+                        <VBox>
+                           <children>
+                              <Label styleClass="section-title" text="Danh mục món" />
+                              <HBox fx:id="categoryButtonBox" alignment="CENTER_LEFT" spacing="15.0">
+                                 <children>
+                                    <!-- Buttons will be dynamically added here -->
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets top="8.0" />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <AnchorPane styleClass="table-container" VBox.vgrow="ALWAYS">
+                           <children>
+                              <TableView fx:id="tableThucDon" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+                                 <columns>
+                                    <TableColumn fx:id="colTenMon" prefWidth="350.0" text="Tên món" />
+                                    <TableColumn fx:id="colHinhAnh" prefWidth="150.0" text="Hình ảnh" />
+                                    <TableColumn fx:id="colDonGia" prefWidth="180.0" text="Đơn giá (VND)" />
+                                    <TableColumn fx:id="colDanhMuc" prefWidth="150.0" text="Danh mục" />
+                                 </columns>
+                              </TableView>
+                           </children>
+                        </AnchorPane>
+                        <HBox fx:id="actionButtonBox" alignment="CENTER" prefHeight="45.0" spacing="20.0">
+                           <children>
+                              <Button fx:id="btnThem" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Thêm" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnXoa" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Xóa" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnSua" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Sửa" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnXoaTrang" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Xóa trắng" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <AnchorPane prefHeight="200.0" VBox.vgrow="NEVER">
+                     <children>
+                        <AnchorPane fx:id="formInputArea" prefWidth="550.0" styleClass="form-container-box" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <VBox spacing="5.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="15.0">
+                                 <children>
+                                    <Label styleClass="form-label-bold" text="Tên món:" />
+                                    <TextField fx:id="txtTenMon" />
+                                    
+                                    <HBox spacing="10.0">
+                                       <children>
+                                          <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label styleClass="form-label-bold" text="Đơn giá:" />
+                                                <TextField fx:id="txtDonGia" />
+                                             </children>
+                                          </VBox>
+                                          <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                             <children>
+                                                <Label styleClass="form-label-bold" text="Danh mục:" />
+                                                <ComboBox fx:id="comboDanhMuc" prefWidth="250.0" promptText="Chọn danh mục" />
+                                             </children>
+                                          </VBox>
+                                       </children>
+                                    </HBox>
+                                    
+                                    <Label styleClass="form-label-bold" text="Hình ảnh:" />
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                       <children>
+                                          <Label fx:id="uploadLabel" alignment="CENTER" prefHeight="38.0" text="Click to upload" style="-fx-border-color: #ddd; -fx-border-style: dashed; -fx-padding: 5;" HBox.hgrow="ALWAYS" />
+                                          <ImageView fx:id="previewImg" fitHeight="60.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+                              <Button fx:id="btnLuuForm" mnemonicParsing="false" text="Lưu" AnchorPane.bottomAnchor="15.0" AnchorPane.rightAnchor="20.0" />
+                           </children>
+                        </AnchorPane>
+                        
+                        <ImageView fitHeight="320.0" fitWidth="350.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                           <image>
+                              <Image url="@../images/Lau.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>

@@ -1,0 +1,243 @@
+/* Khôi phục hình nền theo file gốc */
+.inner-panel {
+    -fx-background-image: url("../images/background.jpg");
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: cover;
+    -fx-min-height: 800px; /* Đảm bảo VBox có chiều cao tối thiểu để cuộn */
+}
+
+/* Khôi phục font-size gốc */
+.screen-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #3a3a3a;
+}
+
+/* Đây là style gốc cho thẻ trắng, dùng cho 3 thẻ KPI mới */
+.card {
+    -fx-background-color: white;
+    -fx-background-radius: 10px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 5);
+}
+
+/* Khôi phục thẻ màu cam theo file gốc */
+.colored-card {
+    -fx-background-color: rgba(255, 161, 0, 0.4);
+    -fx-background-radius: 10px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 5);
+}
+
+.card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+/* ComboBox mặc định (bên trong các frame) */
+.combo-box {
+    -fx-font-size: 13px;
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+/* Style cho DatePicker */
+.date-picker {
+	-fx-font-size: 13px;
+}
+.date-picker .text-field {
+	-fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 6 0 0 6;
+    -fx-border-radius: 6 0 0 6;
+}
+.date-picker .arrow-button {
+	-fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1.5 1.5 1.5 0;
+    -fx-background-radius: 0 6 6 0;
+    -fx-border-radius: 0 6 6 0;
+}
+.date-picker .arrow-button .arrow {
+	-fx-background-color: #555;
+}
+
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 1 0 1 0;
+}
+.table-view .column-header-background {
+    -fx-background-color: #fafafa;
+}
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 1.5 0;
+    -fx-border-color: #f0f0f0;
+}
+.table-view .column-header .label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+    -fx-padding: 8 5;
+}
+.table-view .table-cell {
+    -fx-padding: 10 8;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 13px;
+    -fx-border-color: transparent; /* Loại bỏ viền ô mặc định */
+}
+
+/* Tùy chọn: Thêm đường kẻ ngang giữa các dòng nếu muốn */
+.table-row-cell {
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1 0;
+}
+.table-row-cell:empty {
+    -fx-background-color: transparent; /* Ẩn nền dòng trống */
+    -fx-border-width: 0;
+}
+
+
+.note-section {
+    -fx-padding: 10 5 0 5;
+    -fx-font-size: 12px;
+    -fx-text-fill: #555;
+}
+
+.view-button {
+    -fx-background-color: #2980b9; /* Màu xanh dương gốc */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 5 15;
+    -fx-cursor: hand;
+    -fx-font-size: 12px; /* Chỉnh kích thước chữ nếu cần */
+}
+.view-button:hover {
+	-fx-background-color: #3498DB; /* Màu xanh dương nhạt hơn khi hover */
+}
+
+#btnExportHoaDon, #btnExportMonAn {
+    -fx-background-color: #27ae60; /* Màu xanh lá */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-background-radius: 6;
+    -fx-padding: 6 18;
+    -fx-cursor: hand;
+}
+#btnExportHoaDon:hover, #btnExportMonAn:hover {
+	-fx-background-color: #2ECC71; /* Màu xanh lá nhạt hơn khi hover */
+}
+
+/* Chart Styles */
+.chart-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+.chart-summary {
+    -fx-padding: 10 0;
+}
+.summary-title { /* Dùng cho tên (Tầng trệt, Tầng 1...) dưới biểu đồ cũ */
+    -fx-font-size: 13px;
+    -fx-text-fill: #555;
+}
+.summary-stat-value { /* Dùng cho giá trị (tiền) dưới biểu đồ cũ */
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+.label.text-success {
+    -fx-text-fill: #28a745; /* Màu xanh lá cây */
+}
+.label.text-danger {
+    -fx-text-fill: #dc3545; /* Màu đỏ */
+}
+
+/* ============================================= */
+/* ===    CSS CHO GIAO DIỆN MỚI (KPI & CHART) === */
+/* ============================================= */
+.kpi-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555;
+    -fx-text-transform: uppercase;
+}
+.kpi-value {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-padding-top: 5px;
+}
+#lblTongDoanhThu { -fx-text-fill: #E67E22; } /* Màu cam cho Tổng Doanh thu (Hôm nay) */
+#lblTongHoaDon { -fx-text-fill: #3498DB; }   /* Màu xanh dương cho Tổng Hóa đơn (Hôm nay) */
+#lblNgayHienTai { -fx-text-fill: #333; } /* Màu mặc định cho Ngày hiện tại */
+
+/* ============================================= */
+/* ===       CSS CHO THANH CUỘN (MỚI)        === */
+/* ============================================= */
+.scroll-pane { -fx-background-color: transparent; }
+.scroll-pane > .viewport { -fx-background-color: transparent; }
+.scroll-bar:vertical, .scroll-bar:horizontal { -fx-background-color: transparent; -fx-background-radius: 5; -fx-padding: 2; }
+.scroll-bar .thumb { -fx-background-color: rgba(0, 0, 0, 0.3); -fx-background-radius: 5; }
+.scroll-bar .thumb:hover { -fx-background-color: rgba(0, 0, 0, 0.5); }
+.scroll-bar .increment-button, .scroll-bar .decrement-button { -fx-background-color: transparent; -fx-padding: 0; -fx-font-size: 0; }
+
+/* ============================================= */
+/* ===      CSS CHO BỘ LỌC KHUNG NHÌN MỚI    === */
+/* ============================================= */
+.filter-bar { -fx-padding: 10px 15px; -fx-background-color: rgba(255, 255, 255, 0.3); -fx-background-radius: 8px; -fx-border-color: rgba(255, 255, 255, 0.5); -fx-border-radius: 8px; }
+.section-label { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333; }
+#viewSelectorCombo { -fx-font-size: 14px; -fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 1.5; -fx-background-radius: 6; -fx-border-radius: 6; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2); }
+#viewSelectorCombo .list-cell { -fx-font-size: 14px; }
+
+/* ============================================= */
+/* ===   CSS CHO BIỂU ĐỒ TRÒN MÓN ĂN         === */
+/* ============================================= */
+#pieChartMonAn .chart-pie-label { -fx-fill: #333; -fx-font-size: 11px; -fx-font-weight: bold; }
+#pieChartMonAn .chart-pie-label-line { -fx-stroke: #888; -fx-stroke-width: 1px; }
+#pieChartMonAn .default-color0.chart-pie { -fx-pie-color: #E67E22; } /* Cam */
+#pieChartMonAn .default-color1.chart-pie { -fx-pie-color: #3498DB; } /* Xanh dương */
+#pieChartMonAn .default-color2.chart-pie { -fx-pie-color: #27AE60; } /* Xanh lá */
+#pieChartMonAn .default-color3.chart-pie { -fx-pie-color: #E74C3C; } /* Đỏ */
+#pieChartMonAn .default-color4.chart-pie { -fx-pie-color: #F1C40F; } /* Vàng */
+
+/* ========================================================== */
+/* === CSS CHO KHUNG DOANH THU (LINECHART MỚI - ĐàSỬA)    === */
+/* ========================================================== */
+/* Style cho LineChart Doanh Thu mới (#chartDoanhThu) */
+#chartDoanhThu .default-color0.chart-series-line { -fx-stroke: #3498DB; -fx-stroke-width: 3px; } /* Màu đường kẻ xanh dương */
+#chartDoanhThu .default-color0.chart-line-symbol { -fx-background-color: #3498DB, white; -fx-background-insets: 0, 2; -fx-background-radius: 5px; -fx-padding: 5px;} /* Màu chấm tròn */
+#chartDoanhThu .axis-label { -fx-font-size: 13px; -fx-text-fill: #555; }
+#chartDoanhThu .chart-xaxis .axis-tick-label { -fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #777; }
+#chartDoanhThu .chart-yaxis .axis-tick-label { -fx-font-size: 11px; -fx-text-fill: #777; }
+#chartDoanhThu .chart-vertical-grid-lines { -fx-stroke: rgba(0,0,0,0.1); }
+#chartDoanhThu .chart-horizontal-grid-lines { -fx-stroke: rgba(0,0,0,0.1); }
+
+/* ===================================================== */
+/* === CSS CHO KHUNG KHU VỰC (BARCHART)               === */
+/* ===================================================== */
+#chartKhuVuc .default-color0.chart-bar { -fx-bar-fill: #3498DB; } /* Xanh dương - Tầng trệt */
+#chartKhuVuc .default-color1.chart-bar { -fx-bar-fill: #E67E22; } /* Cam - Tầng 1 */
+#chartKhuVuc .default-color2.chart-bar { -fx-bar-fill: #27AE60; } /* Xanh lá - Phòng */
+#chartKhuVuc { -fx-bar-gap: 10px; -fx-category-gap: 40px; }
+#chartKhuVuc .axis-label { -fx-font-size: 13px; -fx-text-fill: #555; }
+#chartKhuVuc .chart-xaxis .axis-tick-label { -fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #777; }
+#chartKhuVuc .chart-yaxis .axis-tick-label { -fx-font-size: 11px; -fx-text-fill: #777; }
+#chartKhuVuc .chart-series-line { -fx-stroke-width: 0px; } /* Ẩn đường kẻ (nếu còn sót) */
+#chartKhuVuc .chart-line-symbol { -fx-padding: 0px; } /* Ẩn chấm tròn (nếu còn sót) */
+
+/* ============================================= */
+/* ===   CSS CHO BỘ LỌC MÓN ĂN              === */
+/* ============================================= */
+.filter-controls-hbox {
+    -fx-alignment: CENTER_LEFT; -fx-spacing: 8px;
+}
+.filter-controls-hbox .label {
+    -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333;
+}

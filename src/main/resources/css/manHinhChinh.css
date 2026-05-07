@@ -1,0 +1,158 @@
+/* ==================== STYLE CHO MÀN HÌNH CHÍNH ==================== */
+.root {
+    -fx-background-color: #f5f5ff;
+}
+
+/* ==================== TOP BAR ==================== */
+/* (Giữ nguyên) */
+.top-bar {
+    -fx-background-color: #fff;
+    -fx-padding: 20 25;
+    -fx-alignment: center-left;
+    -fx-spacing: 20;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 0 0 1 0;
+}
+.profile-image { -fx-border-radius: 50; }
+.user-info { -fx-alignment: center-left; -fx-spacing: 3; }
+.user-name { -fx-font-size: 14px; -fx-font-weight: bold; }
+.user-role { -fx-font-size: 12px; -fx-text-fill: #666; }
+.logo-text { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4b4b4b; }
+
+/* ==================== SIDEBAR ==================== */
+/* (Giữ nguyên) */
+.sidebar {
+    -fx-background-color: #fff;
+    -fx-pref-width: 250px;
+    -fx-padding: 10 0 0 0;
+}
+.menu-items { -fx-spacing: 5; -fx-padding: 0 10; }
+.menu-button, .menu-button-active {
+    -fx-background-color: transparent;
+    -fx-pref-width: 220px;
+    -fx-alignment: center-left;
+    -fx-font-size: 14px;
+    -fx-text-fill: #4b4b4b;
+    -fx-cursor: hand;
+    -fx-padding: 15 20;
+    -fx-graphic-text-gap: 15;
+    -fx-background-radius: 5;
+}
+.menu-button:hover { -fx-background-color: #f0f0f0; }
+.menu-button-active {
+    -fx-background-color: #ff9100;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* ==================== CONTENT AREA ==================== */
+/* (Giữ nguyên) */
+.content-area {
+    -fx-background-image: url("/images/background.jpg");
+    -fx-padding: 20;
+}
+
+/* ==================== DASHBOARD ==================== */
+/* (Giữ nguyên) */
+.dashboard-container { -fx-background-color: #fff; }
+.stats-card { -fx-background-color: #f5f5f5; -fx-padding: 10 20; -fx-background-radius: 5; }
+.stats-label { -fx-font-size: 14px; -fx-text-fill: #666; }
+.stats-value { -fx-font-size: 18px; -fx-font-weight: bold; }
+
+/* ==================== MENU BAR (ĐàCẬP NHẬT) ==================== */
+/* (Giữ nguyên style của MenuBar) */
+.menu-bar {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-border-width: 0;
+}
+.menu-bar .menu {
+    -fx-padding: 0 25px; 
+    -fx-graphic-text-gap: 6px; 
+    -fx-alignment: CENTER_LEFT; 
+}
+.menu-bar .menu .label {
+    -fx-font-size: 13px; 
+    -fx-font-weight: 500; 
+    -fx-text-fill: #333333;
+    -fx-padding: 4px 0px; 
+    -fx-cursor: hand;
+    -fx-text-alignment: LEFT;
+}
+.menu-bar .menu:hover {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 4;
+}
+.menu-bar .menu:showing {
+    -fx-background-color: #e0e0e0;
+     -fx-background-radius: 4;
+}
+.context-menu {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1px;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);
+}
+.menu-item {
+     -fx-padding: 0;
+     -fx-alignment: CENTER;
+}
+.menu-item .label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #333333;
+    -fx-padding: 8px 20px;
+    -fx-text-alignment: CENTER;
+}
+.menu-item:focused {
+    -fx-background-color: #ff9100;
+}
+.menu-item:focused .label {
+    -fx-text-fill: white;
+}
+.separator-menu-item .line{
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1 0 0 0;
+}
+.separator-menu-item{
+     -fx-padding: 5px 0;
+}
+/* ==================== KẾT THÚC CẬP NHẬT MENU BAR ==================== */
+
+
+/* ==================== THAY ĐỔI: CẬP NHẬT STYLE CHO DARK MODE ==================== */
+
+/* Khi .top-bar có class .dark-mode */
+.top-bar.dark-mode {
+    -fx-background-color: #2a2a2a; /* Nền tối */
+    -fx-border-color: #333333;     /* Viền tối hơn */
+}
+
+/* THAY ĐỔI: Thêm lại style cho .logo-text */
+.top-bar.dark-mode .logo-text {
+     -fx-text-fill: #e0e0e0; /* Chữ màu sáng */
+}
+
+/* (Style cho tên người dùng và vai trò, giữ nguyên) */
+.top-bar.dark-mode .user-name {
+    -fx-text-fill: #e0e0e0; 
+}
+.top-bar.dark-mode .user-role {
+    -fx-text-fill: #9e9e9e; 
+}
+
+
+/* Khi .sidebar có class .dark-mode */
+.sidebar.dark-mode {
+    -fx-background-color: #2a2a2a; /* Nền tối */
+}
+/* Các nút KHÔNG được chọn trong sidebar */
+.sidebar.dark-mode .menu-button {
+    -fx-text-fill: #e0e0e0; /* Chữ màu sáng */
+}
+/* Hover các nút KHÔNG được chọn */
+.sidebar.dark-mode .menu-button:hover {
+    -fx-background-color: #3f3f3f; /* Nền hover tối */
+}
+/* Nút ĐANG ĐƯỢC CHỌN (.menu-button-active) không đổi, vẫn giữ màu

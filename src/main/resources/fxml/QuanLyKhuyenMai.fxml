@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Root container for the entire screen -->
+<AnchorPane stylesheets="@../css/KhuyenMai.css" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.KhuyenMai">
+   <children>
+      <!-- Panel with wooden background -->
+      <AnchorPane styleClass="inner-panel" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <!-- Main vertical layout -->
+            <VBox spacing="15.0" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="20.0">
+               <children>
+                  <!-- Top row: Title and Filter -->
+                  <HBox alignment="CENTER_LEFT" spacing="20.0">
+                     <children>
+                        <Label styleClass="screen-title" text="Quản lý khuyến mãi" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="filterComboBox" prefWidth="250.0" promptText="Đang áp dụng..." />
+                     </children>
+                  </HBox>
+                  <!-- *** KEY CHANGE: VBox now wraps ALL content to be colored *** -->
+                  <VBox styleClass="main-content-box" VBox.vgrow="ALWAYS">
+                     <children>
+                        <!-- Table Container -->
+                        <AnchorPane styleClass="table-container" prefHeight="300.0" VBox.vgrow="ALWAYS">
+                           <children>
+                              <TableView fx:id="tblKhuyenMai" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+                                 <columns>
+                                    <TableColumn fx:id="colTenKM" prefWidth="300.0" text="Tên khuyến mãi" />
+                                    <TableColumn fx:id="colMaKM" prefWidth="100.0" text="Mã" />
+                                    <TableColumn fx:id="colThoiGian" prefWidth="180.0" text="Thời gian" />
+                                    <TableColumn fx:id="colTrangThai" prefWidth="150.0" text="Trạng thái" />
+                                    <TableColumn fx:id="colGiaTri" prefWidth="100.0" text="Giá trị" />
+                                    <TableColumn fx:id="colHanhDong" prefWidth="100.0" text="Hành động" />
+                                 </columns>
+                              </TableView>
+                           </children>
+                        </AnchorPane>
+                        <!-- Form Section -->
+                        <VBox spacing="8.0">
+                           <children>
+                              <HBox spacing="15.0">
+                                 <children>
+                                    <VBox HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label styleClass="form-label" text="Tên khuyến mãi:" />
+                                          <TextField fx:id="txtTenKM" promptText="Giảm 10% cho hóa đơn 2,000,000" />
+                                       </children>
+                                    </VBox>
+                                    <VBox HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label styleClass="form-label" text="Giá trị khuyến mãi:" />
+                                          <TextField fx:id="txtGiaTri" promptText="10" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                              <HBox spacing="15.0">
+                                 <children>
+                                    <VBox HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label styleClass="form-label" text="Thời gian bắt đầu:" />
+                                          <DatePicker fx:id="datePickerStart" maxWidth="1.7976931348623157E308" />
+                                       </children>
+                                    </VBox>
+                                    <VBox HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label styleClass="form-label" text="Thời gian kết thúc:" />
+                                          <DatePicker fx:id="datePickerEnd" maxWidth="1.7976931348623157E308" />
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets top="20.0" />
+                           </VBox.margin>
+                        </VBox>
+                        <!-- Action Buttons Row -->
+                        <HBox fx:id="actionButtonBox" alignment="CENTER" spacing="20.0">
+                           <children>
+                              <Button fx:id="btnThem" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Thêm" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnSua" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Sửa" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="btnLuu" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Lưu" HBox.hgrow="ALWAYS" />
+                           </children>
+                           <VBox.margin>
+                              <Insets top="20.0" />
+                           </VBox.margin>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>

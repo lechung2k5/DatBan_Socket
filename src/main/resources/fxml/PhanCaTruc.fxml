@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<VBox fx:controller="ui.PhanCaTrucUI" spacing="20.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" styleClass="phan-ca-truc-container">
+    <padding>
+        <Insets top="20.0" right="20.0" bottom="20.0" left="20.0" />
+    </padding>
+
+    <Label text="Phân chia ca trực" styleClass="screen-title" />
+
+    <HBox alignment="CENTER_LEFT" spacing="15.0">
+        <children>
+            <Label text="Lịch làm theo tuần" styleClass="calendar-header-label" />
+            <Region HBox.hgrow="ALWAYS" />
+    
+            <DatePicker fx:id="datePicker" styleClass="date-picker-control" prefWidth="120.0" prefHeight="30.0" onAction="#updateCalendarFromDatePicker" />
+            <Button text="Hôm nay" onAction="#handleCurrentWeek" styleClass="calendar-nav-button" />
+            <Button text="Trước" styleClass="calendar-nav-button" onAction="#previousWeek" />
+            <Button text="Sau" styleClass="calendar-nav-button" onAction="#nextWeek" />
+        </children>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+		<content>
+			<GridPane fx:id="gridPhanCa" hgap="10" vgap="10" styleClass="weekly-calendar-grid">
+			    <columnConstraints>
+			        <ColumnConstraints hgrow="SOMETIMES" 
+			minWidth="120" prefWidth="150.0" />
+			        <ColumnConstraints hgrow="SOMETIMES" minWidth="150" prefWidth="200.0" />
+			        <ColumnConstraints hgrow="SOMETIMES" minWidth="150" prefWidth="200.0" />
+			        <ColumnConstraints hgrow="SOMETIMES" minWidth="150" prefWidth="200.0" />
+			        <ColumnConstraints hgrow="SOMETIMES" minWidth="150" prefWidth="200.0" />
+			        <ColumnConstraints hgrow="SOMETIMES" minWidth="150" prefWidth="200.0" />
+			        <ColumnConstraints hgrow="SOMETIMES" minWidth="150" prefWidth="200.0" />
+			        <ColumnConstraints hgrow="SOMETIMES" minWidth="150" prefWidth="200.0" />
+			    </columnConstraints>
+			    <rowConstraints>
+			      
+			        <RowConstraints vgrow="SOMETIMES" minHeight="80" prefHeight="80.0" /> 
+			        <RowConstraints vgrow="SOMETIMES" minHeight="120" prefHeight="150.0" />
+			        <RowConstraints vgrow="SOMETIMES" minHeight="120" prefHeight="150.0" />
+			        <RowConstraints vgrow="SOMETIMES" minHeight="120" prefHeight="150.0" />
+			    </rowConstraints>
+			</GridPane>
+		</content>
+    </ScrollPane>
+</VBox>
