@@ -62,6 +62,7 @@ import utils.ClientSessionManager;
 import javafx.util.Pair;
 import utils.JsonUtil;
 import network.Response;
+import network.RealTimeSubscriber;
 public class ManHinhChinh {
     // ========================================================================
     // FXML FIELDS
@@ -348,55 +349,50 @@ private void setActiveButton(Button button) {
     this.activeButton = button;
     updateMenuStyles();
 }
-private void loadScreen(String fxmlPath, String cssPath) throws IOException {
-    // 1. Kiểm tra Cache
-    if (screenCache.containsKey(fxmlPath)) {
-        Parent root = screenCache.get(fxmlPath);
-        currentController = controllerCache.get(fxmlPath);
-        
-        // Nếu là tab Đặt bàn, đảm bảo controller tham chiếu đúng
+    private void loadScreen(String fxmlPath, String cssPath) throws IOException {
+        // 1. Dọn dẹp màn hình cũ
+        if (currentController instanceof RealTimeSubscriber) {
+            ((RealTimeSubscriber) currentController).cleanupRealTime();
+        }
+
+        // 2. Kiểm tra Cache (Không cache DatBan và TraCuu)
+        boolean skipCache = fxmlPath.contains("QuanLyDatBan") || fxmlPath.contains("QuanLyTraCuu");
+        if (!skipCache && screenCache.containsKey(fxmlPath)) {
+            Parent root = screenCache.get(fxmlPath);
+            currentController = controllerCache.get(fxmlPath);
+            if (currentController instanceof DashboardController) {
+                ((DashboardController) currentController).refreshDashboard();
+            }
+            contentArea.setCenter(root);
+            return;
+        }
+
+        // 3. Load mới
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+        Parent root = loader.load();
+        currentController = loader.getController();
+
+        if (!skipCache) {
+            screenCache.put(fxmlPath, root);
+            controllerCache.put(fxmlPath, currentController);
+        }
+
+        if (currentController instanceof DashboardController) {
+            ((DashboardController) currentController).setMainController(this);
+        }
         if (currentController instanceof DatBan) {
             this.datBanController = (DatBan) currentController;
-            // 🔥 Proactive refresh khi quay lại tab
-            Platform.runLater(() -> {
-                this.datBanController.loadTableGrids();
-                this.datBanController.loadBookingCards();
-            });
         }
-        
-        // 🔥 MỚI: Nếu quay lại Dashboard, hãy refresh dữ liệu
-        if (currentController instanceof DashboardController) {
-            ((DashboardController) currentController).refreshDashboard();
+
+        root.getStylesheets().clear();
+        URL globalCssUrl = getClass().getResource("/css/manHinhChinh.css");
+        if (globalCssUrl != null) root.getStylesheets().add(globalCssUrl.toExternalForm());
+        if (cssPath != null && !cssPath.isEmpty()) {
+            URL specificCssUrl = getClass().getResource(cssPath);
+            if (specificCssUrl != null) root.getStylesheets().add(specificCssUrl.toExternalForm());
         }
-        
         contentArea.setCenter(root);
-        return;
     }
-
-    // 2. Nếu chưa có trong cache thì mới load mới
-    FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-    Parent root = loader.load();
-    currentController = loader.getController();
-    
-    // Lưu vào cache
-    screenCache.put(fxmlPath, root);
-    controllerCache.put(fxmlPath, currentController);
-
-    if (currentController instanceof DashboardController) {
-        ((DashboardController) currentController).setMainController(this);
-    }
-    if (currentController instanceof DatBan) {
-        this.datBanController = (DatBan) currentController;
-    }
-    root.getStylesheets().clear();
-    URL globalCssUrl = getClass().getResource("/css/manHinhChinh.css");
-    if (globalCssUrl != null) root.getStylesheets().add(globalCssUrl.toExternalForm());
-    if (cssPath != null && !cssPath.isEmpty()) {
-        URL specificCssUrl = getClass().getResource(cssPath);
-        if (specificCssUrl != null) root.getStylesheets().add(specificCssUrl.toExternalForm());
-    }
-    contentArea.setCenter(root);
-}
 private void showAlert(Alert.AlertType type, String title, String content) {
     Alert alert = new Alert(type);
     alert.setTitle(title);

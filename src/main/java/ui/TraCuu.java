@@ -1,4 +1,4 @@
-﻿package ui;
+package ui;
 import network.Client;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -29,16 +29,6 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-// ð¥ THíM IMPORT CHO IN HíA ÄÆ N
-
-
-
-
-
-
-
-
-
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,7 +41,17 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-public class TraCuu {
+
+public class TraCuu implements network.RealTimeSubscriber {
+    private final java.util.function.Consumer<network.RealTimeEvent> rtListener = e -> {
+        Platform.runLater(this::loadData);
+    };
+
+    @Override
+    public java.util.function.Consumer<network.RealTimeEvent> getRealTimeListener() {
+        return rtListener;
+    }
+
     @FXML private ComboBox<String> cboSapXepHD, cboSapXepKH;
     @FXML private TextField txtTimKiemHD, txtTimKiemKH;
     @FXML private TableView<HoaDonDisplay> tblHoaDon;
@@ -65,19 +65,20 @@ public class TraCuu {
     private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private List<HoaDon> cachedHD;
+    
     @FXML
     public void initialize() {
         tatCaHoaDon = FXCollections.observableArrayList();
         danhSachHoaDon = FXCollections.observableArrayList();
         tatCaKhachHang = FXCollections.observableArrayList();
         danhSachKhachHang = FXCollections.observableArrayList();
+        
+        // Đăng ký Real-time
+        network.RealTimeClient.getInstance().addListener(rtListener);
+
         // Load data initial
         loadData();
         setupTables();
-
-        // 🔥 THÊM: Lắng nghe sự kiện Real-time để tự động làm mới dữ liệu
-        network.RealTimeClient.getInstance().addListener(this::handleRealTimeEvent);
 
         Platform.runLater(() -> {
             Scene scene = tblHoaDon.getScene();
@@ -137,6 +138,7 @@ public class TraCuu {
             Platform.runLater(() -> loadData());
         }
     }
+
     private void setupTables() {
         // Setup bảng Hóa đơn
         colMaHD.setCellValueFactory(c -> c.getValue().maHDProperty());
@@ -194,14 +196,17 @@ public class TraCuu {
         tblHoaDon.setItems(danhSachHoaDon);
         tblKhachHang.setItems(danhSachKhachHang);
     }
+
     private void loadData() {
         tatCaHoaDon.clear();
         tatCaKhachHang.clear();
+        
+        List<HoaDon> listHD = new ArrayList<>();
         // 1. Load Hóa Đơn qua API
         Response resHD = Client.send(CommandType.GET_INVOICES_ALL, null);
         if (resHD.getStatusCode() == 200) {
-            List<HoaDon> listHD = JsonUtil.fromJsonList(JsonUtil.toJson(resHD.getData()), HoaDon.class);
-            // Sắp xếp mặc định: Sớm nhất đến Muộn nhất
+            listHD = JsonUtil.fromJsonList(JsonUtil.toJson(resHD.getData()), HoaDon.class);
+            // Sắp xếp mặc định: Mới nhất lên đầu
             listHD.sort((a, b) -> {
                 if (a.getNgayLap() == null) return 1;
                 if (b.getNgayLap() == null) return -1;
@@ -242,22 +247,24 @@ public class TraCuu {
                 if (b.getNgayDangKy() == null) return -1;
                 return b.getNgayDangKy().compareTo(a.getNgayDangKy());
             });
-            for (KhachHang kh : listKH) {
-                double total = 0;
-                boolean hasPaidInvoice = false;
-                if (kh.getMaKH() != null) {
-                    Response res = Client.sendWithParams(CommandType.GET_INVOICES_BY_CUSTOMER, java.util.Map.of("maKH", kh.getMaKH()));
-                    if (res.getStatusCode() == 200) {
-                        List<HoaDon> hdList = JsonUtil.fromJsonList(JsonUtil.toJson(res.getData()), HoaDon.class);
-                        for (HoaDon hd : hdList) {
-                            if (hd.getTrangThai() == TrangThaiHoaDon.DA_THANH_TOAN) {
-                                total += hd.getTongTienThanhToan();
-                                hasPaidInvoice = true;
-                            }
-                        }
+            
+            // 🔥 TỐI ƯU: Tạo map để tính tổng tiền của mỗi khách hàng từ danh sách hóa đơn đã load
+            java.util.Map<String, Double> customerTotalMap = new java.util.HashMap<>();
+            java.util.Set<String> customersWithPaidInvoices = new java.util.HashSet<>();
+            
+            for (HoaDon hd : listHD) {
+                if (hd.getTrangThai() == TrangThaiHoaDon.DA_THANH_TOAN && hd.getKhachHang() != null) {
+                    String maKH = hd.getKhachHang().getMaKH();
+                    if (maKH != null) {
+                        customerTotalMap.put(maKH, customerTotalMap.getOrDefault(maKH, 0.0) + hd.getTongTienThanhToan());
+                        customersWithPaidInvoices.add(maKH);
                     }
                 }
-                if (hasPaidInvoice) {
+            }
+
+            for (KhachHang kh : listKH) {
+                if (customersWithPaidInvoices.contains(kh.getMaKH())) {
+                    double total = customerTotalMap.getOrDefault(kh.getMaKH(), 0.0);
                     tatCaKhachHang.add(new KhachHangDisplay(
                         kh.getMaKH(),
                         kh.getTenKH(),
@@ -273,6 +280,7 @@ public class TraCuu {
         }
         danhSachKhachHang.setAll(tatCaKhachHang);
     }
+
     private void sapXepHD(String k) {
         List<HoaDonDisplay> l = new ArrayList<>(danhSachHoaDon);
         l.sort((a, b) -> {
@@ -292,110 +300,100 @@ public class TraCuu {
                 int ngay2 = Integer.parseInt(parts2[0]);
                 int thang2 = Integer.parseInt(parts2[1]);
                 int nam2 = Integer.parseInt(parts2[2]);
-                if (k.equals("Theo nÄm")) {
+                if (k.equals("Theo năm")) {
                     if (nam1 != nam2) return nam1 - nam2;
                     if (thang1 != thang2) return thang1 - thang2;
                     return ngay1 - ngay2;
                 } else if (k.equals("Theo tháng")) {
-                if (nam1 != nam2) return nam1 - nam2;
-                if (thang1 != thang2) return thang1 - thang2;
-                return ngay1 - ngay2;
-            } else {
-            if (nam1 != nam2) return nam1 - nam2;
-            if (thang1 != thang2) return thang1 - thang2;
-            return ngay1 - ngay2;
-        }
-    } catch (Exception e) {
-    return d1.compareTo(d2);
-}
-});
-danhSachHoaDon.setAll(l);
-}
-private void sapXepKH(String k) {
-    List<KhachHangDisplay> l = new ArrayList<>(danhSachKhachHang);
-    l.sort((a, b) -> {
-        String d1 = a.getNgayDK();
-        String d2 = b.getNgayDK();
-        if (d1 == null || d1.isEmpty() || d1.length() < 10) return 1;
-        if (d2 == null || d2.isEmpty() || d2.length() < 10) return -1;
-        try {
-            String[] parts1 = d1.split("/");
-            String[] parts2 = d2.split("/");
-            if (parts1.length != 3 || parts2.length != 3) {
+                    if (nam1 != nam2) return nam1 - nam2;
+                    if (thang1 != thang2) return thang1 - thang2;
+                    return ngay1 - ngay2;
+                } else {
+                    if (nam1 != nam2) return nam1 - nam2;
+                    if (thang1 != thang2) return thang1 - thang2;
+                    return ngay1 - ngay2;
+                }
+            } catch (Exception e) {
                 return d1.compareTo(d2);
             }
-            int ngay1 = Integer.parseInt(parts1[0]);
-            int thang1 = Integer.parseInt(parts1[1]);
-            int nam1 = Integer.parseInt(parts1[2]);
-            int ngay2 = Integer.parseInt(parts2[0]);
-            int thang2 = Integer.parseInt(parts2[1]);
-            int nam2 = Integer.parseInt(parts2[2]);
-            if (k.equals("Theo nÄm")) {
-                if (nam1 != nam2) return nam1 - nam2;
-                if (thang1 != thang2) return thang1 - thang2;
-                return ngay1 - ngay2;
-            } else if (k.equals("Theo tháng")) {
-            if (nam1 != nam2) return nam1 - nam2;
-            if (thang1 != thang2) return thang1 - thang2;
-            return ngay1 - ngay2;
-        } else {
-        if (nam1 != nam2) return nam1 - nam2;
-        if (thang1 != thang2) return thang1 - thang2;
-        return ngay1 - ngay2;
+        });
+        danhSachHoaDon.setAll(l);
     }
-} catch (Exception e) {
-return d1.compareTo(d2);
-}
-});
-danhSachKhachHang.setAll(l);
-}
-// ð¥ RíNG BUá»C: Tìm kiếm hóa Äơn CHá» theo SÄT hoặc Mã HD
-private void timHD(String t) {
-    if (t == null || t.trim().isEmpty()) {
-        tatCaHoaDon.sort((a, b) -> a.getNgay().compareTo(b.getNgay())); // Tạm thời theo chuỗi ngày, nhưng nên theo LocalDateTime của HoaDon gốc. `tatCaHoaDon` là HoaDonDisplay.
-        danhSachHoaDon.setAll(tatCaHoaDon);
-        return;
-    }
-    String s = t.toLowerCase().trim();
-    // Ràng buá»c: Chá» tìm kiếm theo SÄT KH hoặc Mã HD
-    danhSachHoaDon.setAll(tatCaHoaDon.stream()
-    .filter(h -> {
-        // Kiá»m tra SÄT KH (không null và chứa từ khóa)
-        boolean matchSDT = h.getSdtKH() != null &&
-        !h.getSdtKH().equals("N/A") &&
-        h.getSdtKH().toLowerCase().contains(s);
-        // Kiá»m tra Mã HD (không null và chứa từ khóa)
-        boolean matchMaHD = h.getMaHD() != null &&
-        h.getMaHD().toLowerCase().contains(s);
-        // Trả vá» true nếu khá»p vá»i SÄT HOáº¶C Mã HD
-        return matchSDT || matchMaHD;
-    })
-    .collect(Collectors.toList()));
-}
-// ð¥ RíNG BUá»C: Tìm kiếm khách hàng CHá» theo SÄT hoặc Tên KH
-private void timKH(String t) {
-    if (t == null || t.trim().isEmpty()) {
-        danhSachKhachHang.setAll(tatCaKhachHang);
-        return;
-    }
-    String s = t.toLowerCase().trim();
-    // Ràng buá»c: Chá» tìm kiếm theo SÄT hoặc Há» tên KH
-    danhSachKhachHang.setAll(tatCaKhachHang.stream()
-    .filter(k -> {
-        // Kiá»m tra SÄT (không null và chứa từ khóa)
-        boolean matchSDT = k.getSdt() != null &&
-        k.getSdt().toLowerCase().contains(s);
-        // Kiá»m tra Há» tên (không null và chứa từ khóa)
-        boolean matchHoTen = k.getHoTen() != null &&
-        k.getHoTen().toLowerCase().contains(s);
-        // Trả vá» true nếu khá»p vá»i SÄT HOáº¶C Há» tên
-        return matchSDT || matchHoTen;
-    })
-    .collect(Collectors.toList()));
-}
-// ð¥ Sá»¬A HíM NíY: THíM NíT IN HíA ÄÆ N
 
-    
+    private void sapXepKH(String k) {
+        List<KhachHangDisplay> l = new ArrayList<>(danhSachKhachHang);
+        l.sort((a, b) -> {
+            String d1 = a.getNgayDK();
+            String d2 = b.getNgayDK();
+            if (d1 == null || d1.isEmpty() || d1.length() < 10) return 1;
+            if (d2 == null || d2.isEmpty() || d2.length() < 10) return -1;
+            try {
+                String[] parts1 = d1.split("/");
+                String[] parts2 = d2.split("/");
+                if (parts1.length != 3 || parts2.length != 3) {
+                    return d1.compareTo(d2);
+                }
+                int ngay1 = Integer.parseInt(parts1[0]);
+                int thang1 = Integer.parseInt(parts1[1]);
+                int nam1 = Integer.parseInt(parts1[2]);
+                int ngay2 = Integer.parseInt(parts2[0]);
+                int thang2 = Integer.parseInt(parts2[1]);
+                int nam2 = Integer.parseInt(parts2[2]);
+                if (k.equals("Theo năm")) {
+                    if (nam1 != nam2) return nam1 - nam2;
+                    if (thang1 != thang2) return thang1 - thang2;
+                    return ngay1 - ngay2;
+                } else if (k.equals("Theo tháng")) {
+                    if (nam1 != nam2) return nam1 - nam2;
+                    if (thang1 != thang2) return thang1 - thang2;
+                    return ngay1 - ngay2;
+                } else {
+                    if (nam1 != nam2) return nam1 - nam2;
+                    if (thang1 != thang2) return thang1 - thang2;
+                    return ngay1 - ngay2;
+                }
+            } catch (Exception e) {
+                return d1.compareTo(d2);
+            }
+        });
+        danhSachKhachHang.setAll(l);
+    }
+
+    private void timHD(String t) {
+        if (t == null || t.trim().isEmpty()) {
+            danhSachHoaDon.setAll(tatCaHoaDon);
+            return;
+        }
+        String s = t.toLowerCase().trim();
+        danhSachHoaDon.setAll(tatCaHoaDon.stream()
+        .filter(h -> {
+            boolean matchSDT = h.getSdtKH() != null &&
+            !h.getSdtKH().equals("N/A") &&
+            h.getSdtKH().toLowerCase().contains(s);
+            boolean matchMaHD = h.getMaHD() != null &&
+            h.getMaHD().toLowerCase().contains(s);
+            return matchSDT || matchMaHD;
+        })
+        .collect(Collectors.toList()));
+    }
+
+    private void timKH(String t) {
+        if (t == null || t.trim().isEmpty()) {
+            danhSachKhachHang.setAll(tatCaKhachHang);
+            return;
+        }
+        String s = t.toLowerCase().trim();
+        danhSachKhachHang.setAll(tatCaKhachHang.stream()
+        .filter(k -> {
+            boolean matchSDT = k.getSdt() != null &&
+            k.getSdt().toLowerCase().contains(s);
+            boolean matchHoTen = k.getHoTen() != null &&
+            k.getHoTen().toLowerCase().contains(s);
+            return matchSDT || matchHoTen;
+        })
+        .collect(Collectors.toList()));
+    }
+
     private void showFullDetailHD(String id) {
         Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, java.util.Map.of("maHD", id));
         if (res.getStatusCode() != 200) {
@@ -409,14 +407,11 @@ private void timKH(String t) {
             ct = JsonUtil.fromJsonList(JsonUtil.toJson(resDetails.getData()), ChiTietHoaDon.class);
         }
         
-        // 🔥 QUAN TRỌNG: Gán danh sách chi tiết vào hóa đơn để in được
         hd.setChiTietHoaDon(ct);
 
-        // 🔥 FALLBACK CALCULATION: Nếu các trường phí đang bằng 0, tính toán lại từ danh sách món
         if (hd.getTongCongMonAn() == 0 && !ct.isEmpty()) {
             double totalFood = ct.stream().mapToDouble(item -> item.getDonGia() * item.getSoLuong()).sum();
             hd.setTongCongMonAn(totalFood);
-            // setTongCongMonAn sẽ tự gọi calculateTotals() bên trong Entity HoaDon
         }
 
         Dialog<Void> d = new Dialog<>();
@@ -525,7 +520,7 @@ private void timKH(String t) {
 
         d.show();
     }
-// ð¥ HíM Xá»¬ Lí IN HíA ÄÆ N (Láº¤Y Äáº¦Y Äá»¦ Dá»® LIá»U Tá»ª DAO GIá»NG NíT XEM)
+
     private void handleInHoaDon(HoaDon hd) {
         if (hd == null) return;
         try {
@@ -546,242 +541,239 @@ private void timKH(String t) {
         }
     }
 
-private void showFullHistoryKH(String id) {
-    List<HoaDon> ls = new ArrayList<>();
-    Response resLS = Client.sendWithParams(CommandType.GET_INVOICES_BY_CUSTOMER, java.util.Map.of("maKH", id));
-    if (resLS.getStatusCode() == 200) {
-        ls = JsonUtil.fromJsonList(JsonUtil.toJson(resLS.getData()), HoaDon.class);
-    }
-    // Lấy thông tin KH
-    Response resKH = Client.send(CommandType.GET_CUSTOMERS, null);
-    KhachHang kh = null;
-    if (resKH.getStatusCode() == 200) {
-        List<KhachHang> listKH = JsonUtil.fromJsonList(JsonUtil.toJson(resKH.getData()), KhachHang.class);
-            listKH.sort((a, b) -> {
-                if (a.getNgayDangKy() == null) return 1;
-                if (b.getNgayDangKy() == null) return -1;
-                return b.getNgayDangKy().compareTo(a.getNgayDangKy());
-            });
-        kh = listKH.stream().filter(k -> id.equals(k.getMaKH())).findFirst().orElse(null);
-    }
-    Dialog<Void> d = new Dialog<>();
-    d.setTitle("Khách hàng - " + id);
-    VBox main = new VBox(15);
-    main.setPadding(new Insets(15));
-    main.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
-    if (kh != null) {
-        Label t = new Label("THÔNG TIN KHÁCH HÀNG");
-        t.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
-        t.setMaxWidth(Double.MAX_VALUE);
-        t.setAlignment(Pos.CENTER);
-        GridPane g = new GridPane();
-        g.setHgap(15);
-        g.setVgap(8);
-        int row = 0;
-        addInfo(g, row++, "Mã:", kh.getMaKH(), "Tên:", kh.getTenKH());
-        addInfo(g, row++, "SĐT:", kh.getSoDT(), "Email:", kh.getEmail() != null ? kh.getEmail() : "");
-        addInfo(g, row++, "Địa chỉ:", kh.getDiaChi() != null ? kh.getDiaChi() : "", "Loại:", kh.getThanhVien() != null ? kh.getThanhVien() : "");
-        addInfo(g, row++, "Ngày ĐK:", kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "", "", "");
-        double tot = ls.stream().mapToDouble(HoaDon::getTongTienThanhToan).sum();
-        HBox s = new HBox();
-        s.setAlignment(Pos.CENTER_RIGHT);
-        Label sl = new Label("Tổng chi tiêu: ");
-        sl.setStyle("-fx-font-weight: bold;");
-        Label sv = new Label(String.format("%,.0f VNĐ", tot));
-        sv.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: green;");
-        Region sp = new Region();
-        HBox.setHgrow(sp, Priority.ALWAYS);
-        s.getChildren().addAll(sl, sp, sv);
-        main.getChildren().addAll(t, g, s);
-    }
-    Label ht = new Label("Lịch sử (" + ls.size() + " hóa đơn)");
-    ht.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
-    TableView<HoaDon> tb = new TableView<>();
-    tb.setPrefHeight(250);
-    tb.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-    TableColumn<HoaDon, String> c1 = new TableColumn<>("Mã");
-    c1.setCellValueFactory(new PropertyValueFactory<>("maHD"));
-    c1.setPrefWidth(100);
-    TableColumn<HoaDon, String> c2 = new TableColumn<>("Ngày");
-    c2.setCellValueFactory(cellData -> {
-        HoaDon h = cellData.getValue();
-        return new SimpleStringProperty(h.getNgayLap() != null ? h.getNgayLap().format(dateTimeFormatter) : "N/A");
-    });
-    c2.setPrefWidth(150);
-    TableColumn<HoaDon, String> c3 = new TableColumn<>("PTTT");
-    c3.setCellValueFactory(cellData -> {
-        HoaDon h = cellData.getValue();
-        return new SimpleStringProperty(h.getHinhThucTT() != null ? h.getHinhThucTT().getDisplayName() : "Chưa TT");
-    });
-    c3.setPrefWidth(120);
-    TableColumn<HoaDon, Double> c4 = new TableColumn<>("Tổng cộng");
-    c4.setCellValueFactory(new PropertyValueFactory<>("tongTienThanhToan"));
-    c4.setPrefWidth(130);
-    c4.setCellFactory(col -> new TableCell<>() {
-        protected void updateItem(Double i, boolean e) {
-            super.updateItem(i, e);
-            setText(e || i == null ? null : String.format("%,.0f VNĐ", i));
-            setAlignment(Pos.CENTER_RIGHT);
+    private void showFullHistoryKH(String id) {
+        List<HoaDon> ls = new ArrayList<>();
+        Response resLS = Client.sendWithParams(CommandType.GET_INVOICES_BY_CUSTOMER, java.util.Map.of("maKH", id));
+        if (resLS.getStatusCode() == 200) {
+            ls = JsonUtil.fromJsonList(JsonUtil.toJson(resLS.getData()), HoaDon.class);
         }
-    });
-    tb.getColumns().addAll(c1, c2, c3, c4);
-    tb.setItems(FXCollections.observableArrayList(ls));
-    // Thêm sự kiá»n double-click Äá» xem chi tiết hóa Äơn
-    tb.setOnMouseClicked(event -> {
-        if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
-            HoaDon selectedHD = tb.getSelectionModel().getSelectedItem();
-            if (selectedHD != null && selectedHD.getMaHD() != null) {
-                showFullDetailHD(selectedHD.getMaHD());
+        // Lấy thông tin KH
+        Response resKH = Client.send(CommandType.GET_CUSTOMERS, null);
+        KhachHang kh = null;
+        if (resKH.getStatusCode() == 200) {
+            List<KhachHang> listKH = JsonUtil.fromJsonList(JsonUtil.toJson(resKH.getData()), KhachHang.class);
+            kh = listKH.stream().filter(k -> id.equals(k.getMaKH())).findFirst().orElse(null);
+        }
+        Dialog<Void> d = new Dialog<>();
+        d.setTitle("Khách hàng - " + id);
+        VBox main = new VBox(15);
+        main.setPadding(new Insets(15));
+        main.setStyle("-fx-background-color: #FFF3E0; -fx-background-radius: 10;");
+        if (kh != null) {
+            Label t = new Label("THÔNG TIN KHÁCH HÀNG");
+            t.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
+            t.setMaxWidth(Double.MAX_VALUE);
+            t.setAlignment(Pos.CENTER);
+            GridPane g = new GridPane();
+            g.setHgap(15);
+            g.setVgap(8);
+            int row = 0;
+            addInfo(g, row++, "Mã:", kh.getMaKH(), "Tên:", kh.getTenKH());
+            addInfo(g, row++, "SĐT:", kh.getSoDT(), "Email:", kh.getEmail() != null ? kh.getEmail() : "");
+            addInfo(g, row++, "Địa chỉ:", kh.getDiaChi() != null ? kh.getDiaChi() : "", "Loại:", kh.getThanhVien() != null ? kh.getThanhVien() : "");
+            addInfo(g, row++, "Ngày ĐK:", kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "", "", "");
+            double tot = ls.stream().mapToDouble(HoaDon::getTongTienThanhToan).sum();
+            HBox s = new HBox();
+            s.setAlignment(Pos.CENTER_RIGHT);
+            Label sl = new Label("Tổng chi tiêu: ");
+            sl.setStyle("-fx-font-weight: bold;");
+            Label sv = new Label(String.format("%,.0f VNĐ", tot));
+            sv.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: green;");
+            Region sp = new Region();
+            HBox.setHgrow(sp, Priority.ALWAYS);
+            s.getChildren().addAll(sl, sp, sv);
+            main.getChildren().addAll(t, g, s);
+        }
+        Label ht = new Label("Lịch sử (" + ls.size() + " hóa đơn)");
+        ht.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #d35400;");
+        TableView<HoaDon> tb = new TableView<>();
+        tb.setPrefHeight(250);
+        tb.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableColumn<HoaDon, String> c1 = new TableColumn<>("Mã");
+        c1.setCellValueFactory(new PropertyValueFactory<>("maHD"));
+        c1.setPrefWidth(100);
+        TableColumn<HoaDon, String> c2 = new TableColumn<>("Ngày");
+        c2.setCellValueFactory(cellData -> {
+            HoaDon h = cellData.getValue();
+            return new SimpleStringProperty(h.getNgayLap() != null ? h.getNgayLap().format(dateTimeFormatter) : "N/A");
+        });
+        c2.setPrefWidth(150);
+        TableColumn<HoaDon, String> c3 = new TableColumn<>("PTTT");
+        c3.setCellValueFactory(cellData -> {
+            HoaDon h = cellData.getValue();
+            return new SimpleStringProperty(h.getHinhThucTT() != null ? h.getHinhThucTT().getDisplayName() : "Chưa TT");
+        });
+        c3.setPrefWidth(120);
+        TableColumn<HoaDon, Double> c4 = new TableColumn<>("Tổng cộng");
+        c4.setCellValueFactory(new PropertyValueFactory<>("tongTienThanhToan"));
+        c4.setPrefWidth(130);
+        c4.setCellFactory(col -> new TableCell<>() {
+            protected void updateItem(Double i, boolean e) {
+                super.updateItem(i, e);
+                setText(e || i == null ? null : String.format("%,.0f VNĐ", i));
+                setAlignment(Pos.CENTER_RIGHT);
+            }
+        });
+        tb.getColumns().addAll(c1, c2, c3, c4);
+        tb.setItems(FXCollections.observableArrayList(ls));
+        tb.setOnMouseClicked(event -> {
+            if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
+                HoaDon selectedHD = tb.getSelectionModel().getSelectedItem();
+                if (selectedHD != null && selectedHD.getMaHD() != null) {
+                    showFullDetailHD(selectedHD.getMaHD());
+                }
+            }
+        });
+        if (ls.isEmpty()) {
+            tb.setPlaceholder(new Label("Khách hàng chưa có hóa đơn."));
+        }
+        main.getChildren().addAll(ht, tb);
+        d.getDialogPane().setContent(main);
+        d.getDialogPane().setPrefSize(600, 650);
+        d.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        d.getDialogPane().setStyle("-fx-background-color: transparent;");
+        d.show();
+    }
+
+    private void addInfo(GridPane g, int r, String l1, String v1, String l2, String v2) {
+        Label lb1 = new Label(l1);
+        lb1.setStyle("-fx-font-weight: bold;");
+        g.add(lb1, 0, r);
+        g.add(new Label(v1), 1, r);
+        if (!l2.isEmpty()) {
+            Label lb2 = new Label(l2);
+            lb2.setStyle("-fx-font-weight: bold;");
+            g.add(lb2, 2, r);
+            g.add(new Label(v2), 3, r);
+        }
+    }
+
+    private HBox row(String l, String v) {
+        HBox h = new HBox();
+        Label lb = new Label(l);
+        lb.setStyle("-fx-font-weight: bold;");
+        Label vl = new Label(v);
+        Region s = new Region();
+        HBox.setHgrow(s, Priority.ALWAYS);
+        h.getChildren().addAll(lb, s, vl);
+        return h;
+    }
+
+    @FXML
+    private void handleXuatExcelHoaDon() {
+        FileChooser fc = new FileChooser();
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx"));
+        File f = fc.showSaveDialog(tblHoaDon.getScene().getWindow());
+        if (f != null) {
+            try (Workbook wb = new XSSFWorkbook(); FileOutputStream out = new FileOutputStream(f)) {
+                Sheet s = wb.createSheet("Hóa đơn");
+                Row h = s.createRow(0);
+                String[] cols = {"Mã", "Ngày", "PTTT", "SĐT", "Tổng"};
+                for (int i = 0; i < cols.length; i++) h.createCell(i).setCellValue(cols[i]);
+                int r = 1;
+                for (HoaDonDisplay hd : danhSachHoaDon) {
+                    Row rw = s.createRow(r++);
+                    rw.createCell(0).setCellValue(hd.getMaHD());
+                    rw.createCell(1).setCellValue(hd.getNgay());
+                    rw.createCell(2).setCellValue(hd.getHinhThuc());
+                    rw.createCell(3).setCellValue(hd.getSdtKH());
+                    rw.createCell(4).setCellValue(hd.getTongTien());
+                }
+                wb.write(out);
+                alert("Thành công", "Đã xuất Excel");
+            } catch (Exception e) {
+                alert("Lỗi", e.getMessage());
             }
         }
-    });
-    if (ls.isEmpty()) {
-        tb.setPlaceholder(new Label("Khách hàng chưa có hóa Äơn."));
     }
-    main.getChildren().addAll(ht, tb);
-    d.getDialogPane().setContent(main);
-    d.getDialogPane().setPrefSize(600, 650);
-    d.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-    d.getDialogPane().setStyle("-fx-background-color: transparent;");
-    d.show();
-}
-private void addInfo(GridPane g, int r, String l1, String v1, String l2, String v2) {
-    Label lb1 = new Label(l1);
-    lb1.setStyle("-fx-font-weight: bold;");
-    g.add(lb1, 0, r);
-    g.add(new Label(v1), 1, r);
-    if (!l2.isEmpty()) {
-        Label lb2 = new Label(l2);
-        lb2.setStyle("-fx-font-weight: bold;");
-        g.add(lb2, 2, r);
-        g.add(new Label(v2), 3, r);
-    }
-}
-private HBox row(String l, String v) {
-    HBox h = new HBox();
-    Label lb = new Label(l);
-    lb.setStyle("-fx-font-weight: bold;");
-    Label vl = new Label(v);
-    Region s = new Region();
-    HBox.setHgrow(s, Priority.ALWAYS);
-    h.getChildren().addAll(lb, s, vl);
-    return h;
-}
-@FXML
-private void handleXuatExcelHoaDon() {
-    FileChooser fc = new FileChooser();
-    fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx"));
-    File f = fc.showSaveDialog(tblHoaDon.getScene().getWindow());
-    if (f != null) {
-        try (Workbook wb = new XSSFWorkbook(); FileOutputStream out = new FileOutputStream(f)) {
-            Sheet s = wb.createSheet("Hóa Äơn");
-            Row h = s.createRow(0);
-            String[] cols = {"Mã", "Ngày", "PTTT", "SÄT", "Tá»ng"};
-            for (int i = 0; i < cols.length; i++) h.createCell(i).setCellValue(cols[i]);
-            int r = 1;
-            for (HoaDonDisplay hd : danhSachHoaDon) {
-                Row rw = s.createRow(r++);
-                rw.createCell(0).setCellValue(hd.getMaHD());
-                rw.createCell(1).setCellValue(hd.getNgay());
-                rw.createCell(2).setCellValue(hd.getHinhThuc());
-                rw.createCell(3).setCellValue(hd.getSdtKH());
-                rw.createCell(4).setCellValue(hd.getTongTien());
+
+    @FXML
+    private void handleXuatExcelKhachHang() {
+        FileChooser fc = new FileChooser();
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx"));
+        File f = fc.showSaveDialog(tblKhachHang.getScene().getWindow());
+        if (f != null) {
+            try (Workbook wb = new XSSFWorkbook(); FileOutputStream out = new FileOutputStream(f)) {
+                Sheet s = wb.createSheet("Khách hàng");
+                Row h = s.createRow(0);
+                String[] cols = {"Mã", "Tên", "SĐT", "Địa chỉ", "Email", "Ngày", "Loại", "Tổng"};
+                for (int i = 0; i < cols.length; i++) h.createCell(i).setCellValue(cols[i]);
+                int r = 1;
+                for (KhachHangDisplay k : danhSachKhachHang) {
+                    Row rw = s.createRow(r++);
+                    rw.createCell(0).setCellValue(k.getMaKH());
+                    rw.createCell(1).setCellValue(k.getHoTen());
+                    rw.createCell(2).setCellValue(k.getSdt());
+                    rw.createCell(3).setCellValue(k.getDiaChi());
+                    rw.createCell(4).setCellValue(k.getEmail());
+                    rw.createCell(5).setCellValue(k.getNgayDK());
+                    rw.createCell(6).setCellValue(k.getLoaiKH());
+                    rw.createCell(7).setCellValue(k.getTongTienHD());
+                }
+                wb.write(out);
+                alert("Thành công", "Đã xuất Excel");
+            } catch (Exception e) {
+                alert("Lỗi", e.getMessage());
             }
-            wb.write(out);
-            alert("Thành công", "Äã xuất Excel");
-        } catch (Exception e) {
-        alert("Lá»i", e.getMessage());
+        }
     }
-}
-}
-@FXML
-private void handleXuatExcelKhachHang() {
-    FileChooser fc = new FileChooser();
-    fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx"));
-    File f = fc.showSaveDialog(tblKhachHang.getScene().getWindow());
-    if (f != null) {
-        try (Workbook wb = new XSSFWorkbook(); FileOutputStream out = new FileOutputStream(f)) {
-            Sheet s = wb.createSheet("Khách hàng");
-            Row h = s.createRow(0);
-            String[] cols = {"Mã", "Tên", "SÄT", "Äá»a chá»", "Email", "Ngày", "Loại", "Tá»ng"};
-            for (int i = 0; i < cols.length; i++) h.createCell(i).setCellValue(cols[i]);
-            int r = 1;
-            for (KhachHangDisplay k : danhSachKhachHang) {
-                Row rw = s.createRow(r++);
-                rw.createCell(0).setCellValue(k.getMaKH());
-                rw.createCell(1).setCellValue(k.getHoTen());
-                rw.createCell(2).setCellValue(k.getSdt());
-                rw.createCell(3).setCellValue(k.getDiaChi());
-                rw.createCell(4).setCellValue(k.getEmail());
-                rw.createCell(5).setCellValue(k.getNgayDK());
-                rw.createCell(6).setCellValue(k.getLoaiKH());
-                rw.createCell(7).setCellValue(k.getTongTienHD());
-            }
-            wb.write(out);
-            alert("Thành công", "Äã xuất Excel");
-        } catch (Exception e) {
-        alert("Lỗi", e.getMessage());
-    }
-}
-}
-private void alert(String t, String c) {
-    Alert a = new Alert(Alert.AlertType.INFORMATION);
-    a.setTitle(t);
-    a.setHeaderText(null);
-    a.setContentText(c);
-    a.showAndWait();
-}
-// === INNER CLASSES ===
-public static class HoaDonDisplay {
-    private final SimpleStringProperty maHD, ngay, hinhThuc, sdtKH, tongTien;
-    public HoaDonDisplay(String m, String n, String h, String s, String t) {
-        maHD = new SimpleStringProperty(m);
-        ngay = new SimpleStringProperty(n);
-        hinhThuc = new SimpleStringProperty(h);
-        sdtKH = new SimpleStringProperty(s);
-        tongTien = new SimpleStringProperty(t);
-    }
-    public String getMaHD() { return maHD.get(); }
-    public SimpleStringProperty maHDProperty() { return maHD; }
-    public String getNgay() { return ngay.get(); }
-    public SimpleStringProperty ngayProperty() { return ngay; }
-    public String getHinhThuc() { return hinhThuc.get(); }
-    public SimpleStringProperty hinhThucProperty() { return hinhThuc; }
-    public String getSdtKH() { return sdtKH.get(); }
-    public SimpleStringProperty sdtKHProperty() { return sdtKH; }
-    public String getTongTien() { return tongTien.get(); }
-    public SimpleStringProperty tongTienProperty() { return tongTien; }
-}
-public static class KhachHangDisplay {
-    private final SimpleStringProperty maKH, hoTen, sdt, diaChi, email, ngayDK, loaiKH, tongTienHD;
-    public KhachHangDisplay(String m, String h, String s, String d, String e, String n, String l, String t) {
-        maKH = new SimpleStringProperty(m);
-        hoTen = new SimpleStringProperty(h);
-        sdt = new SimpleStringProperty(s);
-        diaChi = new SimpleStringProperty(d);
-        email = new SimpleStringProperty(e);
-        ngayDK = new SimpleStringProperty(n);
-        loaiKH = new SimpleStringProperty(l);
-        tongTienHD = new SimpleStringProperty(t);
-    }
-    public String getMaKH() { return maKH.get(); }
-    public SimpleStringProperty maKHProperty() { return maKH; }
-    public String getHoTen() { return hoTen.get(); }
-    public SimpleStringProperty hoTenProperty() { return hoTen; }
-    public String getSdt() { return sdt.get(); }
-    public SimpleStringProperty sdtProperty() { return sdt; }
-    public String getDiaChi() { return diaChi.get(); }
-    public SimpleStringProperty diaChiProperty() { return diaChi; }
-    public String getEmail() { return email.get(); }
-    public SimpleStringProperty emailProperty() { return email; }
-    public String getNgayDK() { return ngayDK.get(); }
-    public SimpleStringProperty ngayDKProperty() { return ngayDK; }
-    public String getLoaiKH() { return loaiKH.get(); }
-    public SimpleStringProperty loaiKHProperty() { return loaiKH; }
-    public String getTongTienHD() { return tongTienHD.get(); }
-    public SimpleStringProperty tongTienHDProperty() { return tongTienHD; }
-}
-}
 
+    private void alert(String t, String c) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
+        a.setTitle(t);
+        a.setHeaderText(null);
+        a.setContentText(c);
+        a.showAndWait();
+    }
 
+    public static class HoaDonDisplay {
+        private final SimpleStringProperty maHD, ngay, hinhThuc, sdtKH, tongTien;
+        public HoaDonDisplay(String m, String n, String h, String s, String t) {
+            maHD = new SimpleStringProperty(m);
+            ngay = new SimpleStringProperty(n);
+            hinhThuc = new SimpleStringProperty(h);
+            sdtKH = new SimpleStringProperty(s);
+            tongTien = new SimpleStringProperty(t);
+        }
+        public String getMaHD() { return maHD.get(); }
+        public SimpleStringProperty maHDProperty() { return maHD; }
+        public String getNgay() { return ngay.get(); }
+        public SimpleStringProperty ngayProperty() { return ngay; }
+        public String getHinhThuc() { return hinhThuc.get(); }
+        public SimpleStringProperty hinhThucProperty() { return hinhThuc; }
+        public String getSdtKH() { return sdtKH.get(); }
+        public SimpleStringProperty sdtKHProperty() { return sdtKH; }
+        public String getTongTien() { return tongTien.get(); }
+        public SimpleStringProperty tongTienProperty() { return tongTien; }
+    }
 
+    public static class KhachHangDisplay {
+        private final SimpleStringProperty maKH, hoTen, sdt, diaChi, email, ngayDK, loaiKH, tongTienHD;
+        public KhachHangDisplay(String m, String h, String s, String d, String e, String n, String l, String t) {
+            maKH = new SimpleStringProperty(m);
+            hoTen = new SimpleStringProperty(h);
+            sdt = new SimpleStringProperty(s);
+            diaChi = new SimpleStringProperty(d);
+            email = new SimpleStringProperty(e);
+            ngayDK = new SimpleStringProperty(n);
+            loaiKH = new SimpleStringProperty(l);
+            tongTienHD = new SimpleStringProperty(t);
+        }
+        public String getMaKH() { return maKH.get(); }
+        public SimpleStringProperty maKHProperty() { return maKH; }
+        public String getHoTen() { return hoTen.get(); }
+        public SimpleStringProperty hoTenProperty() { return hoTen; }
+        public String getSdt() { return sdt.get(); }
+        public SimpleStringProperty sdtProperty() { return sdt; }
+        public String getDiaChi() { return diaChi.get(); }
+        public SimpleStringProperty diaChiProperty() { return diaChi; }
+        public String getEmail() { return email.get(); }
+        public SimpleStringProperty emailProperty() { return email; }
+        public String getNgayDK() { return ngayDK.get(); }
+        public SimpleStringProperty ngayDKProperty() { return ngayDK; }
+        public String getLoaiKH() { return loaiKH.get(); }
+        public SimpleStringProperty loaiKHProperty() { return loaiKH; }
+        public String getTongTienHD() { return tongTienHD.get(); }
+        public SimpleStringProperty tongTienHDProperty() { return tongTienHD; }
+    }
+}

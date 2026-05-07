@@ -76,10 +76,43 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.scene.control.Label;
 
 public class DatBan implements Initializable, network.RealTimeSubscriber {
-    private static java.util.function.Consumer<network.RealTimeEvent> realTimeListener = null;
+    private final java.util.function.Consumer<network.RealTimeEvent> rtListener = this::handleRealTimeEvent;
+
+    @Override
+    public java.util.function.Consumer<network.RealTimeEvent> getRealTimeListener() {
+        return rtListener;
+    }
+
+    private void handleRealTimeEvent(network.RealTimeEvent event) {
+        String affectedId = event.getAffectedId();
+        Platform.runLater(() -> {
+            // Đợi một chút để DB ổn định
+            javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(300));
+            pause.setOnFinished(e -> {
+                loadTableGrids();
+                loadBookingCards();
+
+                // Nếu hóa đơn đang mở bị ảnh hưởng, nạp lại
+                if (currentHoaDon != null && affectedId != null) {
+                    if (affectedId.equals(currentHoaDon.getMaHD()) || "ALL".equals(affectedId)) {
+                        try {
+                            Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", currentHoaDon.getMaHD()));
+                            if (res.getStatusCode() == 200) {
+                                HoaDon updated = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
+                                if (updated != null) {
+                                    loadHoaDonToMainInterface(updated, true);
+                                }
+                            }
+                        } catch (Exception ex) { ex.printStackTrace(); }
+                    }
+                }
+            });
+            pause.play();
+        });
+    }
+
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
     // Data
     private ObservableList<MonOrder> monOrderList = FXCollections.observableArrayList();
@@ -463,7 +496,9 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 filterGioTheoNgay(newVal);
         });
 
-        // Thêm vào cuối hàm initialize() trong DatBan.java
+        // Đăng ký nhận sự kiện real-time
+        RealTimeClient.getInstance().addListener(rtListener);
+        
         Platform.runLater(() -> {
             if (vboxBookingCards.getScene() != null) {
                 // Sử dụng addEventFilter để giành quyền ưu tiên xử lý phím trước hệ thống
@@ -529,41 +564,6 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             }
         });
 
-        // 🔥 Đăng ký lắng nghe sự kiện Real-time từ Server (REDO: Robust Sync & Leak Fix)
-        if (realTimeListener != null) {
-            RealTimeClient.getInstance().removeListener(realTimeListener);
-        }
-        realTimeListener = event -> {
-            String type = event.getType().name();
-            String affectedId = event.getAffectedId();
-            System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + type + " | ID: " + affectedId);
-            
-            Platform.runLater(() -> {
-                // Đợi một chút để DB kịp ổn định (tránh race condition)
-                javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(300));
-                pause.setOnFinished(e -> {
-                    loadTableGrids();
-                    loadBookingCards();
-
-                    // Nếu hóa đơn đang mở bị ảnh hưởng, nạp lại từ Server
-                    if (currentHoaDon != null && affectedId != null) {
-                        if (affectedId.equals(currentHoaDon.getMaHD()) || "ALL".equals(affectedId)) {
-                            try {
-                                Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", currentHoaDon.getMaHD()));
-                                if (res.getStatusCode() == 200) {
-                                    HoaDon updated = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
-                                    if (updated != null) {
-                                        loadHoaDonToMainInterface(updated, true);
-                                    }
-                                }
-                            } catch (Exception ex) { ex.printStackTrace(); }
-                        }
-                    }
-                });
-                pause.play();
-            });
-        };
-        RealTimeClient.getInstance().addListener(realTimeListener);
     }
 
     // =========================================================
@@ -1929,38 +1929,49 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     // =========================================================
     // Cần phải là public để Controller khác có thể gọi
     public void loadTableGrids() {
-        // 1. Tải lại ds HĐ Đang Chờ qua API
-        LocalDate dateToLoadForGrid = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue()
-                : LocalDate.now();
-        Response resInvoices = Client.sendWithParams(CommandType.GET_PENDING_INVOICES,
-                Map.of("date", dateToLoadForGrid.toString()));
-        if (resInvoices.getStatusCode() == 200 && resInvoices.getData() != null) {
-            this.dsHoaDonDatTrongNgay = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resInvoices.getData()),
-                    HoaDon.class);
-        }
-        if (this.dsHoaDonDatTrongNgay == null) {
-            this.dsHoaDonDatTrongNgay = new ArrayList<>();
-        }
-        // 2. Tải danh sách bàn qua API
-        Response resTables = Client.send(CommandType.GET_TABLES, null);
-        List<Ban> tatCaBan = null;
-        if (resTables.getStatusCode() == 200 && resTables.getData() != null) {
-            tatCaBan = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resTables.getData()), Ban.class);
-        }
-        if (tatCaBan == null) {
-            tatCaBan = new ArrayList<>();
-        }
-        List<Ban> banHienThi = new ArrayList<>();
-        LocalTime thoiGianHienTai = LocalTime.now();
-        // 2. Tính toán trạng thái hiển thị
-        for (Ban ban : tatCaBan) {
-            Ban banMoi = new Ban(ban.getMaBan(), ban.getViTri(), ban.getSucChua(), ban.getLoaiBan(),
-                    ban.getTrangThai());
-            TrangThaiBan trangThaiHienThi = getTrangThaiHienThi(banMoi, thoiGianHienTai);
-            banMoi.setTrangThai(trangThaiHienThi);
-            banHienThi.add(banMoi);
-        }
-        loadTableGridsBase(banHienThi);
+        // Chuyển việc tải dữ liệu sang luồng chạy ngầm để tránh treo UI
+        new Thread(() -> {
+            try {
+                // 1. Tải ds HĐ Đang Chờ qua API
+                LocalDate dateToLoadForGrid = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue()
+                        : LocalDate.now();
+                Response resInvoices = Client.sendWithParams(CommandType.GET_PENDING_INVOICES,
+                        Map.of("date", dateToLoadForGrid.toString()));
+                
+                final List<HoaDon> fetchedInvoices = new ArrayList<>();
+                if (resInvoices.getStatusCode() == 200 && resInvoices.getData() != null) {
+                    List<HoaDon> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resInvoices.getData()), HoaDon.class);
+                    if (list != null) fetchedInvoices.addAll(list);
+                }
+
+                // 2. Tải danh sách bàn qua API
+                Response resTables = Client.send(CommandType.GET_TABLES, null);
+                final List<HoaDon> finalInvoices = fetchedInvoices;
+                
+                Platform.runLater(() -> {
+                    this.dsHoaDonDatTrongNgay = finalInvoices;
+                    
+                    List<Ban> tatCaBan = new ArrayList<>();
+                    if (resTables.getStatusCode() == 200 && resTables.getData() != null) {
+                        List<Ban> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resTables.getData()), Ban.class);
+                        if (list != null) tatCaBan.addAll(list);
+                    }
+
+                    List<Ban> banHienThi = new ArrayList<>();
+                    LocalTime thoiGianHienTai = LocalTime.now();
+                    for (Ban ban : tatCaBan) {
+                        Ban banMoi = new Ban(ban.getMaBan(), ban.getViTri(), ban.getSucChua(), ban.getLoaiBan(),
+                                ban.getTrangThai());
+                        TrangThaiBan trangThaiHienThi = getTrangThaiHienThi(banMoi, thoiGianHienTai);
+                        banMoi.setTrangThai(trangThaiHienThi);
+                        banHienThi.add(banMoi);
+                    }
+                    loadTableGridsBase(banHienThi);
+                });
+            } catch (Exception e) {
+                System.err.println("[DatBan] Lỗi loadTableGrids: " + e.getMessage());
+            }
+        }).start();
     }
 
     private void loadTableGridsBase(List<Ban> dsBan) {
@@ -2153,125 +2164,66 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     // Cần phải là public để Controller khác có thể gọi
     // Cần phải là public để Controller khác có thể gọi
     public void loadBookingCards() {
-        vboxBookingCards.getChildren().clear();
-        LocalDate dateToLoadForGrid = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue()
-                : LocalDate.now();
-        try {
-            // 1. Lấy TẤT CẢ đơn đang chờ qua API
-            Response res = Client.send(CommandType.GET_PENDING_INVOICES, null);
-            List<HoaDon> tempBookings = new ArrayList<>();
-            if (res.getStatusCode() == 200 && res.getData() != null) {
-                List<HoaDon> fetched = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(res.getData()), HoaDon.class);
-                if (fetched != null) {
-                    tempBookings = fetched;
+        new Thread(() -> {
+            try {
+                Response res = Client.send(CommandType.GET_PENDING_INVOICES, null);
+                final List<HoaDon> allPendingBookings = new ArrayList<>();
+                if (res.getStatusCode() == 200 && res.getData() != null) {
+                    List<HoaDon> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(res.getData()), HoaDon.class);
+                    if (list != null) allPendingBookings.addAll(list);
                 }
-            }
-            final List<HoaDon> allPendingBookings = tempBookings;
-            // 2. Lấy giá trị filter và search từ UI
-            String selectedStatus = comboFilter.getValue();
-            String searchQuery = txtSearch.getText().trim().toLowerCase(); // Lấy và chuẩn hóa query
-            // 3. ÁP DỤNG FILTER VÀ SEARCH
-            List<HoaDon> filteredList = allPendingBookings.stream()
-                    // Lọc theo Trạng thái (Giữ nguyên logic gốc nhưng cho phép HOA_DON_TAM hiển
-                    // thị)
-                    .filter(hd -> {
-                        boolean statusMatch = true;
-                        if (selectedStatus != null && !selectedStatus.equals("Tất cả")) {
-                            // ... (logic lọc status giữ nguyên) ...
-                            String dbStatusValue = "";
-                            TrangThaiHoaDon selectedEnum = TrangThaiHoaDon.fromDisplayName(selectedStatus); // Chuyển
-                                                                                                            // đổi
-                                                                                                            // display
-                                                                                                            // name sang
-                                                                                                            // enum
-                            if (selectedEnum != null) {
-                                dbStatusValue = selectedEnum.getDbValue();
-                            }
-                            // Bao gồm cả HĐ Tạm nếu filter là "Đang phục vụ"
-                            if (selectedStatus.equals(TrangThaiHoaDon.DANG_SU_DUNG.getDisplayName())) {
-                                statusMatch = hd.getTrangThai() != null &&
-                                        (hd.getTrangThai() == TrangThaiHoaDon.DANG_SU_DUNG ||
-                                                hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM);
-                            } else if (!dbStatusValue.isEmpty()) {
-                                statusMatch = hd.getTrangThai() != null
-                                        && hd.getTrangThai().getDbValue().equals(dbStatusValue);
-                            } else {
-                                statusMatch = false; // Không tìm thấy trạng thái hợp lệ
-                            }
-                        }
-                        return statusMatch;
-                    })
-                    // --- 🔥 LỌC THEO TÌM KIẾM (SĐT, Mã HĐ, Mã Bàn) ---
-                    .filter(hd -> {
-                        if (searchQuery.isEmpty()) {
-                            return true; // Nếu ô tìm kiếm trống thì không lọc gì cả
-                        }
-                        // Kiểm tra SĐT (khách hàng có thể null)
-                        boolean sdtMatch = hd.getKhachHang() != null &&
-                                hd.getKhachHang().getSoDT() != null &&
-                                hd.getKhachHang().getSoDT().toLowerCase().contains(searchQuery);
-                        // Kiểm tra Mã HĐ
-                        boolean maHdMatch = hd.getMaHD() != null &&
-                                hd.getMaHD().toLowerCase().contains(searchQuery);
-                        // Kiểm tra Mã Bàn (bàn có thể null)
-                        // Cần kiểm tra cả các bàn phụ nếu là HĐ Gốc
-                        boolean maBanMatch = false;
-                        List<HoaDon> relatedHDs = new ArrayList<>();
-                        relatedHDs.add(hd); // Add chính nó
-                        if (hd.getMaHDGoc() == null) { // Nếu là HĐ Gốc, tìm HĐ Phụ trong list đã fetch
-                            List<HoaDon> subs = allPendingBookings.stream()
-                                    .filter(sub -> hd.getMaHD().equals(sub.getMaHDGoc()))
-                                    .collect(Collectors.toList());
-                            relatedHDs.addAll(subs);
-                        }
-                        // Kiểm tra mã bàn trên tất cả HĐ liên quan
-                        for (HoaDon relatedHd : relatedHDs) {
-                            if (relatedHd.getBan() != null && relatedHd.getBan().getMaBan() != null &&
-                                    relatedHd.getBan().getMaBan().toLowerCase().contains(searchQuery)) {
-                                maBanMatch = true;
-                                break;
-                            }
-                        }
-                        // Trả về true nếu khớp bất kỳ trường nào
-                        return sdtMatch || maHdMatch || maBanMatch;
-                    })
-                    // ---------------------------------------------
-                    .collect(Collectors.toList());
-            // 4. Tải các đơn trong ngày qua API (CHO LOGIC SƠ ĐỒ BÀN)
-            Response resToday = Client.sendWithParams(CommandType.GET_INVOICES_TODAY,
-                    Map.of("date", dateToLoadForGrid.toString()));
-            if (resToday.getStatusCode() == 200) {
-                this.dsHoaDonDatTrongNgay = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resToday.getData()),
-                        HoaDon.class);
-            } else {
-                this.dsHoaDonDatTrongNgay = new ArrayList<>();
-            }
-            // 5. Hiển thị danh sách ĐàLỌC (Giữ nguyên)
-            System.out.println("\n*** LOG: Tải thành công " + filteredList.size() + " đơn ĐANG CHỜ (đã lọc) ***");
-            if (filteredList.isEmpty()) {
-                // ... (hiển thị thông báo không tìm thấy) ...
-                Label lbl = new Label("Không tìm thấy đơn nào khớp.");
-                lbl.setPadding(new Insets(10));
-                vboxBookingCards.getChildren().add(lbl);
-            } else {
-                // Chỉ hiển thị HĐ Gốc (Giữ nguyên)
-                List<HoaDon> hdGocFilter = filteredList.stream()
-                        .filter(hd -> hd.getMaHDGoc() == null
-                                || (hd.getTrangThai() != null && hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM))
-                        .collect(Collectors.toList());
-                for (HoaDon hd : hdGocFilter) {
-                    VBox card = createBookingCard(hd);
-                    card.setOnMouseClicked(e -> loadHoaDonToMainInterface(hd, false));
-                    vboxBookingCards.getChildren().add(card);
+
+                LocalDate dateToLoad = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue() : LocalDate.now();
+                Response resToday = Client.sendWithParams(CommandType.GET_INVOICES_TODAY, Map.of("date", dateToLoad.toString()));
+                final List<HoaDon> todayInvoices = new ArrayList<>();
+                if (resToday.getStatusCode() == 200 && resToday.getData() != null) {
+                    List<HoaDon> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resToday.getData()), HoaDon.class);
+                    if (list != null) todayInvoices.addAll(list);
                 }
+
+                Platform.runLater(() -> {
+                    this.dsHoaDonDatTrongNgay = todayInvoices;
+                    vboxBookingCards.getChildren().clear();
+                    String selectedStatus = comboFilter.getValue();
+                    String searchQuery = txtSearch.getText().trim().toLowerCase();
+
+                    List<HoaDon> filteredList = allPendingBookings.stream()
+                            .filter(hd -> {
+                                if (selectedStatus == null || selectedStatus.equals("Tất cả")) return true;
+                                TrangThaiHoaDon selectedEnum = TrangThaiHoaDon.fromDisplayName(selectedStatus);
+                                if (selectedEnum == null) return true;
+                                if (selectedEnum == TrangThaiHoaDon.DANG_SU_DUNG) {
+                                    return hd.getTrangThai() == TrangThaiHoaDon.DANG_SU_DUNG || hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM;
+                                }
+                                return hd.getTrangThai() != null && hd.getTrangThai() == selectedEnum;
+                            })
+                            .filter(hd -> {
+                                if (searchQuery.isEmpty()) return true;
+                                String sdt = (hd.getKhachHang() != null) ? hd.getKhachHang().getSoDT() : "";
+                                return hd.getMaHD().toLowerCase().contains(searchQuery) || sdt.toLowerCase().contains(searchQuery);
+                            })
+                            .collect(Collectors.toList());
+
+                    List<HoaDon> hdGocFilter = filteredList.stream()
+                            .filter(hd -> hd.getMaHDGoc() == null || hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM)
+                            .collect(Collectors.toList());
+
+                    if (hdGocFilter.isEmpty()) {
+                        Label lbl = new Label("Không tìm thấy đơn nào khớp.");
+                        lbl.setPadding(new Insets(10));
+                        vboxBookingCards.getChildren().add(lbl);
+                    } else {
+                        for (HoaDon hd : hdGocFilter) {
+                            VBox card = createBookingCard(hd, allPendingBookings);
+                            card.setOnMouseClicked(e -> loadHoaDonToMainInterface(hd, false));
+                            vboxBookingCards.getChildren().add(card);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("[DatBan] Lỗi loadBookingCards ngầm: " + e.getMessage());
             }
-        } catch (Exception e) {
-            // ... (xử lý lỗi) ...
-            System.err.println("Lỗi tải danh sách đặt bàn: " + e.getMessage());
-            Label lbl = new Label("LỖI TẢI DỮ LIỆU: " + e.getMessage());
-            lbl.setPadding(new Insets(10));
-            vboxBookingCards.getChildren().add(lbl);
-        }
+        }).start();
     }
 
     // (Bên dưới hàm handleSelectBookingCard)
@@ -2457,10 +2409,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             vboxReceipt.setVisible(false);
     }
 
-    /**
-     * Tạo thẻ booking hiển thị bên trái với nút chức năng thông minh.
-     */
-    private VBox createBookingCard(HoaDon hd) {
+    private VBox createBookingCard(HoaDon hd, List<HoaDon> allPendingBookings) {
         // 1. Khởi tạo Card
         VBox card = new VBox(8);
         card.getStyleClass().add("booking-card");
@@ -2471,42 +2420,28 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         String trangThaiDb = hd.getTrangThai() != null ? hd.getTrangThai().getDbValue() : "Unknown";
         String trangThaiViet = switch (trangThaiDb) {
             case "Dat" -> "Đã đặt";
-            case "DangSuDung" -> "Đã nhận bàn"; // Tên mới theo yêu cầu
+            case "DangSuDung" -> "Đã nhận bàn";
             case "HoaDonTam" -> "Hóa đơn tách";
-            case "ChoXacNhan" -> "Chờ  xác nhận";
+            case "ChoXacNhan" -> "Chờ xác nhận";
             default -> trangThaiDb;
         };
         String gioVao = (hd.getGioVao() != null) ? hd.getGioVao().toLocalTime().format(timeFormatter) : "N/A";
         String sdtKhach = (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null)
                 ? hd.getKhachHang().getSoDT()
                 : "N/A";
-        // 3. Logic tìm tên bàn (Bao gồm cả bàn của HĐ Phụ)
+        // 3. Logic tìm tên bàn (SỬA LẠI: Tìm từ list CỤC BỘ thay vì gọi API N+1)
         String danhSachBanDayDu = "N/A";
         try {
             List<HoaDon> allRelatedHDs = new ArrayList<>();
-            String maHDGocDeTim;
-            // Xác định HĐ Gốc
-            if (hd.getMaHDGoc() == null) {
-                maHDGocDeTim = hd.getMaHD();
-                allRelatedHDs.add(hd);
-            } else {
-                maHDGocDeTim = hd.getMaHDGoc();
-                Response resGoc = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGocDeTim));
-                if (resGoc.getStatusCode() == 200) {
-                    allRelatedHDs.add(utils.JsonUtil.convertValue(resGoc.getData(), HoaDon.class));
+            String maHDGocDeTim = (hd.getMaHDGoc() == null) ? hd.getMaHD() : hd.getMaHDGoc();
+            
+            // Tìm tất cả hóa đơn có cùng mã gốc (hoặc bản thân nó là gốc)
+            for (HoaDon item : allPendingBookings) {
+                if (item.getMaHD().equals(maHDGocDeTim) || maHDGocDeTim.equals(item.getMaHDGoc())) {
+                    allRelatedHDs.add(item);
                 }
             }
-            // Tìm các HĐ Phụ
-            Response resSub = Client.sendWithParams(CommandType.GET_SUB_INVOICES, Map.of("maHDGoc", maHDGocDeTim));
-            List<HoaDon> hdPhuList = new ArrayList<>();
-            if (resSub.getStatusCode() == 200) {
-                hdPhuList = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resSub.getData()), HoaDon.class);
-            }
-            for (HoaDon hp : hdPhuList) {
-                if (!allRelatedHDs.stream().anyMatch(h -> h.getMaHD().equals(hp.getMaHD()))) {
-                    allRelatedHDs.add(hp);
-                }
-            }
+
             // Gom danh sách mã bàn
             Set<String> uniqueBanSet = allRelatedHDs.stream()
                     .filter(h -> h.getBan() != null && h.getBan().getMaBan() != null
@@ -2578,51 +2513,36 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
      * Cập nhật cả HĐ Gốc và các HĐ Phụ, cập nhật màu bàn.
      */
     private void handleNhanBanNhanh(HoaDon hd) {
-        // 1. Xác định HĐ Gốc
-        String maHDGoc = (hd.getMaHDGoc() != null) ? hd.getMaHDGoc() : hd.getMaHD();
-        try {
-            // 2. Tìm tất cả HĐ liên quan (Gốc + Phụ) qua API
-            List<HoaDon> allRelated = new ArrayList<>();
-            Response resGoc = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGoc));
-            if (resGoc.getStatusCode() == 200) {
-                allRelated.add(utils.JsonUtil.convertValue(resGoc.getData(), HoaDon.class));
-            }
-            Response resSub = Client.sendWithParams(CommandType.GET_SUB_INVOICES, Map.of("maHDGoc", maHDGoc));
-            if (resSub.getStatusCode() == 200) {
-                allRelated.addAll(utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resSub.getData()), HoaDon.class));
-            }
-            // 3. Cập nhật DB: Chuyển tất cả sang DANG_SU_DUNG
-            String newStatusDb = TrangThaiHoaDon.DANG_SU_DUNG.getDbValue();
-            String newBanStatus = TrangThaiBan.DANG_SU_DUNG.getDbValue();
-            for (HoaDon item : allRelated) {
-                // Update Hóa đơn qua API
-                Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of(
-                        "maHD", item.getMaHD(),
-                        "trangThai", newStatusDb));
-                // Update Bàn qua API
-                if (item.getBan() != null) {
-                    Client.sendWithParams(CommandType.UPDATE_TABLE_STATUS, Map.of(
-                            "maBan", item.getBan().getMaBan(),
-                            "newStatus", newBanStatus));
+        new Thread(() -> {
+            String maHDGoc = (hd.getMaHDGoc() != null) ? hd.getMaHDGoc() : hd.getMaHD();
+            try {
+                List<HoaDon> allRelated = new ArrayList<>();
+                Response resGoc = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGoc));
+                if (resGoc.getStatusCode() == 200) {
+                    allRelated.add(utils.JsonUtil.convertValue(resGoc.getData(), HoaDon.class));
                 }
+                Response resSub = Client.sendWithParams(CommandType.GET_SUB_INVOICES, Map.of("maHDGoc", maHDGoc));
+                if (resSub.getStatusCode() == 200) {
+                    allRelated.addAll(utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resSub.getData()), HoaDon.class));
+                }
+
+                String newStatusDb = TrangThaiHoaDon.DANG_SU_DUNG.getDbValue();
+                String newBanStatus = TrangThaiBan.DANG_SU_DUNG.getDbValue();
+                for (HoaDon item : allRelated) {
+                    Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of("maHD", item.getMaHD(), "trangThai", newStatusDb));
+                    if (item.getBan() != null) {
+                        Client.sendWithParams(CommandType.UPDATE_TABLE_STATUS, Map.of("maBan", item.getBan().getMaBan(), "newStatus", newBanStatus));
+                    }
+                }
+                Platform.runLater(() -> {
+                    showAlert(Alert.AlertType.INFORMATION, "Nhận bàn thành công", "Đã nhận bàn cho HĐ " + maHDGoc + ". Khách bắt đầu sử dụng.");
+                    loadTableGrids();
+                    loadBookingCards();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Lỗi", "Lỗi nhận bàn: " + e.getMessage()));
             }
-            // 4. Thông báo và Refresh
-            showAlert(Alert.AlertType.INFORMATION, "Nhận bàn thành công",
-                    "Đã nhận bàn cho HĐ " + maHDGoc + ". Khách bắt đầu sử dụng.");
-            // 5. 🔥 TỰ ĐỘNG LOAD VÀ CẬP NHẬT
-            loadTableGrids();
-            loadBookingCards();
-            loadTableGrids();
-            // Tìm lại HĐ mới nhất qua API để có trạng thái đúng
-            Response resMoi = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGoc));
-            if (resMoi.getStatusCode() == 200) {
-                HoaDon hdMoi = utils.JsonUtil.convertValue(resMoi.getData(), HoaDon.class);
-                loadHoaDonToMainInterface(hdMoi, false);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể nhận bàn: " + e.getMessage());
-        }
+        }).start();
     }
 
     // =========================================================
@@ -3635,10 +3555,5 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         } catch (Exception e) {
             // Im lặng bỏ qua nếu không tìm thấy (Khách mới)
         }
-    }
-
-    @Override
-    public java.util.function.Consumer<network.RealTimeEvent> getRealTimeListener() {
-        return realTimeListener;
     }
 }
