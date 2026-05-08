@@ -169,6 +169,45 @@ const BookingScreen = () => {
 
     try {
       setLoading(true);
+      
+      // 🔥 [KIỂM TRA] Xem khách hàng có đơn nào đang chờ xác nhận không
+      const phone = customerPhone;
+      const checkRes = await SocketService.request('GET_INVOICES_BY_CUSTOMER', { maKH: phone });
+      
+      if (checkRes.statusCode === 200 && checkRes.data) {
+        const pendingInvoice = checkRes.data.find(inv => inv.trangThai === 'ChoXacNhan');
+        if (pendingInvoice) {
+            Alert.alert(
+                'Thông báo', 
+                'Bạn đang có một đơn đặt bàn chưa hoàn tất (Bàn ' + (pendingInvoice.maBan || 'N/A') + '). Vui lòng thanh toán cọc hoặc hủy đơn cũ trước khi đặt đơn mới.',
+                [
+                    { text: 'Tiếp tục thanh toán', onPress: () => {
+                        setCurrentInvoice(pendingInvoice);
+                        setShowTableModal(false);
+                        setPaymentModalVisible(true);
+                    }},
+                    { text: 'Hủy đơn cũ', style: 'destructive', onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await SocketService.request('CANCEL_INVOICE', { 
+                                maHD: pendingInvoice.maHD, 
+                                trangThai: 'DaHuy' 
+                            });
+                            Alert.alert('Thành công', 'Đã hủy đơn đặt bàn cũ.');
+                        } catch (err) {
+                            Alert.alert('Lỗi', 'Không thể hủy đơn: ' + err.message);
+                        } finally {
+                            setLoading(false);
+                        }
+                    }},
+                    { text: 'Đóng', style: 'cancel' }
+                ]
+            );
+            setLoading(false);
+            return;
+        }
+      }
+
       const booking = new BookingModel({
         customerId: SocketService.token || 'GUEST',
         customerPhone: customerPhone,

@@ -47,11 +47,24 @@ public class OrderService {
             
             // 🔥 THÔNG BÁO CHO QUẢN LÝ (Real-time & Persistence)
             String customerName = (hd.getKhachHang() != null) ? hd.getKhachHang().getTenKH() : "Khách vãng lai";
+            
+            // Fallback: Nếu hd.getBan() null, thử lấy từ raw map (đề phòng Gson mapping issue)
             String tableId = (hd.getBan() != null) ? hd.getBan().getMaBan() : "N/A";
+            if (tableId.equals("N/A")) {
+                Object hoaDonParam = request.getParam("hoaDon");
+                if (hoaDonParam instanceof java.util.Map) {
+                    java.util.Map<String, Object> rawHoaDon = (java.util.Map<String, Object>) hoaDonParam;
+                    if (rawHoaDon.containsKey("maBan")) {
+                        tableId = (String) rawHoaDon.get("maBan");
+                        hd.setMaBan(tableId); // Cập nhật ngược lại object hd
+                    }
+                }
+            }
+
             NotificationService.sendNotification(
                 "MANAGER", 
                 "Yêu cầu đặt bàn mới", 
-                "Khách hàng " + customerName + " vừa đặt bàn " + tableId, 
+                "Khách hàng " + customerName + " vừa đặt bàn " + tableId + " (Đơn: " + hd.getMaHD() + ")", 
                 "BOOKING"
             );
 
@@ -60,7 +73,7 @@ public class OrderService {
                 NotificationService.sendNotification(
                     hd.getKhachHang().getSoDT(),
                     "Đặt bàn đang chờ xác nhận",
-                    "Đơn đặt bàn " + hd.getMaHD() + " của bạn đã được gửi. Vui lòng thanh toán cọc để hoàn tất.",
+                    "Đơn đặt bàn tại bàn " + tableId + " (" + hd.getMaHD() + ") đang chờ xác nhận. Vui lòng thanh toán cọc để hoàn tất.",
                     "BOOKING"
                 );
             }

@@ -44,7 +44,9 @@ export class BookingModel {
   toJavaData(tienCoc = 0) {
     return {
       hoaDon: {
-        maBan: this.maBan,
+        ban: {
+          maBan: this.maBan
+        },
         khachHang: {
           maKH: this.customerPhone,
           soDT: this.customerPhone,
