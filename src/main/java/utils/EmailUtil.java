@@ -13,11 +13,24 @@ public class EmailUtil {
 
     /**
      * Gửi mã OTP đến email khách hàng
-     * @param toEmail Email người nhận
-     * @param otp Mã OTP cần gửi
-     * @return true nếu gửi thành công
      */
     public static boolean sendOTP(String toEmail, String otp) {
+        String htmlContent = "<h3>Xác thực đăng ký tài khoản</h3>"
+                + "<p>Chào bạn, mã OTP của bạn là: <b style='color:red; font-size: 24px;'>" + otp + "</b></p>"
+                + "<p>Mã này có hiệu lực trong vòng 5 phút. Vui lòng không cung cấp mã này cho bất kỳ ai.</p>"
+                + "<br/><p>Trân trọng,<br/>Đội ngũ Quản lý nhà hàng.</p>";
+        
+        return sendEmail(toEmail, "Mã xác thực OTP - Hệ thống Đặt Bàn Nhà Hàng", htmlContent);
+    }
+
+    /**
+     * Gửi email thông thường (Tính năng từ nhánh giaminh)
+     */
+    public static boolean sendEmail(String recipientEmail, String subject, String content) {
+        if (recipientEmail == null || recipientEmail.isEmpty()) {
+            return false;
+        }
+
         String username = EnvConfig.mailUsername();
         String password = EnvConfig.mailPassword();
 
@@ -26,14 +39,12 @@ public class EmailUtil {
             return false;
         }
 
-        // Cấu hình SMTP server (Gmail)
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
 
-        // Tạo phiên làm việc
         Session session = Session.getInstance(props, new javax.mail.Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username, password);
@@ -41,26 +52,15 @@ public class EmailUtil {
         });
 
         try {
-            // Tạo tin nhắn
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(username));
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            
-            message.setSubject("Mã xác thực OTP - Hệ thống Đặt Bàn Nhà Hàng");
-            
-            String htmlContent = "<h3>Xác thực đăng ký tài khoản</h3>"
-                    + "<p>Chào bạn, mã OTP của bạn là: <b style='color:red; font-size: 24px;'>" + otp + "</b></p>"
-                    + "<p>Mã này có hiệu lực trong vòng 5 phút. Vui lòng không cung cấp mã này cho bất kỳ ai.</p>"
-                    + "<br/><p>Trân trọng,<br/>Đội ngũ Quản lý nhà hàng.</p>";
-            
-            message.setContent(htmlContent, "text/html; charset=utf-8");
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
+            message.setSubject(subject);
+            message.setContent(content, "text/html; charset=utf-8");
 
-            // Gửi email
             Transport.send(message);
-
-            System.out.println("[EmailUtil] Đã gửi OTP thành công đến: " + toEmail);
+            System.out.println("[EmailUtil] Đã gửi email thành công tới: " + recipientEmail);
             return true;
-
         } catch (MessagingException e) {
             System.err.println("[EmailUtil] Lỗi gửi email: " + e.getMessage());
             e.printStackTrace();

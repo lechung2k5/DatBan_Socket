@@ -1822,7 +1822,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             }
         }
         if (currentHoaDon != null) {
-            // 🔥 TRƯỜNG HỢP: NHẬN BÀN ĐÝĐẶT TRƯỚC (Bàn màu đỏ -> màu cam)
+            // 🔥 TRƯỜNG HỢP: NHẬN BÀN Đã ĐẶT TRƯỚC (Bàn màu đỏ -> màu cam)
             String maHD = currentHoaDon.getMaHD();
             if (maHD != null) {
                 // Cập nhật trạng thái hóa đơn sang DANG_SU_DUNG và set giờ vào thực tế

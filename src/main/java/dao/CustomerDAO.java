@@ -1,5 +1,4 @@
 package dao;
-
 import entity.KhachHang;
 import db.DynamoDBConfig;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;

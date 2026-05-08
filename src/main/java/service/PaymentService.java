@@ -67,54 +67,61 @@ public class PaymentService {
             }
 
             // 3. Kiểm tra loại hóa đơn (Gốc hay Phụ)
-            // 🔥 SỬA: Nếu có maHDGoc trong params hoặc trong DB thì đều là hóa đơn phụ
             entity.HoaDon currentHd = invoiceDAO.findById(maHD);
             boolean isSubInvoice = (maHDGoc != null && !maHDGoc.isEmpty()) 
                                 || (currentHd != null && currentHd.getMaHDGoc() != null && !currentHd.getMaHDGoc().isEmpty());
 
-            // 4. Thanh toán hóa đơn chính
-            invoiceDAO.checkout(maHD, pttt != null ? pttt : "TIEN_MAT", maNV, totalAmount, totalFood, serviceFee, vat, discount);
-            
-            // 5. CHỈ giải phóng bàn nếu đây là hóa đơn GỐC (không có parentId)
-            if (!isSubInvoice && maBan != null && !maBan.isEmpty()) {
-                tableDAO.updateStatus(maBan, "Trong");
-            }
-
-            // 6. Nếu là hóa đơn GỐC, tự động thanh toán các hóa đơn phụ còn sót lại (nếu có)
-            if (!isSubInvoice) {
-                List<HoaDon> subInvoices = invoiceDAO.findByParentId(maHD);
-                for (HoaDon sub : subInvoices) {
-                    if (sub.getTrangThai() != entity.TrangThaiHoaDon.DA_THANH_TOAN) {
-                        invoiceDAO.checkout(sub.getMaHD(), pttt != null ? pttt : "TIEN_MAT", maNV, 0.0, 0.0, 0.0, 0.0, 0.0);
-                    }
-                }
-            }
-
-            // 7. 🔥 Tự động lưu/cập nhật thông tin Khách hàng (Atomic Upsert + Tích điểm)
+            // 3.5. Xử lý Tích điểm, Hạng Thành viên và Email thông báo (Từ nhánh giaminh)
             if (currentHd != null && currentHd.getKhachHang() != null) {
                 String phone = currentHd.getKhachHang().getSoDT();
-                String name = currentHd.getKhachHang().getTenKH();
-                if (phone != null && !phone.isEmpty()) {
-                    dao.CustomerDAO customerDAO = new dao.CustomerDAO();
-                    customerDAO.upsert(phone, name);
-
-                    // 🏆 TÍCH ĐIỂM: 100k = 1 điểm, > 300k tặng +1 điểm
-                    int pointsAdded = (int) (totalAmount / 100000);
-                    if (totalAmount > 300000) pointsAdded += 1;
-                    
-                    if (pointsAdded > 0) {
-                        customerDAO.addPointsAndAdjustLevel(phone, pointsAdded);
+                dao.CustomerDAO customerDAO = new dao.CustomerDAO();
+                entity.KhachHang kh = customerDAO.findByPhone(phone);
+                
+                if (kh != null) {
+                    // Tự động áp dụng giảm giá theo hạng nếu chưa có discount từ mobile
+                    if (discount == 0) {
+                        if ("Diamond".equals(kh.getThanhVien())) {
+                            discount = totalAmount * 0.15;
+                        } else if ("Gold".equals(kh.getThanhVien()) && totalAmount > 200000) {
+                            discount = totalAmount * 0.10;
+                        }
                     }
-
-                    // 🔥 THÔNG BÁO CHO KHÁCH HÀNG
+                    
+                    double amountAfterDiscount = totalAmount - discount;
+                    
+                    // Tính điểm cộng: 100k = 1 điểm, > 300k tặng +1 điểm
+                    int pointsAdded = (int) (amountAfterDiscount / 100000);
+                    if (amountAfterDiscount > 300000) pointsAdded += 1;
+                    
+                    String oldTier = kh.getThanhVien();
+                    customerDAO.addPointsAndAdjustLevel(phone, pointsAdded);
+                    
+                    // Lấy lại thông tin sau khi cập nhật để gửi email
+                    entity.KhachHang updatedKh = customerDAO.findByPhone(phone);
+                    
+                    // Thông báo email (Feature từ giaminh)
+                    if (updatedKh != null && updatedKh.getEmail() != null && !updatedKh.getEmail().isEmpty()) {
+                        String emailContent = "<h3>Cảm ơn quý khách đã dùng bữa tại Nhà hàng Tứ Hữu!</h3>"
+                            + "<p>Mã hóa đơn: <b>" + maHD + "</b></p>"
+                            + "<p>Số điểm được cộng: <b>" + pointsAdded + "</b></p>"
+                            + "<p>Tổng điểm tích lũy: <b>" + updatedKh.getDiemTichLuy() + "</b></p>"
+                            + "<p>Hạng thành viên hiện tại: <b>" + updatedKh.getThanhVien() + "</b></p>";
+                        if (!updatedKh.getThanhVien().equals(oldTier)) {
+                            emailContent += "<p style='color:green;'>Chúc mừng! Bạn đã được thăng hạng lên <b>" + updatedKh.getThanhVien() + "</b></p>";
+                        }
+                        utils.EmailUtil.sendEmail(updatedKh.getEmail(), "Thông báo điểm tích lũy - Nhà hàng Tứ Hữu", emailContent);
+                    }
+                    
+                    // 🔥 QUAN TRỌNG: Gửi thông báo real-time cho mobile
                     NotificationService.sendNotification(
                         phone,
                         "Cảm ơn quý khách",
-                        "Hóa đơn " + maHD + " đã được thanh toán. Tổng tiền: " + String.format("%,.0f", totalAmount) + " VNĐ. Hẹn gặp lại quý khách!",
+                        "Hóa đơn " + maHD + " đã được thanh toán. Tổng tiền: " + String.format("%,.0f", amountAfterDiscount) + " VNĐ. Bạn được cộng " + pointsAdded + " điểm!",
                         "SYSTEM"
                     );
-
                     Service.broadcast(new RealTimeEvent(CommandType.UPDATE_CUSTOMER, "Cập nhật khách hàng", phone));
+                    
+                    totalAmount = amountAfterDiscount; // Cập nhật để lưu vào DB
                 }
             }
 
