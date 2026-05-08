@@ -11,6 +11,7 @@ public class KhachHang implements Serializable {
     private String diaChi;
     private String thanhVien;
     private int diemTichLuy;
+    private String matKhau;
     // Constructors
     public KhachHang() {
     }
@@ -48,6 +49,8 @@ public class KhachHang implements Serializable {
     public void setThanhVien(String thanhVien) { this.thanhVien = thanhVien; }
     public int getDiemTichLuy() { return diemTichLuy; }
     public void setDiemTichLuy(int diemTichLuy) { this.diemTichLuy = diemTichLuy; }
+    public String getMatKhau() { return matKhau; }
+    public void setMatKhau(String matKhau) { this.matKhau = matKhau; }
     // Alias for server-side compatibility
     public String getHangThanhVien() { return thanhVien; }
     @Override

@@ -30,16 +30,24 @@
                         <items>
                           <MenuItem fx:id="guiChuongTrinhTVMenuItem" mnemonicParsing="false" text="Gửi Chương trình Thành viên" onAction="#handleGuiChuongTrinhTV"/>
                           <Menu text="Quản lý Tài chính">
-							    <MenuItem text="Chốt ca &amp; Kiểm kê" onAction="#handleXemLogKiemKeTienMat" />
+							    <MenuItem fx:id="xemLogKiemKeTienMatMenuItem" text="Chốt ca &amp; Kiểm kê" onAction="#handleXemLogKiemKeTienMat" />
 							    
 							    <MenuItem text="Xem Nhật ký kiểm kê" onAction="#handleXemNhatKyKiemKe" />
 							</Menu>
                         </items>
                       </Menu>
-                     <Menu mnemonicParsing="false" text="Trợ giúp">
-                         <graphic>
-                              <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true"> <image><Image url="@/icons/menubar/icons8-support-50.png" /></image> </ImageView>
+                      <Menu mnemonicParsing="false" text="Thông báo">
+                          <graphic>
+                              <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true"> <image><Image url="@/icons/menubar/icons8-manage-50.png" /></image> </ImageView>
                           </graphic>
+                        <items>
+                          <MenuItem fx:id="xemThongBaoMenuItem" mnemonicParsing="false" text="Xem tất cả thông báo" onAction="#handleQuanLyThongBao"/>
+                        </items>
+                      </Menu>
+                      <Menu mnemonicParsing="false" text="Trợ giúp">
+                          <graphic>
+                               <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true"> <image><Image url="@/icons/menubar/icons8-support-50.png" /></image> </ImageView>
+                           </graphic>
                         <items>
                           <MenuItem fx:id="huongDanMenuItem" mnemonicParsing="false" text="Hướng dẫn sử dụng" onAction="#handleHuongDan"/>
                             <MenuItem fx:id="gioiThieuMenuItem" mnemonicParsing="false" text="Giới thiệu phần mềm" onAction="#handleGioiThieu"/>
@@ -57,7 +65,7 @@
    <center>
         <BorderPane>
             <top>
-                <HBox fx:id="topBar" alignment="CENTER_LEFT" styleClass="top-bar" spacing="10.0">
+                <HBox fx:id="topBar" alignment="CENTER_LEFT" styleClass="top-bar" spacing="15.0">
                   <children>
                         <HBox styleClass="logo-container" alignment="CENTER_LEFT" spacing="10.0">
                             <children>
@@ -68,6 +76,19 @@
                             </children>
                         </HBox>
                         <Region HBox.hgrow="ALWAYS"/>
+                        
+                        <!-- Notification Badge -->
+                        <StackPane fx:id="notificationStack" onMouseClicked="#handleQuanLyThongBao" style="-fx-cursor: hand;">
+                           <children>
+                                <ImageView fitHeight="24.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
+                                    <image> <Image url="@/icons/iconTraCuu.png"/> </image>
+                                </ImageView>
+                                <Label fx:id="notificationBadge" text="0" visible="false" style="-fx-background-color: #FF0000; -fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 1 4 1 4;" StackPane.alignment="TOP_RIGHT">
+                                    <StackPane.margin> <Insets top="-5" right="-5" /> </StackPane.margin>
+                                </Label>
+                           </children>
+                        </StackPane>
+
                         <ImageView fx:id="profileImage" fitHeight="30.0" fitWidth="30.0" preserveRatio="true" styleClass="profile-image"> <image> <Image url="@/icons/iconUserPlaceholder.png"/> </image> </ImageView>
                         <VBox styleClass="user-info" alignment="CENTER_LEFT">
                            <children>

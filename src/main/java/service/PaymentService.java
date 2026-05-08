@@ -106,6 +106,14 @@ public class PaymentService {
                         customerDAO.addPointsAndAdjustLevel(phone, pointsAdded);
                     }
 
+                    // 🔥 THÔNG BÁO CHO KHÁCH HÀNG
+                    NotificationService.sendNotification(
+                        phone,
+                        "Cảm ơn quý khách",
+                        "Hóa đơn " + maHD + " đã được thanh toán. Tổng tiền: " + String.format("%,.0f", totalAmount) + " VNĐ. Hẹn gặp lại quý khách!",
+                        "SYSTEM"
+                    );
+
                     Service.broadcast(new RealTimeEvent(CommandType.UPDATE_CUSTOMER, "Cập nhật khách hàng", phone));
                 }
             }
@@ -133,6 +141,29 @@ public class PaymentService {
             
             invoiceDAO.updateStatus(maHD, "Dat", false);
             
+            // 🔥 THÔNG BÁO CHO QUẢN LÝ
+            HoaDon hd = invoiceDAO.findById(maHD);
+            if (hd != null) {
+                String customerName = (hd.getKhachHang() != null) ? hd.getKhachHang().getTenKH() : "Khách hàng";
+                String tableId = (hd.getBan() != null) ? hd.getBan().getMaBan() : "N/A";
+                NotificationService.sendNotification(
+                    "MANAGER", 
+                    "Khách đã thanh toán cọc", 
+                    "Hóa đơn " + maHD + " (Bàn " + tableId + ") của " + customerName + " đã được xác nhận thanh toán.",
+                    "BOOKING"
+                );
+
+                // 🔥 THÔNG BÁO CHO KHÁCH HÀNG (Real-time & Persistence)
+                if (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null) {
+                    NotificationService.sendNotification(
+                        hd.getKhachHang().getSoDT(),
+                        "Đặt bàn thành công",
+                        "Cảm ơn quý khách! Bàn " + tableId + " của quý khách đã được xác nhận thành công.",
+                        "BOOKING"
+                    );
+                }
+            }
+
             // 🔥 Broadcast sự kiện xác nhận cọc (coi như cập nhật hóa đơn)
             Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Cập nhật hóa đơn", maHD));
 

@@ -24,6 +24,7 @@ public class DatabaseSeeder {
         createTable("Customers", "customerId", null);
         createTable("Employees", "employeeId", null);
         createTable("Promos",    "maUuDai",    null);
+        createTable("AppNotifications", "targetId", "notificationId");
         System.out.println("\n>>> NẠP DỮ LIỆU MẪU <<<");
         // 2. Seed dữ liệu
         seedEmployees();

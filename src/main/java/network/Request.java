@@ -7,6 +7,7 @@ public class Request implements Serializable {
     private Map<String, Object> params;
     private Object data; // Bổ sung data field cho entity
     private String token; // Bổ sung token cho session
+    private String requestId; // Bổ sung để track request-response (WebSocket)
     public Request() {
         this.params = new HashMap<>();
     }
@@ -47,4 +48,6 @@ public class Request implements Serializable {
     public void setData(Object data) {
         this.data = data;
     }
+    public String getRequestId() { return requestId; }
+    public void setRequestId(String requestId) { this.requestId = requestId; }
 }

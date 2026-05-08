@@ -16,17 +16,30 @@ public class Service {
     private static ServerSocket serverSocket;
     private static ExecutorService executorService;
     
-    // 🔥 Đăng ký danh sách các kênh stream để broadcast real-time
+    // 🔥 Đăng ký danh sách các kênh stream để broadcast real-time (Desktop)
     private static final Set<ObjectOutputStream> notificationClients = ConcurrentHashMap.newKeySet();
+    
+    // 🔥 Tham chiếu tới WebSocket Server của Mobile
+    private static MobileWebSocketServer mobileWS;
+
     public static void main(String[] args) {
         System.out.println("==============================================");
         System.out.println(">>> SERVER ĐANG CHẠY TẠI PORT " + PORT + " <<<");
         System.out.println("==============================================");
         executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         running = true;
+        
+        // 🔥 Khởi chạy WebSocket Server cho Mobile trên port 8889
+        mobileWS = new MobileWebSocketServer(8889);
+        mobileWS.start();
+
         try {
             serverSocket = new ServerSocket(PORT);
             System.out.println("[SERVER] Đã sẵn sàng nhận kết nối.");
+            
+            // 🔥 Khởi chạy dịch vụ kiểm tra ngầm
+            service.NotificationBackgroundService.start();
+
             while (running) {
                 try {
                     Socket socket = serverSocket.accept();
@@ -50,6 +63,14 @@ public static void stop() {
         if (executorService != null && !executorService.isShutdown()) {
             executorService.shutdown();
         }
+        if (mobileWS != null) {
+            try {
+                mobileWS.stop();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        service.NotificationBackgroundService.stop();
         System.out.println("[SERVER] Đã dừng.");
     } catch (IOException e) {
     // Ignore
@@ -78,18 +99,48 @@ public static void stop() {
      */
     public static void broadcast(Object event) {
         System.out.println("[BROADCAST] Đang gửi sự kiện: " + event + " tới " + notificationClients.size() + " clients.");
-        int successCount = 0;
+        
+        // 1. Gửi cho Desktop Clients
         for (ObjectOutputStream out : notificationClients) {
             try {
                 out.writeObject(event);
                 out.flush();
                 out.reset(); 
-                successCount++;
             } catch (IOException e) {
-                System.err.println("[BROADCAST ERROR] Lỗi gửi tới 1 client, đang dọn dẹp...");
                 notificationClients.remove(out);
             }
         }
-        System.out.println("[BROADCAST] Hoàn tất gửi tới " + successCount + " clients thành công.");
+
+        // 2. Gửi cho Mobile Clients (tự động broadcast nếu event là RealTimeEvent)
+        if (mobileWS != null && event instanceof RealTimeEvent) {
+            String json = utils.JsonUtil.toJson(event);
+            mobileWS.broadcast(json);
+        }
     }
-}
+
+    /**
+     * Gửi thông báo tới một mục tiêu cụ thể (Targeted)
+     * @param targetId SĐT khách hoặc "MANAGER"
+     * @param event Sự kiện
+     */
+    public static void broadcastTargeted(String targetId, Object event) {
+        // 1. Gửi cho Desktop (nếu là MANAGER)
+        if ("MANAGER".equalsIgnoreCase(targetId)) {
+            for (ObjectOutputStream out : notificationClients) {
+                try {
+                    out.writeObject(event);
+                    out.flush();
+                    out.reset(); 
+                } catch (IOException e) {
+                    notificationClients.remove(out);
+                }
+            }
+        }
+
+        // 2. Gửi cho Mobile (Dù là MANAGER hay Customer)
+        if (mobileWS != null) {
+            String json = utils.JsonUtil.toJson(event);
+            mobileWS.sendToTarget(targetId, json);
+        }
+    }
+}

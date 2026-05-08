@@ -33,6 +33,11 @@ public class OrderService {
             JsonUtil.toJson(request.getParam("chiTiet")),
             ChiTietHoaDon.class
             ));
+            // ─── Tự động sinh mã HD nếu chưa có ───
+            if (hd.getMaHD() == null || hd.getMaHD().isEmpty()) {
+                hd.setMaHD(invoiceDAO.generateNextId());
+            }
+
             // ─── Tự động tạo/cập nhật khách hàng nếu có thông tin ───
             if (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null) {
                 new dao.CustomerDAO().insert(hd.getKhachHang()); // DAO insert đã có logic check tồn tại (hoặc nên có)
@@ -40,14 +45,34 @@ public class OrderService {
             invoiceDAO.insert(hd, chiTiet);
             System.out.println("[OrderService] Đã tạo hóa đơn: " + hd.getMaHD());
             
-            // 🔥 Broadcast sự kiện tạo đơn mới
+            // 🔥 THÔNG BÁO CHO QUẢN LÝ (Real-time & Persistence)
+            String customerName = (hd.getKhachHang() != null) ? hd.getKhachHang().getTenKH() : "Khách vãng lai";
+            String tableId = (hd.getBan() != null) ? hd.getBan().getMaBan() : "N/A";
+            NotificationService.sendNotification(
+                "MANAGER", 
+                "Yêu cầu đặt bàn mới", 
+                "Khách hàng " + customerName + " vừa đặt bàn " + tableId, 
+                "BOOKING"
+            );
+
+            // 🔥 THÔNG BÁO CHO KHÁCH HÀNG
+            if (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null) {
+                NotificationService.sendNotification(
+                    hd.getKhachHang().getSoDT(),
+                    "Đặt bàn đang chờ xác nhận",
+                    "Đơn đặt bàn " + hd.getMaHD() + " của bạn đã được gửi. Vui lòng thanh toán cọc để hoàn tất.",
+                    "BOOKING"
+                );
+            }
+
+            // 🔥 Broadcast sự kiện tạo đơn mới (Legacy broadcast)
             Service.broadcast(new RealTimeEvent(CommandType.CREATE_ORDER, "[ORDER]:" + hd.getMaHD()));
             if (hd.getMaBan() != null) {
                 utils.CacheService.invalidateTables();
                 Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + hd.getMaBan()));
             }
 
-            return Response.ok("Tạo đơn hàng thành công");
+            return Response.ok(hd.getMaHD());
         } catch (Exception e) {
         System.err.println("[OrderService] Lỗi handleCreateOrder: " + e.getMessage());
         return Response.error("Lỗi khi tạo đơn hàng: " + e.getMessage());

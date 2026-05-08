@@ -1,4 +1,4 @@
-﻿package dao;
+package dao;
 import entity.KhachHang;
 import db.DynamoDBConfig;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -13,6 +13,22 @@ import java.util.*;
 public class CustomerDAO {
     private final DynamoDbClient db = DynamoDBConfig.getClient();
     private static final String TBL = "Customers";
+
+    public KhachHang findByEmail(String email) {
+        try {
+            ScanResponse res = db.scan(ScanRequest.builder()
+                .tableName(TBL)
+                .filterExpression("email = :e")
+                .expressionAttributeValues(Map.of(":e", av(email)))
+                .build());
+            if (res.hasItems() && !res.items().isEmpty()) {
+                return mapToKhachHang(res.items().get(0));
+            }
+        } catch (Exception e) {
+            System.err.println("[DAO:Customers] Lỗi findByEmail: " + e.getMessage());
+        }
+        return null;
+    }
 
     public KhachHang findByPhone(String phone) {
         try {
@@ -57,7 +73,7 @@ public class CustomerDAO {
             db.updateItem(UpdateItemRequest.builder()
                 .tableName(TBL)
                 .key(Map.of("customerId", av(kh.getSoDT())))
-                .updateExpression("SET #n = :name, email = :e, diaChi = :d, ngayDangKy = :rd, membership = :m, diemTichLuy = :p, updatedAt = :ts")
+                .updateExpression("SET #n = :name, email = :e, diaChi = :d, ngayDangKy = :rd, membership = :m, diemTichLuy = :p, matKhau = :pw, updatedAt = :ts")
                 .expressionAttributeNames(Map.of("#n", "name"))
                 .expressionAttributeValues(Map.of(
                     ":name", av(kh.getTenKH()),
@@ -66,6 +82,7 @@ public class CustomerDAO {
                     ":rd",   av(kh.getNgayDangKy() != null ? kh.getNgayDangKy().toString() : ""),
                     ":m",    av(kh.getThanhVien() != null ? kh.getThanhVien() : ""),
                     ":p",    AttributeValue.builder().n(String.valueOf(kh.getDiemTichLuy())).build(),
+                    ":pw",   av(kh.getMatKhau()),
                     ":ts",   av(LocalDateTime.now().toString())
                 ))
                 .build());
@@ -146,6 +163,7 @@ public class CustomerDAO {
         item.put("diaChi",      av(kh.getDiaChi()));
         item.put("membership",  av(kh.getThanhVien() != null ? kh.getThanhVien() : ""));
         item.put("diemTichLuy", AttributeValue.builder().n(String.valueOf(kh.getDiemTichLuy())).build());
+        item.put("matKhau",     av(kh.getMatKhau()));
         item.put("registrationDate", av(kh.getNgayDangKy() != null ? kh.getNgayDangKy().toString() : LocalDate.now().toString()));
         item.put("updatedAt",   av(LocalDateTime.now().toString()));
         return item;
@@ -163,6 +181,7 @@ public class CustomerDAO {
         if (m.containsKey("diaChi")) kh.setDiaChi(m.get("diaChi").s());
         if (m.containsKey("membership")) kh.setThanhVien(m.get("membership").s());
         if (m.containsKey("diemTichLuy")) kh.setDiemTichLuy(Integer.parseInt(m.get("diemTichLuy").n()));
+        if (m.containsKey("matKhau")) kh.setMatKhau(m.get("matKhau").s());
         if (m.containsKey("registrationDate")) {
             try {
                 String dateStr = m.get("registrationDate").s();

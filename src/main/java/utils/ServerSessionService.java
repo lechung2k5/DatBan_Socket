@@ -36,12 +36,21 @@ public static boolean isValid(String token) {
     return inMemorySessions.containsKey(token);
 }
 }
-public static void invalidate(String token) {
-    if (token == null || token.isBlank()) return;
-    try (Jedis jedis = RedisConfig.getPool().getResource()) {
-        jedis.del(PREFIX + token);
-    } catch (Exception e) {
-    inMemorySessions.remove(token);
-}
-}
+    public static void invalidate(String token) {
+        if (token == null || token.isBlank()) return;
+        try (Jedis jedis = RedisConfig.getPool().getResource()) {
+            jedis.del(PREFIX + token);
+        } catch (Exception e) {
+            inMemorySessions.remove(token);
+        }
+    }
+
+    public static String getSessionData(String token) {
+        if (token == null || token.isBlank()) return null;
+        try (Jedis jedis = RedisConfig.getPool().getResource()) {
+            return jedis.get(PREFIX + token);
+        } catch (Exception e) {
+            return inMemorySessions.get(token);
+        }
+    }
 }

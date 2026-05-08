@@ -20,10 +20,22 @@ public class RequestDispatcher {
     public Response dispatch(Request request) {
         CommandType CommandType = request.getAction();
         if (CommandType == null) return Response.error("Hành động không hợp lệ");
-        // 1. Ngoại lệ: LOGIN không cần kiểm tra token
-        if (CommandType == CommandType.LOGIN || CommandType == CommandType.FORGOT_PASSWORD_UPDATE) {
+        // 1. Ngoại lệ: LOGIN, SEND_OTP, REGISTER_CUSTOMER không cần kiểm tra token
+        if (CommandType == CommandType.LOGIN || 
+            CommandType == CommandType.FORGOT_PASSWORD_UPDATE || 
+            CommandType == CommandType.SEND_OTP || 
+            CommandType == CommandType.REGISTER_CUSTOMER ||
+            CommandType == CommandType.CUSTOMER_LOGIN ||
+            CommandType == CommandType.GET_MENU ||
+            CommandType == CommandType.GET_MENU_CATEGORIES) {
+            
             if (CommandType == CommandType.LOGIN) return AuthService.handleLogin(request);
             if (CommandType == CommandType.FORGOT_PASSWORD_UPDATE) return AuthService.handleForgotPasswordUpdate(request);
+            if (CommandType == CommandType.SEND_OTP) return AuthService.handleSendOTP(request);
+            if (CommandType == CommandType.REGISTER_CUSTOMER) return AuthService.handleRegisterCustomer(request);
+            if (CommandType == CommandType.CUSTOMER_LOGIN) return AuthService.handleCustomerLogin(request);
+            if (CommandType == CommandType.GET_MENU) return MenuService.handleGetAll(request);
+            if (CommandType == CommandType.GET_MENU_CATEGORIES) return MenuService.handleGetCategories(request);
         }
         // 2. Kiểm tra Session (Token) trong Redis
         String token = request.getToken();
@@ -93,6 +105,8 @@ public class RequestDispatcher {
             case GET_INVOICES_BY_DATE: return OrderService.handleGetInvoicesToday(request);
             case CONFIRM_DEPOSIT: return PaymentService.handleConfirmDeposit(request);
             case GENERATE_INVOICE_ID: return OrderService.handleGenerateId(request);
+            case SEND_OTP: return AuthService.handleSendOTP(request);
+            case REGISTER_CUSTOMER: return AuthService.handleRegisterCustomer(request);
             default:
             System.out.println("[Dispatcher] CommandType chưa được xử lý: " + CommandType);
             return Response.error("Chức năng [" + CommandType + "] chưa được hỗ trợ trên Server");

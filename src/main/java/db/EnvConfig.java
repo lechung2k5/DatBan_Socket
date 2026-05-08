@@ -66,4 +66,8 @@ public class EnvConfig {
     public static String cloudinaryCloudName() { return get("CLOUDINARY_CLOUD_NAME"); }
     public static String cloudinaryApiKey()    { return get("CLOUDINARY_API_KEY"); }
     public static String cloudinaryApiSecret() { return get("CLOUDINARY_API_SECRET"); }
+
+    // Mail
+    public static String mailUsername() { return get("MAIL_USERNAME"); }
+    public static String mailPassword() { return get("MAIL_PASSWORD"); }
 }

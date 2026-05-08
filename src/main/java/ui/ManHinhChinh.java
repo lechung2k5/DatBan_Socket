@@ -1,4 +1,4 @@
-﻿package ui;
+package ui;
 
 // ========================================================================
 // IMPORTS
@@ -61,6 +61,9 @@ import javafx.util.Pair;
 import utils.JsonUtil;
 import network.Response;
 import network.RealTimeSubscriber;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import service.NotificationService;
 
 public class ManHinhChinh {
     // ========================================================================
@@ -137,11 +140,17 @@ public class ManHinhChinh {
     @FXML
     private MenuItem thoatMenuItem;
     @FXML
+    private MenuItem xemThongBaoMenuItem;
+    @FXML
     private MenuItem guiChuongTrinhTVMenuItem;
     @FXML
     private MenuItem xemLogKiemKeTienMatMenuItem;
     @FXML
     private MenuItem huongDanMenuItem;
+    @FXML
+    private StackPane notificationStack;
+    @FXML
+    private Label notificationBadge;
     @FXML
     private MenuItem gioiThieuMenuItem;
     // ========================================================================
@@ -172,6 +181,8 @@ public class ManHinhChinh {
 
     @FXML
     public void initialize() {
+        setupGlobalRealTime();
+        updateNotificationBadge();
         // Map Buttons
         buttonIconMap.put(manHinhChinhButton, manHinhChinhIcon);
         buttonIconMap.put(quanLyDatBanButton, quanLyDatBanIcon);
@@ -406,6 +417,35 @@ public class ManHinhChinh {
         }
     }
 
+    @FXML
+    public void handleQuanLyThongBao() {
+        try {
+            loadScreen("/fxml/NotificationView.fxml", "/css/Notification.css");
+            if (currentController instanceof NotificationController) {
+                ((NotificationController) currentController).setMainController(this);
+            }
+            setActiveButton(null); // Không có button nào active ở sidebar
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể mở trang thông báo: " + e.getMessage());
+        }
+    }
+
+    public void updateNotificationBadge() {
+        Platform.runLater(() -> {
+            List<Map<String, Object>> notifications = NotificationService.getNotifications("MANAGER");
+            long unreadCount = notifications.stream()
+                .filter(n -> !(boolean) n.getOrDefault("isRead", false))
+                .count();
+
+            if (unreadCount > 0) {
+                notificationBadge.setText(String.valueOf(unreadCount));
+                notificationBadge.setVisible(true);
+            } else {
+                notificationBadge.setVisible(false);
+            }
+        });
+    }
+
     public void setUserInfo(TaiKhoan user) {
         this.currentUser = user;
         if (user != null && user.getNhanVien() != null) {
@@ -563,13 +603,13 @@ public class ManHinhChinh {
     }
 
     @FXML
-    private void handleManHinhChinh() throws IOException {
+    public void handleManHinhChinh() throws IOException {
         setActiveButton(manHinhChinhButton);
         loadScreen("/fxml/Dashboard.fxml", "/css/Dashboard.css");
     }
 
     @FXML
-    private void handleQuanLyDatBan() throws IOException {
+    public void handleQuanLyDatBan() throws IOException {
         if (currentUser == null || currentUser.getVaiTro() == null
                 || !kiemTraQuyen("Quản lý Đặt bàn", currentUser.getVaiTro().coQuyenQuanLyDatBan()))
             return;
@@ -1006,5 +1046,26 @@ public class ManHinhChinh {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Lỗi mở file", "Chi tiết lỗi: " + e.getMessage());
         }
+    }
+
+    private void setupGlobalRealTime() {
+        network.RealTimeClient.getInstance().addListener(event -> {
+            if (event.getType() == network.CommandType.NEW_NOTIFICATION) {
+                String title = event.getAffectedId();
+                Object data = event.getData();
+                String message = "";
+                if (data instanceof Map) {
+                    message = (String) ((Map<?, ?>) data).get("message");
+                } else if (data != null) {
+                    message = data.toString();
+                }
+
+                String finalMessage = message;
+                Platform.runLater(() -> {
+                    updateNotificationBadge();
+                    showAlert(Alert.AlertType.INFORMATION, title != null ? title : "Thông báo mới", finalMessage);
+                });
+            }
+        });
     }
 }

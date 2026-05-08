@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trang Chủ - Refined Hospitality</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#e5e2dc",
+                    "secondary-container": "#fed488",
+                    "on-primary-fixed-variant": "#900b19",
+                    "primary-fixed": "#ffdad7",
+                    "on-tertiary-fixed": "#1b1c1c",
+                    "on-tertiary-container": "#b8b7b6",
+                    "outline-variant": "#e1bebc",
+                    "primary-container": "#920d1a",
+                    "on-background": "#1c1c18",
+                    "primary": "#6b000d",
+                    "surface-bright": "#fcf9f3",
+                    "on-primary-fixed": "#410005",
+                    "tertiary": "#323232",
+                    "on-secondary": "#ffffff",
+                    "background": "#fcf9f3",
+                    "surface-tint": "#b2292d",
+                    "secondary-fixed": "#ffdea5",
+                    "error": "#ba1a1a",
+                    "surface-container-high": "#ebe8e2",
+                    "on-secondary-container": "#785a1a",
+                    "surface-container-low": "#f6f3ed",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#f0eee8",
+                    "on-primary-container": "#ff9c96",
+                    "surface-dim": "#dcdad4",
+                    "secondary-fixed-dim": "#e9c176",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed-variant": "#474747",
+                    "inverse-on-surface": "#f3f0ea",
+                    "surface-variant": "#e5e2dc",
+                    "on-surface": "#1c1c18",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#484848",
+                    "outline": "#8d706e",
+                    "on-surface-variant": "#59413f",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed-dim": "#ffb3ae",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed-variant": "#5d4201",
+                    "tertiary-fixed": "#e4e2e1",
+                    "tertiary-fixed-dim": "#c8c6c5",
+                    "on-secondary-fixed": "#261900",
+                    "inverse-primary": "#ffb3ae",
+                    "surface": "#fcf9f3",
+                    "secondary": "#775a19",
+                    "inverse-surface": "#31312d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "lg": "40px",
+                    "md": "24px",
+                    "base": "8px",
+                    "xs": "4px",
+                    "sm": "12px",
+                    "container-margin": "24px",
+                    "xl": "64px"
+            },
+            "fontFamily": {
+                    "h3": ["Be Vietnam Pro"],
+                    "button": ["Be Vietnam Pro"],
+                    "body-md": ["Be Vietnam Pro"],
+                    "body-lg": ["Be Vietnam Pro"],
+                    "label-sm": ["Be Vietnam Pro"],
+                    "h2": ["Be Vietnam Pro"],
+                    "h1": ["Be Vietnam Pro"]
+            },
+            "fontSize": {
+                    "h3": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                    "button": ["16px", { "lineHeight": "1", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                    "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "label-sm": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                    "h2": ["32px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                    "h1": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { background-color: #fcf9f3; } /* Surface Bright fallback */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .ambient-shadow { box-shadow: 0 8px 32px rgba(146, 13, 26, 0.04); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 shadow-sm dark:shadow-none bg-surface dark:bg-background">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant">
+<img alt="User Profile Picture" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjSMQ5ULE4Jwo_OI1VCmJt3AZOr_OSKh7HkInFhv2jJ88ae0xkDQDhmn6TJmNd0oj0G_qm_N31iSvChiCDWlYs-2KWcrdRTnBq8z-Ctcu4jGqdVo4ZEjzh6P7pZOXO7lUn9NOh-LozxWmXLLAYlHZU44MKHv3XMzGwP8ZlMXU8qDP1gsncWSu62aEVCcwm-HCrDpBZoGx6YTBI244Bg14GC73DAQo-9axM3jV9z52QuAJ8wGJpau4_Kg4rcwd1mgVYppsYOz_OWnSp"/>
+</div>
+<h1 class="font-h3 text-h3 font-semibold text-primary dark:text-primary-fixed-dim">Xin chào, Quý khách</h1>
+</div>
+<div class="flex items-center gap-sm">
+<!-- Desktop Nav Items (Hidden on Mobile) -->
+<nav class="hidden md:flex items-center gap-md mr-md">
+<a class="text-primary dark:text-primary-fixed-dim font-bold" href="#">Trang chủ</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high transition-colors px-3 py-2 rounded-lg font-label-sm text-label-sm" href="#">Đặt bàn</a>
+<a class="text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high transition-colors px-3 py-2 rounded-lg font-label-sm text-label-sm" href="#">Thông báo</a>
+</nav>
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 duration-150 flex items-center justify-center">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="pt-[88px] pb-[100px] px-gutter md:px-lg max-w-7xl mx-auto space-y-md">
+<!-- Search Bar -->
+<section class="relative max-w-2xl mx-auto md:mx-0">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">search</span>
+</div>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-full text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ambient-shadow transition-shadow" placeholder="Tìm món ăn, chi nhánh..." type="text"/>
+</section>
+<!-- Status Card -->
+<section>
+<div class="bg-surface-container-lowest rounded-xl p-md ambient-shadow border border-secondary-container relative overflow-hidden flex items-center justify-between group cursor-pointer">
+<!-- Subtle background glow -->
+<div class="absolute inset-0 bg-gradient-to-r from-secondary-container/20 to-transparent opacity-50 pointer-events-none"></div>
+<div class="relative z-10 flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Thông báo lịch trình</p>
+<h2 class="font-h3 text-[20px] font-semibold text-primary">Bạn có lịch hẹn lúc 19:00 hôm nay</h2>
+</div>
+</div>
+<div class="relative z-10 hidden sm:block">
+<span class="material-symbols-outlined text-secondary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</div>
+</section>
+<!-- Quick Services -->
+<section class="grid grid-cols-4 gap-sm sm:gap-md max-w-2xl">
+<button class="flex flex-col items-center justify-center gap-xs p-sm rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors ambient-shadow border border-surface-container-high active:scale-95 duration-150">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">book_online</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Đặt bàn</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-xs p-sm rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors ambient-shadow border border-surface-container-high active:scale-95 duration-150">
+<div class="w-10 h-10 rounded-full bg-secondary-container/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_activity</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Ưu đãi</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-xs p-sm rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors ambient-shadow border border-surface-container-high active:scale-95 duration-150">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Thực đơn</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-xs p-sm rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors ambient-shadow border border-surface-container-high active:scale-95 duration-150">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">support_agent</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Liên hệ</span>
+</button>
+</section>
+<!-- Promotion Slider -->
+<section class="-mx-gutter px-gutter md:mx-0 md:px-0">
+<div class="flex overflow-x-auto snap-x snap-mandatory gap-md hide-scrollbar pb-4">
+<!-- Promo Card 1 -->
+<div class="snap-center shrink-0 w-[85vw] md:w-[600px] h-[200px] rounded-xl overflow-hidden relative ambient-shadow group cursor-pointer">
+<div class="absolute inset-0 bg-gradient-to-r from-primary to-transparent z-10 opacity-90"></div>
+<img alt="Promotion Banner 1" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-700" data-alt="A high-end, elegant photograph of a sophisticated Vietnamese dining table spread, featuring modern porcelain dishes on a dark, textured slate surface. The scene is illuminated by warm, focused spotlighting, creating deep, dramatic shadows that emphasize a premium, minimalist aesthetic. Subtle accents of vibrant ruby red and brushed gold are visible in the table setting accessories, reinforcing a corporate modern hospitality vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7yCIFTCg5Q2cWct1HTrH7NVQF1B9cwv81JYgAI2fiiXcekY6LKEbBiQ3W4nKkzHJX6HmM14cbCfppF3ZoUldGdrT_G0oMKNs2XZsfd0BaFpmRIFzf2_DnScGTO0eBYkQTpv4CaSSwipCvyjUJ0NYAYZR_exiKsMrtOD_FUH0AwXVRSc8_CFDTAFeRMbjFJaBI7T_52QQtcS091beWbbMxgos47-21o4a3p4q-ExSkOWRPuZaxtn41uWhWsl58N1MS9wMsO7pOjVyg"/>
+<div class="relative z-20 h-full p-md flex flex-col justify-center w-2/3">
+<span class="inline-block px-3 py-1 bg-secondary-container text-on-secondary-container font-label-sm text-label-sm rounded-full mb-sm w-max">Ưu đãi Đặc biệt</span>
+<h3 class="font-h3 text-h3 text-on-primary mb-2">Giảm 20% cho thành viên mới</h3>
+<p class="font-body-md text-body-md text-primary-fixed">Áp dụng cho hóa đơn từ 1.000.000đ</p>
+</div>
+</div>
+<!-- Promo Card 2 -->
+<div class="snap-center shrink-0 w-[85vw] md:w-[600px] h-[200px] rounded-xl overflow-hidden relative ambient-shadow group cursor-pointer">
+<div class="absolute inset-0 bg-gradient-to-r from-surface-tint to-transparent z-10 opacity-80"></div>
+<img alt="Promotion Banner 2" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay group-hover:scale-105 transition-transform duration-700" data-alt="A refined, close-up architectural shot of a modern, upscale restaurant interior in Vietnam. The composition focuses on clean lines, abundant whitespace, and high-quality materials like polished wood and matte black metal. Soft, ambient lighting creates a calm, welcoming atmosphere typical of a luxury lifestyle brand. A hint of ruby red floral arrangement provides a striking visual focal point against the neutral cream and white backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfgAwZO0cVGYLaji4UQJyqFAXY_qdr_XY15PnwHQDslUSAUSjW5HLjHDpAzc5OQ4ttXkfPuxOzf3OZtX7ytSS2TmPncpyMbSQS1XIYcoojfsN9FRzUEXdAazShKbZ5LcQv-vKmwzD0HSeLbeLlNMta18G-o--5lvDeqC8NJI2bhS-_YqZNuhsNUAzJmADg_W-2fVtRdBbwldN22UbZWEq_ncmD2_-CQ-pTrQ4vLOozCEVvQOPAVUckw4AUls0P5eUhlZGSPAQY9388"/>
+<div class="relative z-20 h-full p-md flex flex-col justify-center w-2/3">
+<span class="inline-block px-3 py-1 bg-surface-container-lowest text-primary font-label-sm text-label-sm rounded-full mb-sm w-max">Trưa Thứ 6</span>
+<h3 class="font-h3 text-h3 text-on-primary mb-2">Combo Bữa Trưa Thương Gia</h3>
+<p class="font-body-md text-body-md text-primary-fixed">Trải nghiệm đẳng cấp với giá ưu đãi</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Featured Section (Bento Grid) -->
+<section>
+<div class="flex items-center justify-between mb-sm">
+<h2 class="font-h3 text-[22px] font-semibold text-on-surface">Món ngon phải thử</h2>
+<a class="font-label-sm text-label-sm text-primary hover:text-primary-container transition-colors flex items-center" href="#">Xem tất cả <span class="material-symbols-outlined text-[18px]">chevron_right</span></a>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-sm md:gap-md">
+<!-- Main Featured Item -->
+<div class="col-span-2 row-span-2 rounded-xl bg-surface-container-lowest overflow-hidden ambient-shadow border border-surface-container-high group cursor-pointer flex flex-col">
+<div class="relative h-48 md:h-64 overflow-hidden">
+<img alt="Phở Đặc Biệt" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A stunning, top-down photograph of a premium bowl of Vietnamese Pho, presented in an elegant, minimalist white ceramic bowl. The broth is crystal clear with a golden hue, highlighting delicate slices of rare beef and fresh green herbs. The setting is a clean, bright wooden table surface with subtle, soft natural lighting that enhances the dish's vibrant colors. The overall aesthetic is refined, appetizing, and fits perfectly within a modern, high-end culinary portfolio." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBP6v0IcNtGWLRYRnb9SXjhxlIaD4MssVSnqvEwd5S3_xYVHYlq3-B7YSa-RjO3L9P2TMjoakWs3rAw_Ja2CcauHnEoQKWviKU7tA7gusDI5CtIWKROLdNGyoS9UvgCY2HBeHkbk5xPfLlIYQ5BGUaLLzrAReFF5eJzQABNgmTgEX-yq2j4NVVBd7Ao7qn6ODO-FBoK_KpyxWMO9cCloPur06R-NEVvT2mS6s34Uargeaemq3pn4Td9q6OdR_C_9Y7jfXihRhD8mi_Q"/>
+<div class="absolute top-sm right-sm bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm text-on-surface font-bold">4.9</span>
+</div>
+</div>
+<div class="p-md flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-h3 text-[18px] text-primary mb-1">Phở Bò Wagyu Thượng Hạng</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant line-clamp-2">Nước dùng hầm xương 48h kết hợp cùng bò Wagyu A5 nhập khẩu, mang lại trải nghiệm tinh tế.</p>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="font-h3 text-[16px] font-bold text-on-surface">350.000đ</span>
+<button class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Secondary Items -->
+<div class="col-span-1 rounded-xl bg-surface-container-lowest overflow-hidden ambient-shadow border border-surface-container-high group cursor-pointer flex flex-col">
+<div class="relative h-24 md:h-32 overflow-hidden">
+<img alt="Gỏi Cuốn" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A pristine, minimalist shot of fresh Vietnamese spring rolls (Gỏi Cuốn) neatly arranged on a sleek, rectangular white porcelain plate. The translucent rice paper reveals vibrant orange shrimp and bright green herbs inside. The background is completely white, creating a clinical yet appetizing high-end culinary presentation. Lighting is bright, soft, and shadowless, emphasizing the fresh, clean ingredients in a modern corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuABa42Kfp5-AL3bH99zdbtmZdKlxcI_H-CxaBj5oHDmrGtRRfgtavSj6AnsPBOTvl1B4JrFjYubCCes4l39PotWN8YCp4-WqXKbiht-CnoTi-sbmHTuCBqCmcm3NKNWwEQEsUFzPUXhnaQLgQV0SEH5beOrW1FGtV2zhWVlgKHxC46bDRPnDWpOSUQsaSVhgT7RGMxBW3ufbbvvszriFYYxUZ4L1nD0jjrkYhfNTqv2R4BJLYIjqfCglAw6fkG2CM4EGS0n9TCowz-9"/>
+</div>
+<div class="p-sm flex-1 flex flex-col justify-between">
+<h3 class="font-h3 text-[14px] text-on-surface mb-1 leading-snug">Gỏi Cuốn Tôm Thịt</h3>
+<div class="flex items-center justify-between mt-2">
+<span class="font-label-sm font-semibold text-primary">85.000đ</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">add_circle</span>
+</div>
+</div>
+</div>
+<div class="col-span-1 rounded-xl bg-surface-container-lowest overflow-hidden ambient-shadow border border-surface-container-high group cursor-pointer flex flex-col">
+<div class="relative h-24 md:h-32 overflow-hidden">
+<img alt="Cà Phê Sữa" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="An elegant, close-up shot of a traditional Vietnamese iced coffee (Cà Phê Sữa Đá) served in a modern, thick-glass tumbler. The rich, dark coffee is beautifully swirling into the creamy condensed milk over ice cubes. It sits on a minimalist matte gold coaster atop a pristine white marble counter. The lighting is crisp and cool, projecting a subtle, refined shadow that enhances the luxurious, contemporary beverage experience." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuRTFWRyoi4LdtGJ0AEc0r77tjX6pkINLf7VGRqKzYsCL61Ke_zoiFB66ann1mRD9IQZ45jZH0Co0ohi23p8Z3C16QoXC45RJSJ13OinBDJdUjxwOuWCCneEFEm-b63OGoNrEXofaKj_YyucWLnDo2mzYAN2gZvBN3p4zFY2S40lBhsonXpmn5kBiW4JIYhEg40Pw0F3WWw85GgEyLYIbxq87vCx-P8iwMlg-r8StCQNYPTQEDlwda_Ax7gAfiRWuyti2lN867ggFV"/>
+</div>
+<div class="p-sm flex-1 flex flex-col justify-between">
+<h3 class="font-h3 text-[14px] text-on-surface mb-1 leading-snug">Cà Phê Phin Dát Vàng</h3>
+<div class="flex items-center justify-between mt-2">
+<span class="font-label-sm font-semibold text-primary">120.000đ</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">add_circle</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-low dark:bg-surface-dim docked full-width bottom-0 rounded-t-xl border-t border-outline-variant dark:border-outline shadow-lg pb-safe">
+<!-- Active: Trang chủ -->
+<button class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary-fixed-dim text-on-secondary-container dark:text-on-secondary-fixed-variant rounded-full px-4 py-1 active:scale-90 transition-all duration-200 min-w-[64px]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-[12px] mt-xs">Trang chủ</span>
+</button>
+<!-- Inactive: Đặt bàn -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-highest dark:hover:bg-surface-variant transition-colors active:scale-90 transition-all duration-200 px-4 py-1 rounded-full min-w-[64px]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">book_online</span>
+<span class="font-label-sm text-[12px] mt-xs">Đặt bàn</span>
+</button>
+<!-- Inactive: Thông báo -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-highest dark:hover:bg-surface-variant transition-colors active:scale-90 transition-all duration-200 px-4 py-1 rounded-full min-w-[64px] relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+<!-- Notification Badge -->
+<span class="absolute top-1 right-3 w-2 h-2 rounded-full bg-error border border-surface-container-low"></span>
+<span class="font-label-sm text-[12px] mt-xs">Thông báo</span>
+</button>
+<!-- Inactive: Cá nhân -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-highest dark:hover:bg-surface-variant transition-colors active:scale-90 transition-all duration-200 px-4 py-1 rounded-full min-w-[64px]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-sm text-[12px] mt-xs">Cá nhân</span>
+</button>
+</nav>
+<!-- Support for safe area inset on modern mobile devices -->
+<style>
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 8px); }
+    </style>
+</body></html>

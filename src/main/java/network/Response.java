@@ -4,6 +4,7 @@ public class Response implements Serializable {
     private int statusCode; // 200: OK, 400: Error, etc.
     private String message;
     private Object data;
+    private String requestId;
     public Response() {}
     public Response(int statusCode, String message, Object data) {
         this.statusCode = statusCode;
@@ -34,4 +35,6 @@ public class Response implements Serializable {
     public void setData(Object data) {
         this.data = data;
     }
+    public String getRequestId() { return requestId; }
+    public void setRequestId(String requestId) { this.requestId = requestId; }
 }

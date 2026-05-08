@@ -1,0 +1,75 @@
+.notification-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);
+    -fx-border-color: #ECEFF1;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-cursor: hand;
+}
+
+.notification-card:hover {
+    -fx-background-color: #FAFAFA;
+    -fx-border-color: #B0BEC5;
+}
+
+.notification-card-unread {
+    -fx-background-color: #F1F8E9;
+    -fx-border-color: #C8E6C9;
+}
+
+.notification-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #263238;
+}
+
+.notification-message {
+    -fx-font-size: 14px;
+    -fx-text-fill: #546E7A;
+}
+
+.notification-time {
+    -fx-font-size: 12px;
+    -fx-text-fill: #90A4AE;
+}
+
+.action-button-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: #2196F3;
+    -fx-border-radius: 5;
+    -fx-text-fill: #2196F3;
+    -fx-padding: 8 15;
+}
+
+.action-button-outline:hover {
+    -fx-background-color: #E3F2FD;
+}
+
+.action-button-danger {
+    -fx-background-color: transparent;
+    -fx-border-color: #F44336;
+    -fx-border-radius: 5;
+    -fx-text-fill: #F44336;
+    -fx-padding: 8 15;
+}
+
+.action-button-danger:hover {
+    -fx-background-color: #FFEBEE;
+}
+
+.refresh-button {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-padding: 8;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 20;
+}
+
+.icon-circle {
+    -fx-background-radius: 50;
+    -fx-min-width: 40;
+    -fx-min-height: 40;
+    -fx-alignment: center;
+}

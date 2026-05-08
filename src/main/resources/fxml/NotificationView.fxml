@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.image.*?>
+
+<VBox spacing="20.0" style="-fx-background-color: #F8F9FA;" stylesheets="@../css/Notification.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.NotificationController">
+    <children>
+        <HBox alignment="CENTER_LEFT" spacing="15.0">
+            <children>
+                <Label text="Trung tâm thông báo" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2C3E50;"/>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button onAction="#handleMarkAllAsRead" text="Đánh dấu đã đọc tất cả" styleClass="action-button-outline"/>
+                <Button onAction="#handleClearAll" text="Xóa tất cả" styleClass="action-button-danger"/>
+                <Button onAction="#refresh" styleClass="refresh-button">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0">
+                            <image><Image url="@/icons/menubar/icons8-utilities-50.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </children>
+        </HBox>
+
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <content>
+                <VBox fx:id="notificationList" spacing="10.0">
+                    <padding>
+                        <Insets bottom="20.0" left="5.0" right="5.0" top="5.0" />
+                    </padding>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </children>
+    <padding>
+        <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+    </padding>
+</VBox>
