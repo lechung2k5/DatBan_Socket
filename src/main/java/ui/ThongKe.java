@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javafx.scene.text.Font;
+import javafx.application.Platform;
 public class ThongKe {
     // === DAO REMOVED ===
     // Using Client instead
@@ -49,7 +50,7 @@ public class ThongKe {
     @FXML private ComboBox<Integer> cbHoaDonNgay;
     @FXML private ComboBox<Integer> cbHoaDonThang;
     @FXML private ComboBox<Integer> cbHoaDonNam;
-    @FXML private Button btnLocHoaDon;
+    @FXML private Button btnLocHoaDon, btnHoaDonHienTai;
     @FXML private TableView<HoaDonThongKe> tblHoaDon;
     @FXML private TableColumn<HoaDonThongKe, String> colMaHoaDon;
     @FXML private TableColumn<HoaDonThongKe, String> colThoiGianVao;
@@ -62,7 +63,7 @@ public class ThongKe {
     @FXML private ComboBox<Integer> cbMonAnNgay;
     @FXML private ComboBox<Integer> cbMonAnThang;
     @FXML private ComboBox<Integer> cbMonAnNam;
-    @FXML private Button btnLocMonAn;
+    @FXML private Button btnLocMonAn, btnMonAnHienTai;
     @FXML private TableView<MonBanChay> tblMonBanChay;
     @FXML private TableColumn<MonBanChay, Integer> colSTT;
     @FXML private TableColumn<MonBanChay, String> colTenMon;
@@ -103,12 +104,16 @@ public class ThongKe {
         // Cài đặt và tải dữ liệu ban đầu cho frame Doanh thu (MỚI)
         dpDoanhThuNgay.setValue(LocalDate.now());
         setupDoanhThuNavigation();
-        loadDoanhThuDataForWeek();
+        Platform.runLater(this::loadDoanhThuDataForWeek);
         // Cài đặt và tải dữ liệu ban đầu cho frame Khu Vực
         dpKhuVucNgay.setValue(LocalDate.now());
         setupKhuVucNavigation();
-        loadKhuVucDataForWeek();
-        loadInitialKpiData(); // Load KPI ban đầu
+        Platform.runLater(this::loadKhuVucDataForWeek);
+        
+        // 🔥 Sử dụng Platform.runLater để không chặn luồng UI khi khởi tạo
+        Platform.runLater(() -> {
+            loadInitialKpiData();
+        });
     }
     // --- Setup Methods ---
     private void setupViewSelector() {
@@ -142,23 +147,54 @@ public class ThongKe {
     // private void setupOtherFilters() { ... }
     private void setupHoaDonFilters() {
         ObservableList<Integer> days = FXCollections.observableArrayList();
-        days.add(null); // Giá trị null đại diện cho "Tất cả"
+        days.add(null);
         days.addAll(IntStream.rangeClosed(1, 31).boxed().collect(Collectors.toList()));
+        
         ObservableList<Integer> months = FXCollections.observableArrayList();
-        months.add(null); // Giá trị null đại diện cho "Tất cả"
+        months.add(null);
         months.addAll(IntStream.rangeClosed(1, 12).boxed().collect(Collectors.toList()));
-        ObservableList<Integer> years = FXCollections.observableArrayList(2024, 2025); // Chỉ có năm 2024 và 2025
-        // Gán danh sách item cho các ComboBox
+        
+        // Tạo danh sách năm động từ 2024 đến năm hiện tại
+        int currentYear = LocalDate.now().getYear();
+        ObservableList<Integer> years = FXCollections.observableArrayList();
+        years.add(null); // Thêm option rỗng (Tất cả)
+        for (int y = 2024; y <= currentYear; y++) {
+            years.add(y);
+        }
+        
         cbHoaDonNgay.setItems(days);
         cbHoaDonThang.setItems(months);
         cbHoaDonNam.setItems(years);
-        // Đặt giá trị mặc định (Tất cả ngày, Tất cả tháng, Năm 2025)
+        
+        // Thiết lập hiển thị cho ComboBox Năm (hiển thị null là "Tất cả")
+        Callback<ListView<Integer>, ListCell<Integer>> yearCellFactory = lv -> new ListCell<Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) setText("Tất cả");
+                else setText(String.valueOf(item));
+            }
+        };
+        cbHoaDonNam.setCellFactory(yearCellFactory);
+        cbHoaDonNam.setButtonCell(yearCellFactory.call(null));
+        
+        // Mặc định là tháng hiện tại, năm hiện tại (hoặc Tất cả tháng nếu muốn)
         cbHoaDonNgay.setValue(null);
         cbHoaDonThang.setValue(null);
-        cbHoaDonNam.setValue(2025);
-        // Gán sự kiện cho nút "Lọc"
+        cbHoaDonNam.setValue(currentYear);
+        
         btnLocHoaDon.setOnAction(event -> loadHoaDonDataFromDAO());
-        loadHoaDonDataFromDAO(); // Tải dữ liệu lần đầu với bộ lọc mặc định
+        
+        // Nút "Hôm nay" - Đặt về ngày/tháng/năm hiện tại
+        btnHoaDonHienTai.setOnAction(event -> {
+            LocalDate today = LocalDate.now();
+            cbHoaDonNgay.setValue(today.getDayOfMonth());
+            cbHoaDonThang.setValue(today.getMonthValue());
+            cbHoaDonNam.setValue(today.getYear());
+            loadHoaDonDataFromDAO();
+        });
+
+        Platform.runLater(this::loadHoaDonDataFromDAO);
     }
     private void setupMonAnFilters() {
         ObservableList<Integer> days = FXCollections.observableArrayList();
@@ -166,16 +202,45 @@ public class ThongKe {
         days.addAll(IntStream.rangeClosed(1, 31).boxed().collect(Collectors.toList()));
         cbMonAnNgay.setItems(days);
         cbMonAnNgay.setValue(null);
+
         ObservableList<Integer> months = FXCollections.observableArrayList();
         months.add(null);
         months.addAll(IntStream.rangeClosed(1, 12).boxed().collect(Collectors.toList()));
         cbMonAnThang.setItems(months);
         cbMonAnThang.setValue(null);
-        ObservableList<Integer> years = FXCollections.observableArrayList(2024, 2025);
+
+        int currentYear = LocalDate.now().getYear();
+        ObservableList<Integer> years = FXCollections.observableArrayList();
+        years.add(null); // Thêm option rỗng (Tất cả)
+        for (int y = 2024; y <= currentYear; y++) {
+            years.add(y);
+        }
         cbMonAnNam.setItems(years);
-        cbMonAnNam.setValue(2025);
+        
+        // Thiết lập hiển thị cho ComboBox Năm Món Ăn
+        Callback<ListView<Integer>, ListCell<Integer>> monAnYearCellFactory = lv -> new ListCell<Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) setText("Tất cả");
+                else setText(String.valueOf(item));
+            }
+        };
+        cbMonAnNam.setCellFactory(monAnYearCellFactory);
+        cbMonAnNam.setButtonCell(monAnYearCellFactory.call(null));
+        cbMonAnNam.setValue(currentYear);
+
         btnLocMonAn.setOnAction(event -> loadMonAnDataFromDAO());
-        loadMonAnDataFromDAO(); // Tải dữ liệu lần đầu
+        
+        btnMonAnHienTai.setOnAction(event -> {
+            LocalDate today = LocalDate.now();
+            cbMonAnNgay.setValue(today.getDayOfMonth());
+            cbMonAnThang.setValue(today.getMonthValue());
+            cbMonAnNam.setValue(today.getYear());
+            loadMonAnDataFromDAO();
+        });
+
+        Platform.runLater(this::loadMonAnDataFromDAO);
     }
     private void loadInitialKpiData() {
         LocalDate today = LocalDate.now();
@@ -188,6 +253,11 @@ public class ThongKe {
             lblNgayHienTai.setText(formattedDate);
             lblTongHoaDon.setText(String.valueOf(totalInvoicesToday));
             lblTongDoanhThu.setText(currencyFormatter.format(totalRevenueToday));
+        } else {
+            System.err.println("[ThongKe] Lỗi tải KPI: " + res.getMessage());
+            lblNgayHienTai.setText(formattedDate);
+            lblTongHoaDon.setText("N/A");
+            lblTongDoanhThu.setText("N/A");
         }
     }
     private void loadHoaDonDataFromDAO() {
@@ -208,6 +278,12 @@ public class ThongKe {
             tblHoaDon.setItems(list);
             lblHoaDon_TongSoHD.setText(String.valueOf(totalInvoices));
             lblHoaDon_TongDoanhThu.setText(currencyFormatter.format(totalRevenue));
+        } else {
+            System.err.println("[ThongKe] Lỗi tải thống kê hóa đơn: " + res.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Lỗi tải dữ liệu", res.getMessage());
+            tblHoaDon.setItems(FXCollections.observableArrayList());
+            lblHoaDon_TongSoHD.setText("0");
+            lblHoaDon_TongDoanhThu.setText("0 ₫");
         }
     }
     private void loadMonAnDataFromDAO() {
@@ -487,16 +563,47 @@ private void loadKhuVucDataForWeek() {
 private LocalDate getMondayOfWeek(LocalDate date) {
     return date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
 }
-// --- Inner classes ---
+// --- Inner classes (DTOs for GSON) ---
 public static class HoaDonThongKe {
-    private final SimpleStringProperty maHD; private final SimpleStringProperty thoiGianVao; private final SimpleDoubleProperty tongTien;
-    public HoaDonThongKe(String maHD, String thoiGianVao, double tongTien) { this.maHD = new SimpleStringProperty(maHD); this.thoiGianVao = new SimpleStringProperty(thoiGianVao); this.tongTien = new SimpleDoubleProperty(tongTien); }
-    public String getMaHD() { return maHD.get(); } public String getThoiGianVao() { return thoiGianVao.get(); } public double getTongTien() { return tongTien.get(); }
+    private String maHD;
+    private String thoiGianVao;
+    private double tongTien;
+
+    public HoaDonThongKe() {}
+    public HoaDonThongKe(String maHD, String thoiGianVao, double tongTien) {
+        this.maHD = maHD;
+        this.thoiGianVao = thoiGianVao;
+        this.tongTien = tongTien;
+    }
+    public String getMaHD() { return maHD; }
+    public String getThoiGianVao() { return thoiGianVao; }
+    public double getTongTien() { return tongTien; }
+    public void setMaHD(String maHD) { this.maHD = maHD; }
+    public void setThoiGianVao(String thoiGianVao) { this.thoiGianVao = thoiGianVao; }
+    public void setTongTien(double tongTien) { this.tongTien = tongTien; }
 }
+
 public static class MonBanChay {
-    private final SimpleIntegerProperty stt; private final SimpleStringProperty tenMon; private final SimpleIntegerProperty soLuongBan; private final SimpleDoubleProperty doanhThu;
-    public MonBanChay(int stt, String tenMon, int soLuongBan, double doanhThu) { this.stt = new SimpleIntegerProperty(stt); this.tenMon = new SimpleStringProperty(tenMon); this.soLuongBan = new SimpleIntegerProperty(soLuongBan); this.doanhThu = new SimpleDoubleProperty(doanhThu); }
-    public int getStt() { return stt.get(); } public String getTenMon() { return tenMon.get(); } public int getSoLuongBan() { return soLuongBan.get(); } public double getDoanhThu() { return doanhThu.get(); }
+    private int stt;
+    private String tenMon;
+    private int soLuongBan;
+    private double doanhThu;
+
+    public MonBanChay() {}
+    public MonBanChay(int stt, String tenMon, int soLuongBan, double doanhThu) {
+        this.stt = stt;
+        this.tenMon = tenMon;
+        this.soLuongBan = soLuongBan;
+        this.doanhThu = doanhThu;
+    }
+    public int getStt() { return stt; }
+    public String getTenMon() { return tenMon; }
+    public int getSoLuongBan() { return soLuongBan; }
+    public double getDoanhThu() { return doanhThu; }
+    public void setStt(int stt) { this.stt = stt; }
+    public void setTenMon(String tenMon) { this.tenMon = tenMon; }
+    public void setSoLuongBan(int soLuongBan) { this.soLuongBan = soLuongBan; }
+    public void setDoanhThu(double doanhThu) { this.doanhThu = doanhThu; }
 }
 // Hàm tiện ích hiển thị Alert
 private void showAlert(Alert.AlertType type, String title, String content) {

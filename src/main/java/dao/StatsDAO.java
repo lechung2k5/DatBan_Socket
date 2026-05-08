@@ -105,7 +105,7 @@ public double getEmployeeRevenue(String maNV, LocalDate start, LocalDate end) {
         // Note: In real app, we should use GSI on staffId + createdAt
         ScanResponse res = db.scan(ScanRequest.builder()
         .tableName(TBL)
-        .filterExpression("staffId = :nv AND #s = :paid AND createdAt BETWEEN :s AND :e")
+        .filterExpression("employeeId = :nv AND #s = :paid AND createdAt BETWEEN :s AND :e")
         .expressionAttributeNames(Map.of("#s", "status"))
         .expressionAttributeValues(Map.of(
         ":nv", av(maNV),
@@ -125,7 +125,7 @@ public double getCashRevenueByEmployee(String maNV, LocalDate date) {
     try {
         ScanResponse res = db.scan(ScanRequest.builder()
         .tableName(TBL)
-        .filterExpression("staffId = :nv AND #s = :paid AND begins_with(createdAt, :d) AND pttt = :cash")
+        .filterExpression("employeeId = :nv AND #s = :paid AND begins_with(createdAt, :d) AND paymentMethod = :cash")
         .expressionAttributeNames(Map.of("#s", "status"))
         .expressionAttributeValues(Map.of(
         ":nv", av(maNV),
@@ -157,22 +157,56 @@ public List<Map<String, AttributeValue>> getRawInvoicesByRange(LocalDate start, 
     return new ArrayList<>();
 }
 }
-public List<Map<String, AttributeValue>> getRawInvoicesByMonth(int year, int month) {
-    String prefix = String.format("%d-%02d", year, month);
-    try {
-        return db.scan(ScanRequest.builder()
-        .tableName(TBL)
-        .filterExpression("begins_with(createdAt, :prefix) AND #s = :paid")
-        .expressionAttributeNames(Map.of("#s", "status"))
-        .expressionAttributeValues(Map.of(
-        ":prefix", av(prefix),
-        ":paid", av(STATUS_PAID)
-        ))
-        .build()).items();
-    } catch (Exception e) {
-    return new ArrayList<>();
-}
-}
+    public List<Map<String, AttributeValue>> getRawInvoicesByMonth(int year, int month) {
+        String prefix = String.format("%d-%02d", year, month);
+        try {
+            return db.scan(ScanRequest.builder()
+            .tableName(TBL)
+            .filterExpression("begins_with(createdAt, :prefix) AND #s = :paid")
+            .expressionAttributeNames(Map.of("#s", "status"))
+            .expressionAttributeValues(Map.of(
+            ":prefix", av(prefix),
+            ":paid", av(STATUS_PAID)
+            ))
+            .build()).items();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public List<Map<String, AttributeValue>> getRawInvoicesByYear(int year) {
+        String prefix = String.valueOf(year);
+        try {
+            return db.scan(ScanRequest.builder()
+            .tableName(TBL)
+            .filterExpression("begins_with(createdAt, :prefix) AND #s = :paid")
+            .expressionAttributeNames(Map.of("#s", "status"))
+            .expressionAttributeValues(Map.of(
+            ":prefix", av(prefix),
+            ":paid", av(STATUS_PAID)
+            ))
+            .build()).items();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public List<Map<String, AttributeValue>> getRawInvoicesAll() {
+        try {
+            return db.scan(ScanRequest.builder()
+            .tableName(TBL)
+            .filterExpression("#s = :paid")
+            .expressionAttributeNames(Map.of("#s", "status"))
+            .expressionAttributeValues(Map.of(
+            ":paid", av(STATUS_PAID)
+            ))
+            .build()).items();
+        } catch (Exception e) {
+            System.err.println("[DAO:Stats] Lỗi getRawInvoicesAll: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
 // ─── Helpers ─────────────────────────────────────────────────────────────
 private AttributeValue av(String s) { return AttributeValue.builder().s(s != null ? s : "").build(); }
 }
