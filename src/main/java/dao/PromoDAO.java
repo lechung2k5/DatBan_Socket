@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
+
 /**
 * PromoDAO - Quản lý chương trình khuyến mãi (UuDai)
 */
@@ -28,20 +30,27 @@ public class PromoDAO {
 public void insert(UuDai ud) {
     try {
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("promoId", AttributeValue.builder().s(ud.getMaUuDai()).build());
+        item.put("maUuDai", AttributeValue.builder().s(ud.getMaUuDai()).build());
         item.put("name", AttributeValue.builder().s(ud.getTenUuDai()).build());
         item.put("discountPercent", AttributeValue.builder().n(String.valueOf(ud.getGiaTri())).build());
-        item.put("description", AttributeValue.builder().s(ud.getMoTa() != null ? ud.getMoTa() : "").build());
+        item.put("description", AttributeValue.builder().s(ud.getMoTa() != null && !ud.getMoTa().trim().isEmpty() ? ud.getMoTa() : "Không có mô tả").build());
+        if (ud.getNgayBatDau() != null) {
+            item.put("ngayBatDau", AttributeValue.builder().s(ud.getNgayBatDau().toString()).build());
+        }
+        if (ud.getNgayKetThuc() != null) {
+            item.put("ngayKetThuc", AttributeValue.builder().s(ud.getNgayKetThuc().toString()).build());
+        }
         db.putItem(PutItemRequest.builder().tableName(TBL).item(item).build());
     } catch (Exception e) {
-    System.err.println("[DAO:Promos] Lỗi insert: " + e.getMessage());
-}
+        System.err.println("[DAO:Promos] Lỗi insert: " + e.getMessage());
+        throw new RuntimeException("Lỗi lưu DB: " + e.getMessage()); // Re-throw để Server báo lỗi
+    }
 }
 public UuDai findById(String id) {
     try {
         GetItemResponse response = db.getItem(GetItemRequest.builder()
         .tableName(TBL)
-        .key(Map.of("promoId", AttributeValue.builder().s(id).build()))
+        .key(Map.of("maUuDai", AttributeValue.builder().s(id).build()))
         .build());
         if (response.hasItem() && !response.item().isEmpty()) {
             return mapToUuDai(response.item());
@@ -55,7 +64,7 @@ public void delete(String id) {
     try {
         db.deleteItem(DeleteItemRequest.builder()
         .tableName(TBL)
-        .key(Map.of("promoId", AttributeValue.builder().s(id).build()))
+        .key(Map.of("maUuDai", AttributeValue.builder().s(id).build()))
         .build());
     } catch (Exception e) {
     System.err.println("[DAO:Promos] Lỗi delete: " + e.getMessage());
@@ -63,10 +72,17 @@ public void delete(String id) {
 }
 private UuDai mapToUuDai(Map<String, AttributeValue> item) {
     UuDai ud = new UuDai();
-    if (item.containsKey("promoId")) ud.setMaUuDai(item.get("promoId").s());
+    // Hỗ trợ cả tên cột mới (maUuDai) và cũ (promoId) để backward compatible
+    if (item.containsKey("maUuDai")) ud.setMaUuDai(item.get("maUuDai").s());
+    else if (item.containsKey("promoId")) ud.setMaUuDai(item.get("promoId").s());
     if (item.containsKey("name")) ud.setTenUuDai(item.get("name").s());
     if (item.containsKey("discountPercent")) ud.setGiaTri(Double.parseDouble(item.get("discountPercent").n()));
     if (item.containsKey("description")) ud.setMoTa(item.get("description").s());
+    // Hỗ trợ cả tên cột mới (ngayBatDau) và cũ (startDate/ngayBatDau từ seed) để backward compatible
+    if (item.containsKey("ngayBatDau")) { try { ud.setNgayBatDau(LocalDate.parse(item.get("ngayBatDau").s())); } catch (Exception ignored) {} }
+    else if (item.containsKey("startDate")) { try { ud.setNgayBatDau(LocalDate.parse(item.get("startDate").s())); } catch (Exception ignored) {} }
+    if (item.containsKey("ngayKetThuc")) { try { ud.setNgayKetThuc(LocalDate.parse(item.get("ngayKetThuc").s())); } catch (Exception ignored) {} }
+    else if (item.containsKey("endDate")) { try { ud.setNgayKetThuc(LocalDate.parse(item.get("endDate").s())); } catch (Exception ignored) {} }
     return ud;
 }
 }

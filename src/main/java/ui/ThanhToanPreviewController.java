@@ -216,7 +216,7 @@ if (promoComboBoxPreview != null) {
 }
 /**
 * 🔥 SỬA: Cập nhật hàm để tính toán, đổ dữ liệu vào các Labels mới và BẢNG
-* ĐÃ FIX: Đảm bảo TableView được cấu hình và đổ dữ liệu MonOrder từ MonTachSnapshot.
+* ĐàFIX: Đảm bảo TableView được cấu hình và đổ dữ liệu MonOrder từ MonTachSnapshot.
 */
 // [Trong file ThanhToanPreviewController.java]
 public void setInitialData(HoaDon hd, DatBan controller, double tongMonAn, double tienCoc, boolean isNewInvoice) {
@@ -226,7 +226,7 @@ public void setInitialData(HoaDon hd, DatBan controller, double tongMonAn, doubl
     // --- 1. LƯU GIÁ TRỊ TÍNH TOÁN (Đã đúng) ---
     this.currentTongMonAn = tongMonAn;
     this.currentTienCoc = isNewInvoice ? 0.0 : tienCoc;
-    // --- 🔥 ĐÃ XÓA KHỎI TÍNH TOÁN CŨ (từ phiDV đến soTienKhachTra) ---
+    // --- 🔥 ĐàXÓA KHỎI TÍNH TOÁN CŨ (từ phiDV đến soTienKhachTra) ---
     // (Logic này đã được chuyển vào hàm calculateAndDisplayTotals())
     // --- 2. ĐỔ DỮ LIỆU CHUNG (HEADER) (Giữ nguyên) ---
     HoaDon hdGocDeLayThongTin = hd;
@@ -258,7 +258,7 @@ if (lblGioRa != null) lblGioRa.setText("Giờ ra: " + java.time.LocalTime.now().
 if (lblThuNgan != null) lblThuNgan.setText("Thu ngân: " + tenThuNgan);
 if (lblKhachHang != null) lblKhachHang.setText("Khách hàng: " + khachHangSdt);
 if (lblBan != null) lblBan.setText("Bàn: " + (hd.getBan() != null ? hd.getBan().getMaBan() : "Chưa gán"));
-    // --- 🔥 ĐÃ XÓA CÁC LỆNH .setText CŨ CHO PHẦN SUMMARY ---
+    // --- 🔥 ĐàXÓA CÁC LỆNH .setText CŨ CHO PHẦN SUMMARY ---
 if (lblThanhVien != null) {
     String memberStatus = (hdGocDeLayThongTin.getKhachHang() != null && hdGocDeLayThongTin.getKhachHang().getThanhVien().equals("VIP")) ? "Gold (giảm 10%)" : "N/A";
     lblThanhVien.setText(memberStatus);

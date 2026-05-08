@@ -11,26 +11,26 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * InvoiceDAO Â— HÃ³a Ä‘Æ¡n vá»›i embedded items (document-style NoSQL - CLO1)
+ * InvoiceDAO Â— Hóa Ä‘ơn vá»›i embedded items (document-style NoSQL - CLO1)
  *
  * DynamoDB Table: "Invoices"
  * PK: invoiceId (String)
  *
- * Äáº·c trÆ°ng NoSQL: Danh sÃ¡ch mÃ³n Äƒn (ChiTietHoaDon) Ä‘Æ°á»£c lÆ°u
- * dÆ°á»›i dáº¡ng
- * JSON string bÃªn trong field "itemsJson" Â— thá»ƒ hiá»‡n document-style.
+ * Äáº·c trưng NoSQL: Danh sách món Äƒn (ChiTietHoaDon) Ä‘ưá»£c lưu
+ * dưá»›i dạng
+ * JSON string bên trong field "itemsJson" Â— thá»ƒ hiá»‡n document-style.
  */
 public class InvoiceDAO {
     private final DynamoDbClient db = DynamoDBConfig.getClient();
     private static final String TBL = "Invoices";
 
-    // â”€â”€â”€ 1. Táº¡o hÃ³a Ä‘Æ¡n má»›i (insert vá»›i embedded items)
+    // â”€â”€â”€ 1. Tạo hóa Ä‘ơn má»›i (insert vá»›i embedded items)
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public void insert(HoaDon hd, List<ChiTietHoaDon> chiTietList) {
         try {
             Map<String, AttributeValue> item = new HashMap<>();
             item.put("invoiceId", av(hd.getMaHD()));
-            // â”€â”€â”€ Tá»± Ä‘á»™ng cáº­p nháº­t tráº¡ng thÃ¡i bÃ n â”€â”€â”€
+            // â”€â”€â”€ Tự Ä‘á»™ng cáº­p nháº­t trạng thái bÃ n â”€â”€â”€
             if (hd.getMaBan() != null && !hd.getMaBan().isEmpty()) {
                 String tableStatus = "DaDat";
                 if ("DangSuDung".equals(hd.getTrangThai() != null ? hd.getTrangThai().getDbValue() : "")) {
@@ -49,7 +49,7 @@ public class InvoiceDAO {
             item.put("employeeId", av(hd.getTenNhanVien() != null ? hd.getTenNhanVien() : ""));
             item.put("total", avn(hd.getTongTienThanhToan()));
             item.put("tienCoc", avn(hd.getTienCoc()));
-            // ðŸ”‘ NoSQL embedded items Â— lÆ°u list dÆ°á»›i dáº¡ng JSON string
+            // ðŸ”‘ NoSQL embedded items Â— lưu list dưá»›i dạng JSON string
             if (chiTietList != null && !chiTietList.isEmpty()) {
                 item.put("itemsJson", av(JsonUtil.toJson(chiTietList)));
             }
@@ -69,7 +69,7 @@ public class InvoiceDAO {
         }
     }
 
-    // â”€â”€â”€ 2. TÃ¬m theo ID
+    // â”€â”€â”€ 2. Tìm theo ID
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public HoaDon findById(String invoiceId) {
         try {
@@ -86,7 +86,7 @@ public class InvoiceDAO {
         return null;
     }
 
-    // â”€â”€â”€ 3. Láº¥y danh sÃ¡ch theo ngÃ y (Scan + filter Â— CLO1 StatsDAO
+    // â”€â”€â”€ 3. Láº¥y danh sách theo ngÃ y (Scan + filter Â— CLO1 StatsDAO
     // pattern) â”€
     public List<HoaDon> findByDate(LocalDate date) {
         try {
@@ -116,7 +116,7 @@ public class InvoiceDAO {
         }
     }
 
-    // â”€â”€â”€ 4. Láº¥y hÃ³a Ä‘Æ¡n theo tráº¡ng thÃ¡i
+    // â”€â”€â”€ 4. Láº¥y hóa Ä‘ơn theo trạng thái
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public List<HoaDon> findByStatus(String status) {
         try {
@@ -166,7 +166,7 @@ public class InvoiceDAO {
 
     public List<String> findActiveTableIds() {
         try {
-            // Láº¥y danh sÃ¡ch maBan cá»§a cÃ¡c hÃ³a Ä‘Æ¡n chÆ°a thanh toÃ¡n (HoaDonTam,
+            // Láº¥y danh sách maBan của các hóa Ä‘ơn chưa thanh toán (HoaDonTam,
             // DangSuDung)
             ScanResponse res = db.scan(ScanRequest.builder()
                     .tableName(TBL)
@@ -245,7 +245,7 @@ public class InvoiceDAO {
         }
     }
 
-    // â”€â”€â”€ 5. Cáº­p nháº­t tráº¡ng thÃ¡i
+    // â”€â”€â”€ 5. Cáº­p nháº­t trạng thái
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public void updateStatus(String invoiceId, String newStatus, boolean setGioRa) {
         try {
@@ -316,7 +316,7 @@ public class InvoiceDAO {
         }
     }
 
-    // â”€â”€â”€ 6. Láº¥y chi tiáº¿t mÃ³n Äƒn (tá»« embedded JSON)
+    // â”€â”€â”€ 6. Láº¥y chi tiết món Äƒn (từ embedded JSON)
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public List<ChiTietHoaDon> getChiTietHoaDon(String invoiceId) {
         try {
@@ -336,7 +336,7 @@ public class InvoiceDAO {
         return new ArrayList<>();
     }
 
-    // â”€â”€â”€ 7. Láº¥y danh sÃ¡ch hÃ³a Ä‘Æ¡n theo khÃ¡ch hÃ ng
+    // â”€â”€â”€ 7. Láº¥y danh sách hóa Ä‘ơn theo khách hÃ ng
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public List<HoaDon> findByCustomer(String customerPhone) {
         try {
@@ -417,7 +417,7 @@ public class InvoiceDAO {
                 .build());
     }
 
-    // â”€â”€â”€ 9. XÃ³a hÃ³a Ä‘Æ¡n Ä‘Ã£ gá»™p (vÃ  giáº£i phÃ³ng bÃ n)
+    // â”€â”€â”€ 9. Xóa hóa Ä‘ơn Ä‘ã gá»™p (vÃ  giải phóng bÃ n)
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     public void deleteMerged(String invoiceId) {
         try {

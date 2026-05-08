@@ -4,6 +4,7 @@ import db.DynamoDBConfig;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.*;
 /**
 * CustomerDAO  CRUD cho bảng Customers
@@ -60,11 +61,13 @@ public void update(KhachHang kh) {
         db.updateItem(UpdateItemRequest.builder()
         .tableName(TBL)
         .key(Map.of("customerId", av(kh.getSoDT())))
-        .updateExpression("SET #n = :name, membership = :m, updatedAt = :ts")
+        .updateExpression("SET #n = :name, membership = :m, points = :pts, email = :em, updatedAt = :ts")
         .expressionAttributeNames(Map.of("#n", "name"))
         .expressionAttributeValues(Map.of(
         ":name", av(kh.getTenKH()),
         ":m",    av(kh.getThanhVien() != null ? kh.getThanhVien() : ""),
+        ":pts",  avn(kh.getDiemTichLuy()),
+        ":em",   av(kh.getEmail()),
         ":ts",   av(LocalDateTime.now().toString())
         ))
         .build());
@@ -103,6 +106,8 @@ private Map<String, AttributeValue> toMap(KhachHang kh) {
     item.put("customerId",  av(kh.getSoDT()));
     item.put("name",        av(kh.getTenKH()));
     item.put("membership",  av(kh.getThanhVien() != null ? kh.getThanhVien() : ""));
+    item.put("points",      avn(kh.getDiemTichLuy()));
+    if (kh.getEmail() != null) item.put("email", av(kh.getEmail()));
     item.put("createdAt",   av(LocalDateTime.now().toString()));
     return item;
 }
@@ -111,6 +116,9 @@ private KhachHang mapToKhachHang(Map<String, AttributeValue> m) {
     if (m.containsKey("customerId")) kh.setSoDT(m.get("customerId").s());
     if (m.containsKey("name"))       kh.setTenKH(m.get("name").s());
     if (m.containsKey("membership")) kh.setThanhVien(m.get("membership").s());
+    if (m.containsKey("email"))      kh.setEmail(m.get("email").s());
+    if (m.containsKey("points"))     kh.setDiemTichLuy(Integer.parseInt(m.get("points").n()));
+    if (m.containsKey("createdAt"))  kh.setNgayDangKy(LocalDate.parse(m.get("createdAt").s().substring(0, 10)));
     return kh;
 }
 }
