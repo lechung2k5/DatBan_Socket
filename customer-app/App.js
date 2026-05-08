@@ -13,6 +13,7 @@ import ProfileScreen from './src/views/screens/ProfileScreen';
 import LoginScreen from './src/views/screens/LoginScreen';
 import RegisterScreen from './src/views/screens/RegisterScreen';
 import OtpScreen from './src/views/screens/OtpScreen';
+import BookingDetailScreen from './src/views/screens/BookingDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -20,7 +21,7 @@ const Stack = createNativeStackNavigator();
 /**
  * Main Tab Navigator - Giao diện chính sau khi đăng nhập
  */
-function MainTabs() {
+function MainTabs({ unreadCount, setUnreadCount }) {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -53,7 +54,15 @@ function MainTabs() {
     >
       <Tab.Screen name="Trang chủ" component={HomeScreen} />
       <Tab.Screen name="Đặt bàn" component={BookingScreen} />
-      <Tab.Screen name="Thông báo" component={NotificationScreen} />
+      <Tab.Screen 
+        name="Thông báo" 
+        options={{ 
+            tabBarBadge: unreadCount > 0 ? unreadCount : null,
+            tabBarBadgeStyle: { backgroundColor: '#FF0000', color: 'white', fontSize: 10 }
+        }}
+      >
+        {props => <NotificationScreen {...props} setUnreadCount={setUnreadCount} />}
+      </Tab.Screen>
       <Tab.Screen name="Cá nhân" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -68,21 +77,49 @@ import { View, ActivityIndicator } from 'react-native';
  */
 export default function App() {
   const [isReady, setIsReady] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   useEffect(() => {
     const initApp = async () => {
       await SocketService.loadToken();
-      
-      // Khởi chạy kết nối Socket
       SocketService.connect();
+
+      // Lấy số lượng chưa đọc ban đầu
+      const profile = SocketService.userProfile;
+      if (profile && profile.soDT) {
+        try {
+            const res = await ApiService.getNotifications(profile.soDT);
+            if (res.statusCode === 200) {
+                setUnreadCount(res.data.filter(n => !n.isRead).length);
+            }
+        } catch (e) {}
+      }
       
       // Đăng ký lắng nghe thông báo toàn cục
       SocketService.addListener((response) => {
         if (response.CommandType === 'NEW_NOTIFICATION') {
-          const { title, message } = response.data;
-          // Hiển thị thông báo nhanh (Toast hoặc Alert)
-          // Ở đây dùng Alert cơ bản của React Native
+          setUnreadCount(prev => prev + 1);
+          const { title, message, type } = response.data;
           const { Alert } = require('react-native');
-          Alert.alert(title, message);
+          
+          // Tìm mã hóa đơn trong tin nhắn
+          const match = message.match(/(HD\d+)/);
+          const maHD = match ? match[0] : null;
+
+          if (maHD && (type === 'BOOKING' || type === 'UPDATE' || type === 'SYSTEM')) {
+            Alert.alert(
+              title, 
+              message,
+              [
+                { text: 'Đóng', style: 'cancel' },
+                { text: 'Xem ngay', onPress: () => {
+                   Alert.alert('Thông báo', 'Vui lòng vào tab Thông báo để xem chi tiết đơn ' + maHD);
+                }}
+              ]
+            );
+          } else {
+            Alert.alert(title, message);
+          }
         }
       });
 
@@ -111,7 +148,10 @@ export default function App() {
         <Stack.Screen name="Otp" component={OtpScreen} />
         
         {/* Main App */}
-        <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen name="Main">
+          {props => <MainTabs {...props} unreadCount={unreadCount} setUnreadCount={setUnreadCount} />}
+        </Stack.Screen>
+        <Stack.Screen name="BookingDetail" component={BookingDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

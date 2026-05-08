@@ -42,12 +42,6 @@ public class OrderService {
             if (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null) {
                 new dao.CustomerDAO().insert(hd.getKhachHang()); // DAO insert đã có logic check tồn tại (hoặc nên có)
             }
-            invoiceDAO.insert(hd, chiTiet);
-            System.out.println("[OrderService] Đã tạo hóa đơn: " + hd.getMaHD());
-            
-            // 🔥 THÔNG BÁO CHO QUẢN LÝ (Real-time & Persistence)
-            String customerName = (hd.getKhachHang() != null) ? hd.getKhachHang().getTenKH() : "Khách vãng lai";
-            
             // Fallback: Nếu hd.getBan() null, thử lấy từ raw map (đề phòng Gson mapping issue)
             String tableId = (hd.getBan() != null) ? hd.getBan().getMaBan() : "N/A";
             if (tableId.equals("N/A")) {
@@ -72,6 +66,11 @@ public class OrderService {
                 }
             }
 
+            // 🔥 QUAN TRỌNG: Lưu hóa đơn vào DB SAU KHI đã fix tableId (nếu có)
+            invoiceDAO.insert(hd, chiTiet);
+            System.out.println("[OrderService] Đã tạo hóa đơn: " + hd.getMaHD() + " cho bàn: " + tableId);
+
+            String customerName = (hd.getKhachHang() != null) ? hd.getKhachHang().getTenKH() : "Khách vãng lai";
             NotificationService.sendNotification(
                 "MANAGER", 
                 "Yêu cầu đặt bàn mới", 
@@ -157,7 +156,19 @@ public Response handleUpdateInvoicePromo(Request request) {
     return Response.error("Lỗi: " + e.getMessage());
 }
 }
-public Response handleUpdateInvoice(Request request) {
+    public Response handleGetInvoiceDetail(Request request) {
+        try {
+            String maHD = (String) request.getParam("maHD");
+            if (maHD == null) return Response.error("Thiếu mã hóa đơn");
+            HoaDon hd = invoiceDAO.findById(maHD);
+            if (hd == null) return Response.error("Không tìm thấy hóa đơn");
+            return Response.ok(hd);
+        } catch (Exception e) {
+            return Response.error("Lỗi: " + e.getMessage());
+        }
+    }
+
+    public Response handleUpdateInvoice(Request request) {
     try {
         String maHD = (String) request.getParam("maHD");
         String soDT = (String) request.getParam("soDT");
@@ -179,12 +190,34 @@ public Response handleUpdateInvoice(Request request) {
         
         // 🔥 Broadcast sự kiện cập nhật hóa đơn
         Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Cập nhật hóa đơn", maHD));
+        
+        // 🔥 THÔNG BÁO CHO QUẢN LÝ (Chỉ khi từ mobile)
+        String source = (String) request.getParam("source");
+        if ("mobile".equals(source)) {
+            NotificationService.sendNotification(
+                "MANAGER", 
+                "Khách cập nhật đơn", 
+                "Đơn " + maHD + " vừa được khách hàng cập nhật thông tin (Bàn: " + (maBan != null ? maBan : "Không đổi") + ")", 
+                "UPDATE"
+            );
+        }
+
         if (maBan != null) {
             utils.CacheService.invalidateTables();
             Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật bàn", maBan));
         }
 
-        return Response.ok("Cập nhật thông tin hóa đơn thành công");
+        // 🔥 THÔNG BÁO CHO KHÁCH HÀNG (Nếu đổi trạng thái)
+        if (status != null && !"mobile".equals(source) && soDT != null) {
+            NotificationService.sendNotification(
+                soDT, 
+                "Cập nhật trạng thái", 
+                "Đơn đặt bàn " + maHD + " của bạn đã chuyển sang trạng thái: " + status, 
+                "BOOKING"
+            );
+        }
+
+        return Response.ok("Cập nhật hóa đơn thành công");
     } catch (Exception e) {
         return Response.error("Lỗi: " + e.getMessage());
     }
@@ -227,7 +260,25 @@ public Response handleGetInvoicesByCustomer(Request request) {
     return Response.error("Lỗi: " + e.getMessage());
 }
 }
-public Response handleMergeInvoices(Request request) {
+    public Response handleDeleteInvoice(Request request) {
+        try {
+            String maHD = (String) request.getParam("maHD");
+            if (maHD == null || maHD.isEmpty()) return Response.error("Thiếu mã hóa đơn");
+            HoaDon hd = invoiceDAO.findById(maHD);
+            invoiceDAO.delete(maHD);
+            if (hd != null && hd.getMaBan() != null && !hd.getMaBan().isEmpty()) {
+                new dao.TableDAO().updateStatus(hd.getMaBan(), "Trong");
+                utils.CacheService.invalidateTables();
+                Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "[TABLE]:" + hd.getMaBan()));
+            }
+            Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Xóa hóa đơn", maHD));
+            return Response.ok("Xóa hóa đơn thành công");
+        } catch (Exception e) {
+            return Response.error("Lỗi xóa hóa đơn: " + e.getMessage());
+        }
+    }
+
+    public Response handleMergeInvoices(Request request) {
     try {
         String targetId = (String) request.getParam("targetId");
         String sourceId = (String) request.getParam("sourceId");

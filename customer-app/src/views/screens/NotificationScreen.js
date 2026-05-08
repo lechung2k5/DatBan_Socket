@@ -20,7 +20,7 @@ const StyledView = styled(View);
 const StyledText = styled(Text);
 const StyledTouchableOpacity = styled(TouchableOpacity);
 
-const NotificationScreen = () => {
+const NotificationScreen = ({ navigation, setUnreadCount }) => {
   const [activeTab, setActiveTab] = useState('Hệ thống');
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,11 @@ const NotificationScreen = () => {
       }
       const res = await ApiService.getNotifications(phone);
       if (res.statusCode === 200) {
-        setNotifications(res.data);
+        const sortedData = res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setNotifications(sortedData);
+        if (setUnreadCount) {
+            setUnreadCount(sortedData.filter(n => !n.isRead).length);
+        }
       }
     } catch (err) {
       console.error('[NotificationScreen] Error fetching:', err);
@@ -58,6 +62,32 @@ const NotificationScreen = () => {
 
     return () => unsubscribe();
   }, []);
+
+  const handleMarkAsRead = async (notif) => {
+    if (notif.isRead) return;
+    try {
+        await ApiService.markNotificationAsRead(notif.notificationId);
+        setNotifications(prev => prev.map(n => n.notificationId === notif.notificationId ? { ...n, isRead: true } : n));
+        if (setUnreadCount) {
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+    } catch (err) {
+        console.error('Lỗi đánh dấu đã đọc:', err);
+    }
+  };
+
+  const handleDelete = async (notifId) => {
+      try {
+          const target = notifications.find(n => n.notificationId === notifId);
+          await ApiService.deleteNotification(notifId);
+          setNotifications(prev => prev.filter(n => n.notificationId !== notifId));
+          if (target && !target.isRead && setUnreadCount) {
+              setUnreadCount(prev => Math.max(0, prev - 1));
+          }
+      } catch (err) {
+          Alert.alert('Lỗi', 'Không thể xóa thông báo');
+      }
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -148,18 +178,40 @@ const NotificationScreen = () => {
                     .map((notif, index) => (
                     <StyledTouchableOpacity 
                         key={notif.notificationId || index}
-                        className="bg-white rounded-3xl p-5 mb-4 border border-gray-100 flex-row items-center shadow-sm"
+                        onPress={() => {
+                            handleMarkAsRead(notif);
+                            if (notif.type === 'BOOKING' || notif.type === 'UPDATE' || notif.type === 'SYSTEM') {
+                                const match = notif.message.match(/(HD\d+)/);
+                                if (match) {
+                                    navigation.navigate('BookingDetail', { maHD: match[0] });
+                                }
+                            }
+                        }}
+                        className={`bg-white rounded-3xl p-5 mb-4 border border-gray-100 flex-row items-center shadow-sm ${!notif.isRead ? 'border-l-4 border-l-red-600' : ''}`}
                     >
                         <StyledView className="w-14 h-14 rounded-full justify-center items-center mr-4" style={{ backgroundColor: getColor(notif.type) + '15' }}>
                             <MaterialCommunityIcons name={getIcon(notif.type)} size={28} color={getColor(notif.type)} />
                         </StyledView>
                         <StyledView className="flex-1">
                             <StyledView className="flex-row justify-between items-start">
-                                <StyledText className="text-lg font-bold text-gray-800 w-[90%]" numberOfLines={1}>{notif.title}</StyledText>
-                                {!notif.isRead && <StyledView className="w-2.5 h-2.5 rounded-full bg-red-600 mt-2" />}
+                                <StyledText className={`text-lg font-bold text-gray-800 w-[85%] ${!notif.isRead ? 'text-red-900' : ''}`} numberOfLines={1}>
+                                    {notif.title}
+                                </StyledText>
+                                <StyledTouchableOpacity 
+                                    onPress={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(notif.notificationId);
+                                    }}
+                                    className="p-1"
+                                >
+                                    <Ionicons name="close-circle-outline" size={20} color="#CCC" />
+                                </StyledTouchableOpacity>
                             </StyledView>
                             <StyledText className="text-gray-500 text-sm mt-1 leading-5" numberOfLines={2}>{notif.message}</StyledText>
-                            <StyledText className="text-gray-400 text-xs mt-2 font-semibold">{formatTime(notif.createdAt)}</StyledText>
+                            <StyledView className="flex-row justify-between items-center mt-2">
+                                <StyledText className="text-gray-400 text-xs font-semibold">{formatTime(notif.createdAt)}</StyledText>
+                                {!notif.isRead && <StyledView className="px-2 py-0.5 rounded-full bg-red-100"><StyledText className="text-[10px] text-red-600 font-bold">MỚI</StyledText></StyledView>}
+                            </StyledView>
                         </StyledView>
                     </StyledTouchableOpacity>
                     ))

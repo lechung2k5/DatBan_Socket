@@ -57,6 +57,16 @@ const BookingScreen = () => {
 
   useEffect(() => {
     fetchMenuData();
+
+    // Đăng ký listener realtime cho thực đơn
+    const unsubscribe = SocketService.on('UPDATE_MENU', (data) => {
+        console.log('[Realtime] Thực đơn đã cập nhật từ server:', data);
+        fetchMenuData();
+    });
+
+    return () => {
+        if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const fetchMenuData = async () => {
@@ -109,39 +119,23 @@ const BookingScreen = () => {
       // 🔥 [KIỂM TRA] Xem khách hàng có đơn nào đang chờ xác nhận không TRƯỚC KHI tìm bàn
       const checkRes = await SocketService.request('GET_INVOICES_BY_CUSTOMER', { maKH: phone });
       
-      if (checkRes.statusCode === 200 && checkRes.data) {
-        const pendingInvoice = checkRes.data.find(inv => inv.trangThai === 'ChoXacNhan');
+      if (checkRes.statusCode === 200 && checkRes.data && Array.isArray(checkRes.data)) {
+        const pendingInvoice = checkRes.data.find(inv => 
+            inv.trangThai === 'ChoXacNhan' || 
+            (typeof inv.trangThai === 'object' && inv.trangThai.dbValue === 'ChoXacNhan')
+        );
+
         if (pendingInvoice) {
-            Alert.alert(
-                'Thông báo', 
-                'Bạn đang có một đơn đặt bàn chưa hoàn tất. Vui lòng thanh toán cọc hoặc hủy đơn cũ trước khi đặt đơn mới.',
-                [
-                    { text: 'Thanh toán ngay', onPress: () => {
-                        setCurrentInvoice({
-                            maHD: pendingInvoice.maHD,
-                            maBan: pendingInvoice.maBan,
-                            tienCoc: pendingInvoice.tienCoc || 150000
-                        });
-                        setPaymentModalVisible(true);
-                    }},
-                    { text: 'Hủy đặt bàn này', style: 'destructive', onPress: async () => {
-                        try {
-                            setLoading(true);
-                            await SocketService.request('CANCEL_INVOICE', { 
-                                maHD: pendingInvoice.maHD, 
-                                trangThai: 'DaHuy' 
-                            });
-                            Alert.alert('Thành công', 'Đã hủy đơn đặt bàn cũ.');
-                        } catch (err) {
-                            Alert.alert('Lỗi', 'Không thể hủy đơn: ' + err.message);
-                        } finally {
-                            setLoading(false);
-                        }
-                    }},
-                    { text: 'Đóng', style: 'cancel' }
-                ]
-            );
-            return;
+            console.log('[Booking] Phát hiện đơn treo:', pendingInvoice.maHD);
+            // Load thẳng đến thanh toán luôn theo yêu cầu
+            setCurrentInvoice({
+                maHD: pendingInvoice.maHD,
+                maBan: pendingInvoice.maBan || 'N/A',
+                tienCoc: pendingInvoice.tienCoc || 150000
+            });
+            setLoading(false);
+            setPaymentModalVisible(true);
+            return; // Dừng lại ngay lập tức, không cho chọn bàn mới
         }
       }
 
@@ -200,11 +194,14 @@ const BookingScreen = () => {
   const handleCreateRequest = async () => {
     if (!selectedTable) {
       Alert.alert('Thông báo', 'Vui lòng chọn bàn bạn muốn đặt');
+      setLoading(false);
       return;
     }
     if (selectedDishes.length === 0) {
         Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một món ăn');
-        setShowMenuModal(true);
+        setLoading(false);
+        setShowTableModal(false);
+        setTimeout(() => setShowMenuModal(true), 500); // Mở menu modal sau khi table modal đóng
         return;
     }
 
@@ -215,36 +212,22 @@ const BookingScreen = () => {
       const phone = customerPhone;
       const checkRes = await SocketService.request('GET_INVOICES_BY_CUSTOMER', { maKH: phone });
       
-      if (checkRes.statusCode === 200 && checkRes.data) {
-        const pendingInvoice = checkRes.data.find(inv => inv.trangThai === 'ChoXacNhan');
+      if (checkRes.statusCode === 200 && checkRes.data && Array.isArray(checkRes.data)) {
+        const pendingInvoice = checkRes.data.find(inv => 
+            inv.trangThai === 'ChoXacNhan' || 
+            (typeof inv.trangThai === 'object' && inv.trangThai.dbValue === 'ChoXacNhan')
+        );
+
         if (pendingInvoice) {
-            Alert.alert(
-                'Thông báo', 
-                'Bạn đang có một đơn đặt bàn chưa hoàn tất (Bàn ' + (pendingInvoice.maBan || 'N/A') + '). Vui lòng thanh toán cọc hoặc hủy đơn cũ trước khi đặt đơn mới.',
-                [
-                    { text: 'Tiếp tục thanh toán', onPress: () => {
-                        setCurrentInvoice(pendingInvoice);
-                        setShowTableModal(false);
-                        setPaymentModalVisible(true);
-                    }},
-                    { text: 'Hủy đơn cũ', style: 'destructive', onPress: async () => {
-                        try {
-                            setLoading(true);
-                            await SocketService.request('CANCEL_INVOICE', { 
-                                maHD: pendingInvoice.maHD, 
-                                trangThai: 'DaHuy' 
-                            });
-                            Alert.alert('Thành công', 'Đã hủy đơn đặt bàn cũ.');
-                        } catch (err) {
-                            Alert.alert('Lỗi', 'Không thể hủy đơn: ' + err.message);
-                        } finally {
-                            setLoading(false);
-                        }
-                    }},
-                    { text: 'Đóng', style: 'cancel' }
-                ]
-            );
+            console.log('[Booking] Phát hiện đơn treo (CreateRequest):', pendingInvoice.maHD);
+            setCurrentInvoice({
+                maHD: pendingInvoice.maHD,
+                maBan: pendingInvoice.maBan || 'N/A',
+                tienCoc: pendingInvoice.tienCoc || 150000
+            });
             setLoading(false);
+            setShowTableModal(false);
+            setPaymentModalVisible(true);
             return;
         }
       }
@@ -325,7 +308,7 @@ const BookingScreen = () => {
 
   // VietQR generation URL
   const qrUrl = (currentInvoice && selectedTable) 
-    ? `https://img.vietqr.io/image/MB-0968686868-compact2.png?amount=${getDepositAmount(selectedTable)}&addInfo=DATBAN%20${currentInvoice.invoiceId}&accountName=QUAN%20AN%20ANTIGRAVITY` 
+    ? `https://img.vietqr.io/image/MB-0968686868-compact2.png?amount=${getDepositAmount(selectedTable)}&addInfo=DATBAN%20${currentInvoice.maHD}&accountName=QUAN%20AN%20ANTIGRAVITY` 
     : '';
 
   return (
@@ -667,12 +650,12 @@ const BookingScreen = () => {
                             { text: 'Hủy đặt bàn', style: 'destructive', onPress: async () => {
                                 try {
                                     setLoading(true);
-                                    await SocketService.request('CANCEL_INVOICE', { 
-                                        maHD: currentInvoice?.maHD, 
-                                        trangThai: 'DaHuy' 
+                                    await SocketService.request('DELETE_INVOICE', { 
+                                        maHD: currentInvoice?.maHD
                                     });
                                     setPaymentModalVisible(false);
-                                    Alert.alert('Thành công', 'Đã hủy đơn đặt bàn.');
+                                    resetForm();
+                                    Alert.alert('Thành công', 'Đã xóa đơn đặt bàn.');
                                 } catch (err) {
                                     Alert.alert('Lỗi', 'Không thể hủy đơn: ' + err.message);
                                 } finally {

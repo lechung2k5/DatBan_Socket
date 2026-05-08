@@ -18,24 +18,24 @@ public class RequestDispatcher {
     private final PromoService PromoService = new PromoService();
     private final EmployeeService EmployeeService = new EmployeeService();
     public Response dispatch(Request request) {
-        CommandType CommandType = request.getAction();
-        if (CommandType == null) return Response.error("Hành động không hợp lệ");
+        CommandType action = request.getAction();
+        if (action == null) return Response.error("Hành động không hợp lệ");
         // 1. Ngoại lệ: LOGIN, SEND_OTP, REGISTER_CUSTOMER không cần kiểm tra token
-        if (CommandType == CommandType.LOGIN || 
-            CommandType == CommandType.FORGOT_PASSWORD_UPDATE || 
-            CommandType == CommandType.SEND_OTP || 
-            CommandType == CommandType.REGISTER_CUSTOMER ||
-            CommandType == CommandType.CUSTOMER_LOGIN ||
-            CommandType == CommandType.GET_MENU ||
-            CommandType == CommandType.GET_MENU_CATEGORIES) {
+        if (action == CommandType.LOGIN || 
+            action == CommandType.FORGOT_PASSWORD_UPDATE || 
+            action == CommandType.SEND_OTP || 
+            action == CommandType.REGISTER_CUSTOMER ||
+            action == CommandType.CUSTOMER_LOGIN ||
+            action == CommandType.GET_MENU ||
+            action == CommandType.GET_MENU_CATEGORIES) {
             
-            if (CommandType == CommandType.LOGIN) return AuthService.handleLogin(request);
-            if (CommandType == CommandType.FORGOT_PASSWORD_UPDATE) return AuthService.handleForgotPasswordUpdate(request);
-            if (CommandType == CommandType.SEND_OTP) return AuthService.handleSendOTP(request);
-            if (CommandType == CommandType.REGISTER_CUSTOMER) return AuthService.handleRegisterCustomer(request);
-            if (CommandType == CommandType.CUSTOMER_LOGIN) return AuthService.handleCustomerLogin(request);
-            if (CommandType == CommandType.GET_MENU) return MenuService.handleGetAll(request);
-            if (CommandType == CommandType.GET_MENU_CATEGORIES) return MenuService.handleGetCategories(request);
+            if (action == CommandType.LOGIN) return AuthService.handleLogin(request);
+            if (action == CommandType.FORGOT_PASSWORD_UPDATE) return AuthService.handleForgotPasswordUpdate(request);
+            if (action == CommandType.SEND_OTP) return AuthService.handleSendOTP(request);
+            if (action == CommandType.REGISTER_CUSTOMER) return AuthService.handleRegisterCustomer(request);
+            if (action == CommandType.CUSTOMER_LOGIN) return AuthService.handleCustomerLogin(request);
+            if (action == CommandType.GET_MENU) return MenuService.handleGetAll(request);
+            if (action == CommandType.GET_MENU_CATEGORIES) return MenuService.handleGetCategories(request);
         }
         // 2. Kiểm tra Session (Token) trong Redis
         String token = request.getToken();
@@ -44,7 +44,7 @@ public class RequestDispatcher {
             return new Response(401, "Phiên làm việc hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.", null);
         }
         // 3. Phân luồng xử lý theo CommandType
-        switch (CommandType) {
+        switch (action) {
             case LOGOUT: return AuthService.handleLogout(request);
             case CHANGE_PASSWORD: return AuthService.handleChangePassword(request);
             case GET_TABLES: return TableService.getAllTables();
@@ -107,9 +107,14 @@ public class RequestDispatcher {
             case GENERATE_INVOICE_ID: return OrderService.handleGenerateId(request);
             case SEND_OTP: return AuthService.handleSendOTP(request);
             case REGISTER_CUSTOMER: return AuthService.handleRegisterCustomer(request);
+            case GET_NOTIFICATIONS: return NotificationService.handleGetNotifications(request);
+            case DELETE_INVOICE: return OrderService.handleDeleteInvoice(request);
+            case GET_INVOICE_DETAIL: return OrderService.handleGetInvoiceDetail(request);
+            case MARK_NOTIFICATION_READ: return NotificationService.handleMarkAsRead(request);
+            case DELETE_NOTIFICATION: return NotificationService.handleDeleteNotification(request);
             default:
-            System.out.println("[Dispatcher] CommandType chưa được xử lý: " + CommandType);
-            return Response.error("Chức năng [" + CommandType + "] chưa được hỗ trợ trên Server");
+            System.out.println("[Dispatcher] CommandType chưa được xử lý: " + action);
+            return Response.error("Chức năng [" + action + "] chưa được hỗ trợ trên Server");
         }
     }
 }

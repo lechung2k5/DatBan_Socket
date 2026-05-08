@@ -71,6 +71,19 @@ public class InvoiceDAO {
 
     // â”€â”€â”€ 2. TÃ¬m theo ID
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    public void delete(String invoiceId) {
+        try {
+            db.deleteItem(DeleteItemRequest.builder()
+                    .tableName(TBL)
+                    .key(Map.of("invoiceId", av(invoiceId)))
+                    .build());
+            System.out.println("[DAO:Invoices] delete -> " + invoiceId);
+        } catch (Exception e) {
+            System.err.println("[DAO:Invoices] Lỗi delete: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
     public HoaDon findById(String invoiceId) {
         try {
             GetItemResponse res = db.getItem(GetItemRequest.builder()
@@ -595,7 +608,18 @@ public class InvoiceDAO {
         java.time.LocalDate today = java.time.LocalDate.now();
         String datePart = today.format(java.time.format.DateTimeFormatter.ofPattern("ddMMyy"));
         List<HoaDon> todayInvoices = findByDate(today);
-        int nextSeq = todayInvoices.size() + 1;
-        return String.format("HD%s%04d", datePart, nextSeq);
+        
+        int maxSeq = 0;
+        for (HoaDon hd : todayInvoices) {
+            String id = hd.getMaHD();
+            if (id != null && id.startsWith("HD" + datePart) && id.length() >= 12) {
+                try {
+                    int seq = Integer.parseInt(id.substring(8));
+                    if (seq > maxSeq) maxSeq = seq;
+                } catch (Exception ignored) {}
+            }
+        }
+        
+        return String.format("HD%s%04d", datePart, maxSeq + 1);
     }
 }

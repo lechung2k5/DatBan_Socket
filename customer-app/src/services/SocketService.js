@@ -161,6 +161,20 @@ class SocketService {
     removeListener(callback) {
         this.listeners.delete(callback);
     }
+
+    /**
+     * Đăng ký lắng nghe một CommandType cụ thể
+     * Trả về hàm để hủy đăng ký (unsubscribe)
+     */
+    on(command, callback) {
+        const handler = (response) => {
+            if (response.CommandType === command) {
+                callback(response.data);
+            }
+        };
+        this.addListener(handler);
+        return () => this.removeListener(handler);
+    }
 }
 
 export default new SocketService();

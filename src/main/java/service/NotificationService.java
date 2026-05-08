@@ -5,6 +5,7 @@ import network.RealTimeEvent;
 import network.Service;
 import network.CommandType;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import network.Response;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 
@@ -128,6 +129,38 @@ public class NotificationService {
                     .build());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static Response handleGetNotifications(network.Request request) {
+        try {
+            String targetId = (String) request.getParam("targetId");
+            if (targetId == null || targetId.isEmpty()) return Response.error("Thiếu targetId");
+            return Response.ok(getNotifications(targetId));
+        } catch (Exception e) {
+            return Response.error("Lỗi lấy thông báo: " + e.getMessage());
+        }
+    }
+
+    public static Response handleMarkAsRead(network.Request request) {
+        try {
+            String targetId = (String) request.getParam("targetId");
+            String notificationId = (String) request.getParam("notificationId");
+            markAsRead(targetId, notificationId);
+            return Response.ok("Đã đánh dấu đã đọc");
+        } catch (Exception e) {
+            return Response.error("Lỗi: " + e.getMessage());
+        }
+    }
+
+    public static Response handleDeleteNotification(network.Request request) {
+        try {
+            String targetId = (String) request.getParam("targetId");
+            String notificationId = (String) request.getParam("notificationId");
+            deleteNotification(targetId, notificationId);
+            return Response.ok("Đã xóa thông báo");
+        } catch (Exception e) {
+            return Response.error("Lỗi: " + e.getMessage());
         }
     }
 }
