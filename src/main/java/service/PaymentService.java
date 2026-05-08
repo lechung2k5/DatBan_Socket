@@ -31,10 +31,17 @@ public class PaymentService {
             Double vat = request.getParam("vat") != null ? Double.valueOf(String.valueOf(request.getParam("vat"))) : 0.0;
             Double discount = request.getParam("discount") != null ? Double.valueOf(String.valueOf(request.getParam("discount"))) : 0.0;
 
+            System.out.println("[PaymentService] Received Checkout Request:");
+            System.out.println(" - maHD: " + maHD);
+            System.out.println(" - totalAmount: " + totalAmount);
+            System.out.println(" - totalFood: " + totalFood);
+            System.out.println(" - serviceFee: " + serviceFee);
+            System.out.println(" - vat: " + vat);
+            System.out.println(" - discount: " + discount);
+
             // 1. Xử lý tách bàn nếu có thông tin (Split-and-Pay)
             String maHDGoc = (String) request.getParam("maHDGoc");
             if (maHDGoc != null && !maHDGoc.isEmpty()) {
-                // 🔥 Nếu maHD là mã tạm (TMP), cần tạo HĐ thật trước
                 if (maHD.startsWith("TMP")) {
                     HoaDon sourceHd = invoiceDAO.findById(maHDGoc);
                     HoaDon newHd = new HoaDon();
@@ -47,9 +54,8 @@ public class PaymentService {
                     newHd.setTenNhanVien(sourceHd != null ? sourceHd.getTenNhanVien() : "N/A");
                     newHd.setMaHDGoc(maHDGoc);
                     newHd.setTienCoc(0.0);
-                    
                     invoiceDAO.insert(newHd, new java.util.ArrayList<>());
-                    maHD = realId; // Đổi sang ID thật để checkout bên dưới
+                    maHD = realId;
                 }
 
                 List<entity.ChiTietHoaDon> monTach = JsonUtil.fromJsonList(
@@ -61,83 +67,95 @@ public class PaymentService {
                 }
             }
 
-            // 2. Cập nhật mã ưu đãi (nếu có)
-            if (maUuDai != null && !maUuDai.isEmpty()) {
-                invoiceDAO.updatePromo(maHD, maUuDai, 0.0);
-            }
-
-            // 3. Kiểm tra loại hóa đơn (Gốc hay Phụ)
+            // 2. 🔥 TÍNH TOÁN CHIẾT KHẤU & TỔNG TIỀN CUỐI CÙNG
             entity.HoaDon currentHd = invoiceDAO.findById(maHD);
             boolean isSubInvoice = (maHDGoc != null && !maHDGoc.isEmpty()) 
                                 || (currentHd != null && currentHd.getMaHDGoc() != null && !currentHd.getMaHDGoc().isEmpty());
 
-            // 3.5. Xử lý Tích điểm, Hạng Thành viên và Email thông báo (Từ nhánh giaminh)
-            if (currentHd != null && currentHd.getKhachHang() != null) {
+            double serverDiscount = 0.0;
+            if (currentHd != null && currentHd.getKhachHang() != null && discount == 0) {
                 String phone = currentHd.getKhachHang().getSoDT();
                 dao.CustomerDAO customerDAO = new dao.CustomerDAO();
                 entity.KhachHang kh = customerDAO.findByPhone(phone);
-                
                 if (kh != null) {
-                    // Tự động áp dụng giảm giá theo hạng nếu chưa có discount từ mobile
-                    if (discount == 0) {
-                        if ("Diamond".equals(kh.getThanhVien())) {
-                            discount = totalAmount * 0.15;
-                        } else if ("Gold".equals(kh.getThanhVien()) && totalAmount > 200000) {
-                            discount = totalAmount * 0.10;
-                        }
+                    if ("Diamond".equals(kh.getThanhVien())) {
+                        serverDiscount = totalAmount * 0.15;
+                    } else if ("Gold".equals(kh.getThanhVien()) && totalAmount > 200000) {
+                        serverDiscount = totalAmount * 0.10;
                     }
-                    
-                    double amountAfterDiscount = totalAmount - discount;
-                    
-                    // Tính điểm cộng: 100k = 1 điểm, > 300k tặng +1 điểm
-                    int pointsAdded = (int) (amountAfterDiscount / 100000);
-                    if (amountAfterDiscount > 300000) pointsAdded += 1;
-                    
-                    String oldTier = kh.getThanhVien();
-                    customerDAO.addPointsAndAdjustLevel(phone, pointsAdded);
-                    
-                    // Lấy lại thông tin sau khi cập nhật để gửi email
-                    entity.KhachHang updatedKh = customerDAO.findByPhone(phone);
-                    
-                    // Thông báo email (Feature từ giaminh)
-                    if (updatedKh != null && updatedKh.getEmail() != null && !updatedKh.getEmail().isEmpty()) {
-                        String emailContent = "<h3>Cảm ơn quý khách đã dùng bữa tại Nhà hàng Tứ Hữu!</h3>"
-                            + "<p>Mã hóa đơn: <b>" + maHD + "</b></p>"
-                            + "<p>Số điểm được cộng: <b>" + pointsAdded + "</b></p>"
-                            + "<p>Tổng điểm tích lũy: <b>" + updatedKh.getDiemTichLuy() + "</b></p>"
-                            + "<p>Hạng thành viên hiện tại: <b>" + updatedKh.getThanhVien() + "</b></p>";
-                        if (!updatedKh.getThanhVien().equals(oldTier)) {
-                            emailContent += "<p style='color:green;'>Chúc mừng! Bạn đã được thăng hạng lên <b>" + updatedKh.getThanhVien() + "</b></p>";
-                        }
-                        utils.EmailUtil.sendEmail(updatedKh.getEmail(), "Thông báo điểm tích lũy - Nhà hàng Tứ Hữu", emailContent);
-                    }
-                    
-                    // 🔥 QUAN TRỌNG: Gửi thông báo real-time cho mobile
-                    NotificationService.sendNotification(
-                        phone,
-                        "Cảm ơn quý khách",
-                        "Hóa đơn " + maHD + " đã được thanh toán. Tổng tiền: " + String.format("%,.0f", amountAfterDiscount) + " VNĐ. Bạn được cộng " + pointsAdded + " điểm!",
-                        "SYSTEM"
-                    );
-                    Service.broadcast(new RealTimeEvent(CommandType.UPDATE_CUSTOMER, "Cập nhật khách hàng", phone));
-                    
-                    totalAmount = amountAfterDiscount; // Cập nhật để lưu vào DB
                 }
             }
 
-            
-            
+            double finalAmount = (serverDiscount > 0) ? (totalAmount - serverDiscount) : totalAmount;
+            double finalDiscount = (serverDiscount > 0) ? serverDiscount : discount;
+            if (finalAmount < 0) finalAmount = 0;
+
+            // 3. Cập nhật tích điểm và hạng thành viên
+            if (currentHd != null && currentHd.getKhachHang() != null) {
+                String phone = currentHd.getKhachHang().getSoDT();
+                if (phone != null && !phone.isEmpty()) {
+                    dao.CustomerDAO customerDAO = new dao.CustomerDAO();
+                    entity.KhachHang kh = customerDAO.findByPhone(phone);
+                    if (kh != null) {
+                        // 🔥 TÍNH ĐIỂM: 1 điểm cho mỗi 10,000 VNĐ
+                        int pointsAdded = (int) (finalAmount / 10000);
+                        if (pointsAdded <= 0 && finalAmount > 0) pointsAdded = 1; // Tối thiểu 1 điểm nếu có thanh toán
+                        
+                        System.out.println("[PaymentService] Đang tích điểm cho " + phone + ": +" + pointsAdded + " điểm (HĐ: " + maHD + ")");
+                        
+                        customerDAO.addPointsAndAdjustLevel(phone, pointsAdded);
+                        
+                        entity.KhachHang updatedKh = customerDAO.findByPhone(phone);
+                        if (updatedKh != null && updatedKh.getEmail() != null && !updatedKh.getEmail().isEmpty()) {
+                            try {
+                                String emailContent = "<h3>Cảm ơn quý khách đã dùng bữa tại Nhà hàng Tứ Hữu!</h3>"
+                                    + "<p>Mã hóa đơn: <b>" + maHD + "</b></p>"
+                                    + "<p>Số tiền thanh toán: <b>" + String.format("%,.0f", finalAmount) + " VNĐ</b></p>"
+                                    + "<p>Số điểm cộng thêm: <b style='color: green;'>+" + pointsAdded + "</b></p>"
+                                    + "<p>Tổng điểm hiện tại: <b>" + updatedKh.getDiemTichLuy() + "</b></p>"
+                                    + "<p>Hạng thành viên: <b style='color: gold;'>" + updatedKh.getThanhVien() + "</b></p>";
+                                utils.EmailUtil.sendEmail(updatedKh.getEmail(), "Xác nhận thanh toán & Tích điểm", emailContent);
+                            } catch (Exception e) {
+                                System.err.println("[PaymentService] Lỗi gửi mail tích điểm: " + e.getMessage());
+                            }
+                        }
+                        NotificationService.sendNotification(phone, "Tích điểm thành công", 
+                            "Hóa đơn " + maHD + " mang về cho bạn +" + pointsAdded + " điểm. Tổng điểm: " + updatedKh.getDiemTichLuy(), "SYSTEM");
+                        Service.broadcast(new RealTimeEvent(CommandType.UPDATE_CUSTOMER, "Cập nhật khách hàng", phone));
+                    } else {
+                        System.out.println("[PaymentService] Không tìm thấy thông tin KH trong DB để tích điểm: " + phone);
+                    }
+                }
+            } else {
+                System.out.println("[PaymentService] Hóa đơn không có thông tin khách hàng, bỏ qua tích điểm.");
+            }
+
+            // 4. 🔥 THANH TOÁN
+            invoiceDAO.checkout(maHD, pttt != null ? pttt : "TIEN_MAT", maNV, finalAmount, totalFood, serviceFee, vat, finalDiscount);
+            if (maUuDai != null && !maUuDai.isEmpty()) {
+                invoiceDAO.updatePromo(maHD, maUuDai, finalDiscount);
+            }
+
+            if (!isSubInvoice && maBan != null && !maBan.isEmpty()) {
+                tableDAO.updateStatus(maBan, "Trong");
+            }
+
+            if (!isSubInvoice) {
+                List<entity.HoaDon> subInvoices = invoiceDAO.findByParentId(maHD);
+                for (entity.HoaDon sub : subInvoices) {
+                    if (sub.getTrangThai() != entity.TrangThaiHoaDon.DA_THANH_TOAN) {
+                        invoiceDAO.checkout(sub.getMaHD(), pttt != null ? pttt : "TIEN_MAT", maNV, 0.0, 0.0, 0.0, 0.0, 0.0);
+                    }
+                }
+            }
+
             CacheService.invalidateTables();
-            
-            // 🔥 Broadcast sự kiện cập nhật bàn và hóa đơn
             Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Cập nhật bàn", maBan != null ? maBan : "ALL"));
             Service.broadcast(new RealTimeEvent(CommandType.CHECK_OUT, "Hóa đơn đã thanh toán", maHD));
-            
-            System.out.println("[PaymentService] Thanh toán thành công: " + maHD);
             return Response.ok("Thanh toán thành công");
         } catch (Exception e) {
-            System.err.println("[PaymentService] Lỗi handleCheckout: " + e.getMessage());
-            return Response.error("Lỗi khi thanh toán: " + e.getMessage());
+            e.printStackTrace();
+            return Response.error("Lỗi: " + e.getMessage());
         }
     }
 
@@ -145,40 +163,15 @@ public class PaymentService {
         try {
             String maHD = (String) request.getParam("maHD");
             if (maHD == null || maHD.isEmpty()) return Response.error("Thiếu mã hóa đơn");
-            
             invoiceDAO.updateStatus(maHD, "Dat", false);
-            
-            // 🔥 THÔNG BÁO CHO QUẢN LÝ
             HoaDon hd = invoiceDAO.findById(maHD);
-            if (hd != null) {
-                String customerName = (hd.getKhachHang() != null) ? hd.getKhachHang().getTenKH() : "Khách hàng";
-                String tableId = (hd.getBan() != null) ? hd.getBan().getMaBan() : "N/A";
-                NotificationService.sendNotification(
-                    "MANAGER", 
-                    "Khách đã thanh toán cọc", 
-                    "Hóa đơn " + maHD + " (Bàn " + tableId + ") của " + customerName + " đã được xác nhận thanh toán.",
-                    "BOOKING"
-                );
-
-                // 🔥 THÔNG BÁO CHO KHÁCH HÀNG (Real-time & Persistence)
-                if (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null) {
-                    NotificationService.sendNotification(
-                        hd.getKhachHang().getSoDT(),
-                        "Đặt bàn thành công",
-                        "Cảm ơn quý khách! Bàn " + tableId + " của quý khách đã được xác nhận thành công.",
-                        "BOOKING"
-                    );
-                }
+            if (hd != null && hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null) {
+                NotificationService.sendNotification(hd.getKhachHang().getSoDT(), "Đặt bàn thành công", "Bàn của quý khách đã được xác nhận.", "BOOKING");
             }
-
-            // 🔥 Broadcast sự kiện xác nhận cọc (coi như cập nhật hóa đơn)
             Service.broadcast(new RealTimeEvent(CommandType.UPDATE_INVOICE, "Cập nhật hóa đơn", maHD));
-
-            System.out.println("[PaymentService] Xác nhận cọc thành công: " + maHD);
             return Response.ok("Xác nhận tiền cọc thành công");
         } catch (Exception e) {
-            System.err.println("[PaymentService] Lỗi handleConfirmDeposit: " + e.getMessage());
-            return Response.error("Lỗi khi xác nhận cọc: " + e.getMessage());
+            return Response.error("Lỗi: " + e.getMessage());
         }
     }
 }

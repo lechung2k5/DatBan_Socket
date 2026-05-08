@@ -263,19 +263,17 @@ public class TraCuu implements network.RealTimeSubscriber {
             }
 
             for (KhachHang kh : listKH) {
-                if (customersWithPaidInvoices.contains(kh.getMaKH())) {
-                    double total = customerTotalMap.getOrDefault(kh.getMaKH(), 0.0);
-                    tatCaKhachHang.add(new KhachHangDisplay(
-                        kh.getMaKH(),
-                        kh.getTenKH(),
-                        kh.getSoDT(),
-                        kh.getDiaChi() != null ? kh.getDiaChi() : "",
-                        kh.getEmail() != null ? kh.getEmail() : "",
-                        kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "",
-                        kh.getThanhVien() != null ? kh.getThanhVien() : "",
-                        String.format("%,.0f VNĐ ", total)
-                    ));
-                }
+                double total = customerTotalMap.getOrDefault(kh.getMaKH(), 0.0);
+                tatCaKhachHang.add(new KhachHangDisplay(
+                    kh.getMaKH(),
+                    kh.getTenKH(),
+                    kh.getSoDT(),
+                    kh.getDiaChi() != null ? kh.getDiaChi() : "",
+                    kh.getEmail() != null ? kh.getEmail() : "",
+                    kh.getNgayDangKy() != null ? kh.getNgayDangKy().format(fmt) : "",
+                    kh.getThanhVien() != null ? kh.getThanhVien() : "",
+                    String.format("%,.0f VNĐ ", total)
+                ));
             }
         }
         danhSachKhachHang.setAll(tatCaKhachHang);

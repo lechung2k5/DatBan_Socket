@@ -264,8 +264,11 @@ if (lblKhachHang != null) lblKhachHang.setText("Khách hàng: " + khachHangSdt);
 if (lblBan != null) lblBan.setText("Bàn: " + (hd.getBan() != null ? hd.getBan().getMaBan() : "Chưa gán"));
     // --- 🔥 ĐãXÓA CÁC LỆNH .setText CŨ CHO PHẦN SUMMARY ---
 if (lblThanhVien != null) {
-    String memberStatus = (hdGocDeLayThongTin.getKhachHang() != null && hdGocDeLayThongTin.getKhachHang().getThanhVien().equals("VIP")) ? "Gold (giảm 10%)" : "N/A";
-    lblThanhVien.setText(memberStatus);
+    String tier = "Member";
+    if (hdGocDeLayThongTin.getKhachHang() != null && hdGocDeLayThongTin.getKhachHang().getThanhVien() != null) {
+        tier = hdGocDeLayThongTin.getKhachHang().getThanhVien();
+    }
+    lblThanhVien.setText(tier);
 }
 // --- 3. ĐỔ DỮ LIỆU BẢNG MÓN ĂN (Giữ nguyên) ---
 if (tblMonAnThanhToan != null && monTachListSnapshot != null) {

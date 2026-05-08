@@ -1,16 +1,83 @@
 const express = require('express');
+require('dotenv').config();
 const cors = require('cors');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
+const http = require('http');
+const { Server } = require('socket.io');
+const Redis = require('ioredis');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+const redis = new Redis({
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: process.env.REDIS_PORT || 6379,
+    password: process.env.REDIS_PASSWORD || undefined
+});
+
+const redisSub = new Redis({
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: process.env.REDIS_PORT || 6379,
+    password: process.env.REDIS_PASSWORD || undefined
+});
+
 const PORT = process.env.MOBILE_BACKEND_PORT || 3001;
+
+// --- SOCKET.IO LOGIC ---
+io.on('connection', (socket) => {
+    console.log(`[Socket.io] Client connected: ${socket.id}`);
+    
+    socket.on('register', (targetId) => {
+        socket.join(targetId);
+        console.log(`[Socket.io] Client registered for: ${targetId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`[Socket.io] Client disconnected: ${socket.id}`);
+    });
+});
+
+// --- REDIS PUB/SUB LOGIC ---
+redisSub.subscribe('notifications', (err, count) => {
+    if (err) {
+        console.error('[Redis] Failed to subscribe:', err.message);
+    } else {
+        console.log(`[Redis] Subscribed to ${count} channels. Listening for notifications...`);
+    }
+});
+
+redisSub.on('message', (channel, message) => {
+    if (channel === 'notifications') {
+        try {
+            const event = JSON.parse(message);
+            console.log(`[Redis] Received notification for: ${event.affectedId || 'all'}`);
+            
+            // Emit to specific user room if targetId exists
+            const targetId = event.params ? event.params.targetId : event.affectedId;
+            if (targetId) {
+                io.to(targetId).emit('NEW_NOTIFICATION', event);
+            } else {
+                io.emit('NEW_NOTIFICATION', event);
+            }
+        } catch (err) {
+            console.error('[Redis] Message parse error:', err);
+        }
+    }
+});
 
 // Helper: Generate Invoice ID like Java (HDddMMyyxxxx)
 async function generateInvoiceId() {
+// ... (rest of helper)
     const now = new Date();
     const datePart = now.getDate().toString().padStart(2, '0') + 
                      (now.getMonth() + 1).toString().padStart(2, '0') + 
@@ -38,9 +105,10 @@ app.get('/api/menu', async (req, res) => {
         const items = data.Items.map(item => ({
             maMon: item.itemId,
             tenMon: item.name,
-            giaBan: item.price,
+            donGia: item.price,
+            giaBan: item.price, // Keep for backward compatibility
             maDM: item.categoryId,
-            hinhAnhUrl: item.imageUrl,
+            hinhAnh: item.imageUrl,
             available: item.available
         }));
         res.json({ statusCode: 200, data: items });
@@ -169,6 +237,6 @@ app.get('/api/notifications/:targetId', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Mobile Backend running on port ${PORT}`);
+server.listen(PORT, () => {
+    console.log(`Mobile Backend with Socket.io running on port ${PORT}`);
 });

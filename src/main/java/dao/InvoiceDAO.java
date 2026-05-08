@@ -561,13 +561,30 @@ public class InvoiceDAO {
             if (m.containsKey("total") && m.get("total").n() != null) total = Double.parseDouble(m.get("total").n());
             else if (m.containsKey("totalAmount") && m.get("totalAmount").n() != null) total = Double.parseDouble(m.get("totalAmount").n());
             
-            // Nếu total vẫn bằng 0, sử dụng giá trị đã tính toán từ itemsJson hoặc từ DB
-            if (total <= 0 && hd.getTongCongMonAn() > 0) {
-                total = hd.getTongCongMonAn();
-                double phiDV = hd.getPhiDichVu();
-                double thue = hd.getThueVAT() > 0 ? hd.getThueVAT() : total * 0.1;
-                double km = hd.getKhuyenMai();
-                total = total + phiDV + thue - km;
+            // 🔥 FALLBACK: Nếu các trường phí/thuế/km bị thiếu hoặc bằng 0, tính toán lại để hiển thị UI
+            if (hd.getTongCongMonAn() > 0) {
+                double food = hd.getTongCongMonAn();
+                double deposit = hd.getTienCoc();
+                
+                if (hd.getPhiDichVu() <= 0) hd.setPhiDichVu(food * 0.05);
+                if (hd.getThueVAT() <= 0) hd.setThueVAT((food + hd.getPhiDichVu()) * 0.08);
+                
+                double fee = hd.getPhiDichVu();
+                double vat = hd.getThueVAT();
+                
+                // Nếu total > 0 (đã thanh toán) nhưng khuyenMai = 0, thử tính ngược lại
+                if (total > 0 && hd.getKhuyenMai() <= 0) {
+                    double expectedWithoutPromo = food + fee + vat - deposit;
+                    double diff = expectedWithoutPromo - total;
+                    if (diff > 100) { // Nếu chênh lệch đáng kể (> 100 VNĐ) thì coi như là khuyến mãi
+                        hd.setKhuyenMai(diff);
+                    }
+                }
+                
+                // Nếu total vẫn bằng 0 (chưa thanh toán), tính toán total dự phòng
+                if (total <= 0) {
+                    total = food + fee + vat - deposit - hd.getKhuyenMai();
+                }
             }
             hd.setTongTienThanhToan(total);
 
@@ -591,7 +608,11 @@ public class InvoiceDAO {
 
             if (m.containsKey("customerPhone") || m.containsKey("customerName")) {
                 KhachHang kh = new KhachHang();
-                if (m.containsKey("customerPhone")) kh.setSoDT(m.get("customerPhone").s());
+                if (m.containsKey("customerPhone")) {
+                    String phone = m.get("customerPhone").s();
+                    kh.setSoDT(phone);
+                    kh.setMaKH(phone); // 🔥 QUAN TRỌNG: Gán maKH để logic tra cứu tìm được
+                }
                 if (m.containsKey("customerName")) kh.setTenKH(m.get("customerName").s());
                 hd.setKhachHang(kh);
             }

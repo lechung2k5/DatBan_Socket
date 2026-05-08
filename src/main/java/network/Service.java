@@ -112,9 +112,16 @@ public static void stop() {
         }
 
         // 2. Gửi cho Mobile Clients (tự động broadcast nếu event là RealTimeEvent)
-        if (mobileWS != null && event instanceof RealTimeEvent) {
+        if (event instanceof RealTimeEvent) {
             String json = utils.JsonUtil.toJson(event);
-            mobileWS.broadcast(json);
+            
+            // 🔥 GỬI QUA REDIS (MỚI - để Node.js backend nhận được)
+            utils.CacheService.publishNotification(json);
+
+            // Gửi qua WebSocket cũ (nếu còn dùng)
+            if (mobileWS != null) {
+                mobileWS.broadcast(json);
+            }
         }
     }
 
@@ -138,8 +145,12 @@ public static void stop() {
         }
 
         // 2. Gửi cho Mobile (Dù là MANAGER hay Customer)
+        String json = utils.JsonUtil.toJson(event);
+        
+        // 🔥 GỬI QUA REDIS (MỚI - để Node.js backend nhận được)
+        utils.CacheService.publishNotification(json);
+
         if (mobileWS != null) {
-            String json = utils.JsonUtil.toJson(event);
             mobileWS.sendToTarget(targetId, json);
         }
     }

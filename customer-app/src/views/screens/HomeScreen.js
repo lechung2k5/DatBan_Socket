@@ -34,6 +34,11 @@ const HomeScreen = () => {
 
   useEffect(() => {
     fetchData();
+
+    // 🔥 CƠ CHẾ REAL-TIME (POLLING): Tự động cập nhật dữ liệu mỗi 30 giây
+    const pollingInterval = setInterval(fetchData, 30000);
+
+    return () => clearInterval(pollingInterval);
   }, []);
 
   const fetchData = async () => {

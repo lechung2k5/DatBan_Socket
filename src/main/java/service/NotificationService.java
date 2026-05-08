@@ -61,6 +61,9 @@ public class NotificationService {
             // Gửi đích danh cho targetId
             Service.broadcastTargeted(targetId, event);
 
+            // 🔥 3. Publish lên Redis cho Mobile Backend
+            utils.CacheService.publishNotification(utils.JsonUtil.toJson(event));
+
             System.out.println("[Notification] Sent to " + targetId + ": " + title);
         } catch (Exception e) {
             System.err.println("[Notification] Error: " + e.getMessage());

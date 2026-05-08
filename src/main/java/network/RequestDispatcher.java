@@ -112,6 +112,7 @@ public class RequestDispatcher {
             case GET_INVOICE_DETAIL: return OrderService.handleGetInvoiceDetail(request);
             case MARK_NOTIFICATION_READ: return NotificationService.handleMarkAsRead(request);
             case DELETE_NOTIFICATION: return NotificationService.handleDeleteNotification(request);
+            case GET_USER_PROFILE: return CustomerService.handleFindByPhone(request);
             default:
             System.out.println("[Dispatcher] CommandType chưa được xử lý: " + action);
             return Response.error("Chức năng [" + action + "] chưa được hỗ trợ trên Server");

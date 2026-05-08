@@ -35,8 +35,8 @@ public class HoaDon implements Serializable {
     public void calculateTotals() {
         // 1. Phí dịch vụ 5% trên tổng món
         this.phiDichVu = this.tongCongMonAn * 0.05;
-        // 2. Thuế VAT 8% trên tổng món (Theo yêu cầu mới)
-        this.thueVAT = this.tongCongMonAn * 0.08;
+        // 2. Thuế VAT 8% trên (tổng món + phí dịch vụ) - Đồng bộ với UI
+        this.thueVAT = (this.tongCongMonAn + this.phiDichVu) * 0.08;
         // 3. Tổng thanh toán
         this.tongTienThanhToan = this.tongCongMonAn + this.phiDichVu + this.thueVAT - this.tienCoc - this.khuyenMai;
         if (this.tongTienThanhToan < 0) {
@@ -91,15 +91,12 @@ public class HoaDon implements Serializable {
     public void setGioRa(LocalDateTime gioRa) { this.gioRa = gioRa; }
     public void setTongCongMonAn(double tongCongMonAn) {
         this.tongCongMonAn = tongCongMonAn;
-        calculateTotals();
     }
     public void setTienCoc(double tienCoc) {
         this.tienCoc = tienCoc;
-        calculateTotals();
     }
     public void setKhuyenMai(double khuyenMai) {
         this.khuyenMai = khuyenMai;
-        calculateTotals();
     }
     // 🔥 [THÊM MỚI] Các Setter cho trường tính toán (Để khớp với DatBan.java)
     public void setPhiDichVu(double phiDichVu) {

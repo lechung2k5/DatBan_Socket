@@ -4,8 +4,9 @@ const SERVER_IP = process.env.EXPO_PUBLIC_SOCKET_SERVER_IP || '192.168.1.1';
 const ApiService = {
     getMenu: async () => {
         try {
-            const response = await SocketService.request('GET_MENU');
-            return response;
+            const API_URL = `http://${SERVER_IP}:3001/api/menu`;
+            const response = await fetch(API_URL);
+            return await response.json();
         } catch (error) {
             console.error('[ApiService] Error fetching menu:', error);
             throw error;
@@ -14,8 +15,9 @@ const ApiService = {
 
     getCategories: async () => {
         try {
-            const response = await SocketService.request('GET_MENU_CATEGORIES');
-            return response;
+            const API_URL = `http://${SERVER_IP}:3001/api/categories`;
+            const response = await fetch(API_URL);
+            return await response.json();
         } catch (error) {
             console.error('[ApiService] Error fetching categories:', error);
             throw error;
@@ -24,8 +26,9 @@ const ApiService = {
 
     getTables: async () => {
         try {
-            const response = await SocketService.request('GET_TABLES_WITH_AVAILABILITY');
-            return response;
+            const API_URL = `http://${SERVER_IP}:3001/api/tables`;
+            const response = await fetch(API_URL);
+            return await response.json();
         } catch (error) {
             console.error('[ApiService] Error fetching tables:', error);
             throw error;
@@ -54,8 +57,10 @@ const ApiService = {
 
     getNotifications: async (targetId) => {
         try {
-            const response = await SocketService.request('GET_NOTIFICATIONS', { targetId });
-            return response;
+            const API_URL = `http://${SERVER_IP}:3001/api/notifications/${targetId}`;
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            return data;
         } catch (error) {
             console.error('[ApiService] Error fetching notifications:', error);
             throw error;
@@ -100,6 +105,26 @@ const ApiService = {
             return response;
         } catch (error) {
             console.error('[ApiService] Error deleting notification:', error);
+            throw error;
+        }
+    },
+
+    getInvoicesByCustomer: async (maKH) => {
+        try {
+            const response = await SocketService.request('GET_INVOICES_BY_CUSTOMER', { maKH });
+            return response;
+        } catch (error) {
+            console.error('[ApiService] Error fetching customer invoices:', error);
+            throw error;
+        }
+    },
+
+    getUserProfile: async (phone) => {
+        try {
+            const response = await SocketService.request('GET_USER_PROFILE', { phone });
+            return response;
+        } catch (error) {
+            console.error('[ApiService] Error fetching user profile:', error);
             throw error;
         }
     }

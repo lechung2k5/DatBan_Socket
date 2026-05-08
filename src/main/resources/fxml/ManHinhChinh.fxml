@@ -38,7 +38,7 @@
                       </Menu>
                       <Menu mnemonicParsing="false" text="Thông báo">
                           <graphic>
-                              <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true"> <image><Image url="@/icons/menubar/icons8-manage-50.png" /></image> </ImageView>
+                              <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true"> <image><Image url="@/icons/menubar/icons8-notification-72.png" /></image> </ImageView>
                           </graphic>
                         <items>
                           <MenuItem fx:id="xemThongBaoMenuItem" mnemonicParsing="false" text="Xem tất cả thông báo" onAction="#handleQuanLyThongBao"/>
@@ -81,7 +81,7 @@
                         <StackPane fx:id="notificationStack" onMouseClicked="#handleQuanLyThongBao" style="-fx-cursor: hand;">
                            <children>
                                 <ImageView fitHeight="24.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
-                                    <image> <Image url="@/icons/iconTraCuu.png"/> </image>
+                                    <image> <Image url="@/icons/menubar/icons8-notification-72.png"/> </image>
                                 </ImageView>
                                 <Label fx:id="notificationBadge" text="0" visible="false" style="-fx-background-color: #FF0000; -fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 1 4 1 4;" StackPane.alignment="TOP_RIGHT">
                                     <StackPane.margin> <Insets top="-5" right="-5" /> </StackPane.margin>

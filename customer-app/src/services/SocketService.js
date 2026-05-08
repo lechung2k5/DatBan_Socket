@@ -1,18 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { io } from 'socket.io-client';
 
-/**
- * SocketService - Tiện ích kết nối WebSocket tới Server Java
- */
 const SERVER_IP = process.env.EXPO_PUBLIC_SOCKET_SERVER_IP || '192.168.1.1'; 
 const WS_PORT = 8889;
+const IO_PORT = 3001;
 const WS_URL = `ws://${SERVER_IP}:${WS_PORT}`;
+const IO_URL = `http://${SERVER_IP}:${IO_PORT}`;
 
 class SocketService {
     constructor() {
         this.socket = null;
+        this.io = null;
         this.listeners = new Set();
         this.token = null;
-        this.userProfile = null; // { name, phone, email, ... }
+        this.userProfile = null;
         this.isLoaded = false;
     }
 
@@ -59,35 +60,48 @@ class SocketService {
     }
 
     /**
-     * Khởi tạo kết nối
+     * Khởi tạo kết nối (Cả WS và IO)
      */
     connect() {
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) return;
+        // 1. Kết nối Java WebSocket (Legacy/Backup)
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            console.log(`[Socket] Connecting to Java WS: ${WS_URL}`);
+            this.socket = new WebSocket(WS_URL);
+            this.socket.onmessage = (e) => {
+                try {
+                    const response = JSON.parse(e.data);
+                    this.listeners.forEach(callback => callback(response));
+                } catch (err) {}
+            };
+            this.socket.onclose = () => setTimeout(() => this.connect(), 10000);
+        }
 
-        console.log(`[Socket] Đang kết nối tới ${WS_URL}...`);
-        this.socket = new WebSocket(WS_URL);
+        // 2. Kết nối Node.js Socket.io (Chính cho Real-time)
+        if (!this.io || !this.io.connected) {
+            console.log(`[Socket.io] Connecting to Mobile Backend: ${IO_URL}`);
+            this.io = io(IO_URL, {
+                reconnection: true,
+                reconnectionDelay: 5000
+            });
 
-        this.socket.onopen = () => {
-            console.log('[Socket] Kết nối thành công!');
-        };
+            this.io.on('connect', () => {
+                console.log('[Socket.io] Connected to Mobile Backend!');
+                // Đăng ký phòng theo số điện thoại để nhận thông báo đích danh
+                if (this.userProfile && this.userProfile.soDT) {
+                    this.io.emit('register', this.userProfile.soDT);
+                }
+            });
 
-        this.socket.onmessage = (e) => {
-            try {
-                const response = JSON.parse(e.data);
-                this.listeners.forEach(callback => callback(response));
-            } catch (err) {
-                console.error('[Socket] Lỗi parse JSON:', err);
-            }
-        };
+            this.io.on('NEW_NOTIFICATION', (data) => {
+                console.log('[Socket.io] New Notification received!');
+                // Chuyển đổi format cho giống Java WS response để App.js không phải sửa nhiều
+                this.listeners.forEach(callback => callback(data));
+            });
 
-        this.socket.onerror = (e) => {
-            console.error('[Socket] Lỗi kết nối:', e.message);
-        };
-
-        this.socket.onclose = (e) => {
-            console.log('[Socket] Đã ngắt kết nối. Đang thử lại sau 5s...');
-            setTimeout(() => this.connect(), 5000);
-        };
+            this.io.on('disconnect', () => {
+                console.log('[Socket.io] Disconnected');
+            });
+        }
     }
 
     /**

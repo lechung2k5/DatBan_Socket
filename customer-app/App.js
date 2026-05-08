@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { View, ActivityIndicator, Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from './src/theme/colors';
+
+// Services
+import ApiService from './src/services/ApiService';
+import SocketService from './src/services/SocketService';
 
 // Screens
 import HomeScreen from './src/views/screens/HomeScreen';
@@ -68,10 +73,6 @@ function MainTabs({ unreadCount, setUnreadCount }) {
   );
 }
 
-import { useEffect, useState } from 'react';
-import SocketService from './src/services/SocketService';
-import { View, ActivityIndicator } from 'react-native';
-
 /**
  * Root Stack Navigator - Quản lý Auth và App
  */
@@ -89,43 +90,57 @@ export default function App() {
       if (profile && profile.soDT) {
         try {
             const res = await ApiService.getNotifications(profile.soDT);
-            if (res.statusCode === 200) {
+            if (res && res.statusCode === 200) {
                 setUnreadCount(res.data.filter(n => !n.isRead).length);
             }
-        } catch (e) {}
+        } catch (e) {
+            console.log('[Init] Error fetching notifications:', e);
+        }
       }
       
-      // Đăng ký lắng nghe thông báo toàn cục
+      // Đăng ký lắng nghe thông báo toàn cục qua Socket (nếu kết nối được)
       SocketService.addListener((response) => {
         if (response.CommandType === 'NEW_NOTIFICATION') {
           setUnreadCount(prev => prev + 1);
-          const { title, message, type } = response.data;
-          const { Alert } = require('react-native');
+          const eventData = response.data || response; // Hỗ trợ cả 2 định dạng
+          const { title, message, type } = eventData;
           
-          // Tìm mã hóa đơn trong tin nhắn
-          const match = message.match(/(HD\d+)/);
-          const maHD = match ? match[0] : null;
-
-          if (maHD && (type === 'BOOKING' || type === 'UPDATE' || type === 'SYSTEM')) {
-            Alert.alert(
-              title, 
-              message,
-              [
-                { text: 'Đóng', style: 'cancel' },
-                { text: 'Xem ngay', onPress: () => {
-                   Alert.alert('Thông báo', 'Vui lòng vào tab Thông báo để xem chi tiết đơn ' + maHD);
-                }}
-              ]
-            );
-          } else {
-            Alert.alert(title, message);
-          }
+          // Hiển thị Alert khi có thông báo mới
+          Alert.alert(title || "Thông báo", message || "Bạn có thông báo mới");
         }
       });
 
       setIsReady(true);
     };
     initApp();
+
+    // 🔥 CƠ CHẾ REAL-TIME (POLLING): Tự động kiểm tra database mỗi 10 giây
+    const pollingInterval = setInterval(async () => {
+      const profile = SocketService.userProfile;
+      if (profile && profile.soDT) {
+        try {
+          // Sử dụng ApiService trực tiếp (đã import ở top-level)
+          const res = await ApiService.getNotifications(profile.soDT);
+          if (res && res.statusCode === 200) {
+            const newNotifications = res.data || [];
+            const currentUnread = newNotifications.filter(n => !n.isRead).length;
+            
+            setUnreadCount(prev => {
+                if (currentUnread > prev) {
+                    console.log('[Polling] Phát hiện thông báo mới!');
+                }
+                return currentUnread;
+            });
+          }
+        } catch (e) {
+          console.log('[Polling] Lỗi khi kiểm tra thông báo:', e.message);
+        }
+      }
+    }, 10000); // 10 giây một lần
+
+    return () => {
+        clearInterval(pollingInterval);
+    };
   }, []);
 
   if (!isReady) {

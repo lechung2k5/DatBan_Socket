@@ -58,16 +58,21 @@ const BookingScreen = () => {
   useEffect(() => {
     fetchMenuData();
 
-    // Đăng ký listener realtime cho thực đơn
-    const unsubscribe = SocketService.on('UPDATE_MENU', (data) => {
-        console.log('[Realtime] Thực đơn đã cập nhật từ server:', data);
-        fetchMenuData();
-    });
+    // 🔥 CƠ CHẾ REAL-TIME (POLLING): Tự động cập nhật dữ liệu mỗi 10-30 giây
+    const menuInterval = setInterval(fetchMenuData, 30000); // Thực đơn: 30s
+    
+    // Tự động làm mới danh sách bàn nếu đang tìm kiếm
+    const tableInterval = setInterval(() => {
+        if (showTableModal) {
+            refreshTables(customerPhone || SocketService.userProfile?.soDT);
+        }
+    }, 10000); // Bàn: 10s
 
     return () => {
-        if (unsubscribe) unsubscribe();
+        clearInterval(menuInterval);
+        clearInterval(tableInterval);
     };
-  }, []);
+  }, [showTableModal]); // Chạy lại khi modal bàn mở/đóng
 
   const fetchMenuData = async () => {
     try {
@@ -113,10 +118,21 @@ const BookingScreen = () => {
         Alert.alert('Thông báo', 'Hệ thống chưa có tên của bạn. Vui lòng cập nhật trong mục Cá nhân.');
         return;
     }
+    
     try {
       setLoading(true);
+      await refreshTables(phone);
+      setShowTableModal(true);
+    } catch (err) {
+      Alert.alert('Lỗi', 'Không thể tìm thấy danh sách bàn trống');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // 🔥 [KIỂM TRA] Xem khách hàng có đơn nào đang chờ xác nhận không TRƯỚC KHI tìm bàn
+  const refreshTables = async (phone) => {
+    try {
+      // 🔥 [KIỂM TRA] Xem khách hàng có đơn nào đang chờ xác nhận không
       const checkRes = await SocketService.request('GET_INVOICES_BY_CUSTOMER', { maKH: phone });
       
       if (checkRes.statusCode === 200 && checkRes.data && Array.isArray(checkRes.data)) {
@@ -127,15 +143,13 @@ const BookingScreen = () => {
 
         if (pendingInvoice) {
             console.log('[Booking] Phát hiện đơn treo:', pendingInvoice.maHD);
-            // Load thẳng đến thanh toán luôn theo yêu cầu
             setCurrentInvoice({
                 maHD: pendingInvoice.maHD,
                 maBan: pendingInvoice.maBan || 'N/A',
                 tienCoc: pendingInvoice.tienCoc || 150000
             });
-            setLoading(false);
             setPaymentModalVisible(true);
-            return; // Dừng lại ngay lập tức, không cho chọn bàn mới
+            return; 
         }
       }
 
@@ -148,12 +162,9 @@ const BookingScreen = () => {
           (selectedZone === 'Tất cả' || table.viTri === selectedZone)
         );
         setAvailableTables(filtered);
-        setShowTableModal(true);
       }
     } catch (err) {
-      Alert.alert('Lỗi', 'Không thể tìm thấy danh sách bàn trống');
-    } finally {
-      setLoading(false);
+      console.error('[RefreshTables] Error:', err);
     }
   };
 
