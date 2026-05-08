@@ -213,7 +213,17 @@ public Response handleGetZoneRevenueForWeek(Request request) {
         LocalDate start = LocalDate.parse((String) request.getParam("start"));
         LocalDate end = LocalDate.parse((String) request.getParam("end"));
         List<Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue>> invoices = statsDAO.getRawInvoicesByRange(start, end);
-        // Map<Zone, Map<DateStr, Amount>>
+        
+        // 1. Lấy danh sách bàn để map TableId -> Khu vực (Zone)
+        List<entity.Ban> allTables = tableDAO.findAll();
+        Map<String, String> tableToZoneMap = new HashMap<>();
+        for (entity.Ban b : allTables) {
+            if (b.getMaBan() != null) {
+                tableToZoneMap.put(b.getMaBan(), b.getViTri() != null ? b.getViTri() : "Khác");
+            }
+        }
+
+        // 2. Khởi tạo cấu trúc dữ liệu cho 3 khu vực chính
         Map<String, Map<String, Double>> zoneData = new HashMap<>();
         String[] zones = {"Tầng trệt", "Tầng 1", "Phòng"};
         for (String z : zones) {
@@ -221,17 +231,32 @@ public Response handleGetZoneRevenueForWeek(Request request) {
             for (int i = 0; i < 7; i++) dMap.put(start.plusDays(i).toString(), 0.0);
             zoneData.put(z, dMap);
         }
+
+        // 3. Phân bổ doanh thu từ hóa đơn vào từng khu vực
         for (Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> inv : invoices) {
+            if (!inv.containsKey("createdAt") || !inv.containsKey("total")) continue;
+            
             String d = inv.get("createdAt").s().substring(0, 10);
-            String z = inv.containsKey("zone") ? inv.get("zone").s() : "Khác";
+            String tableId = inv.containsKey("tableId") ? inv.get("tableId").s() : "";
+            
+            // Tìm khu vực dựa trên mã bàn
+            String z = tableToZoneMap.getOrDefault(tableId, "Khác");
+            
+            // Nếu khu vực nằm trong 3 khu vực chính thì cộng dồn doanh thu
             if (zoneData.containsKey(z)) {
-                zoneData.get(z).put(d, zoneData.get(z).get(d) + Double.parseDouble(inv.get("total").n()));
+                double amount = 0;
+                try {
+                    amount = Double.parseDouble(inv.get("total").n());
+                } catch (Exception ignored) {}
+                
+                zoneData.get(z).put(d, zoneData.get(z).get(d) + amount);
             }
         }
         return Response.ok(zoneData);
     } catch (Exception e) {
-    return Response.error(e.getMessage());
-}
+        System.err.println("[StatsService] Lỗi handleGetZoneRevenueForWeek: " + e.getMessage());
+        return Response.error(e.getMessage());
+    }
 }
 public Response handleGetTopSellingItems(Request request) {
     try {

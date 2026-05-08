@@ -189,17 +189,21 @@ public class InvoiceDAO {
     }
 
     public void updateInfo(String invoiceId, String customerPhone, double tienCoc) {
-        updateInfoExtended(invoiceId, customerPhone, tienCoc, null, null, null, null);
+        updateInfoExtended(invoiceId, customerPhone, null, tienCoc, null, null, null, null, null, null);
     }
 
-    public void updateInfoExtended(String invoiceId, String customerPhone, Double tienCoc, String tableId,
-            String gioVao, String status, String itemsJson) {
+    public void updateInfoExtended(String invoiceId, String customerPhone, String customerName, Double tienCoc, String tableId,
+            String gioVao, String status, String itemsJson, String maUuDai, Double giaTriUuDai) {
         try {
             StringBuilder expr = new StringBuilder("SET ");
             Map<String, AttributeValue> vals = new HashMap<>();
             if (customerPhone != null) {
                 expr.append("customerPhone = :c, ");
                 vals.put(":c", av(customerPhone));
+            }
+            if (customerName != null) {
+                expr.append("customerName = :cn, ");
+                vals.put(":cn", av(customerName));
             }
             if (tienCoc != null) {
                 expr.append("tienCoc = :t, ");
@@ -220,6 +224,14 @@ public class InvoiceDAO {
             if (itemsJson != null) {
                 expr.append("itemsJson = :ij, ");
                 vals.put(":ij", av(itemsJson));
+            }
+            if (maUuDai != null) {
+                expr.append("maUuDai = :ud, ");
+                vals.put(":ud", av(maUuDai));
+            }
+            if (giaTriUuDai != null) {
+                expr.append("giaTriUuDai = :gt, ");
+                vals.put(":gt", avn(giaTriUuDai));
             }
             // Remove trailing comma and space
             if (expr.toString().endsWith(", ")) {
@@ -385,13 +397,26 @@ public class InvoiceDAO {
 
     public void splitItems(String sourceInvoiceId, String targetInvoiceId, List<ChiTietHoaDon> itemsToMove) {
         try {
+            // 1. Lấy danh sách món hiện tại của hóa đơn gốc
             List<ChiTietHoaDon> sourceItems = getChiTietHoaDon(sourceInvoiceId);
+            
+            // 2. Thực hiện trừ món ở hóa đơn gốc (Dùng maMon ưu tiên, fallback sang tenMon)
             for (ChiTietHoaDon moveItem : itemsToMove) {
+                String moveId = moveItem.getMaMon();
+                String moveName = moveItem.getTenMon() != null ? moveItem.getTenMon().trim() : "";
+                
                 sourceItems.removeIf(item -> {
-                    if (item.getTenMon().equals(moveItem.getTenMon())) {
+                    boolean isMatch = false;
+                    if (moveId != null && item.getMaMon() != null) {
+                        isMatch = item.getMaMon().equalsIgnoreCase(moveId);
+                    } else if (item.getTenMon() != null) {
+                        isMatch = item.getTenMon().trim().equalsIgnoreCase(moveName);
+                    }
+
+                    if (isMatch) {
                         int slConLai = item.getSoLuong() - moveItem.getSoLuong();
-                        if (slConLai <= 0)
-                            return true;
+                        if (slConLai <= 0) return true; // Xóa hẳn món nếu tách hết
+                        
                         item.setSoLuong(slConLai);
                         item.setThanhTien(item.getSoLuong() * item.getDonGia());
                         return false;
@@ -399,11 +424,36 @@ public class InvoiceDAO {
                     return false;
                 });
             }
-            updateItems(sourceInvoiceId, sourceItems);
-            updateItems(targetInvoiceId, itemsToMove);
-            System.out.println("[DAO:Invoices] splitItems âœ“ " + sourceInvoiceId + " â†’ " + targetInvoiceId);
+
+            // 3. Tính toán lại tổng tiền món ăn cho cả 2 hóa đơn
+            double sourceTotal = sourceItems.stream().mapToDouble(ChiTietHoaDon::getThanhTien).sum();
+            double targetTotal = itemsToMove.stream().mapToDouble(it -> it.getSoLuong() * it.getDonGia()).sum();
+
+            // 4. Cập nhật hóa đơn gốc (Món mới + Tổng tiền mới)
+            db.updateItem(UpdateItemRequest.builder()
+                .tableName(TBL)
+                .key(Map.of("invoiceId", av(sourceInvoiceId)))
+                .updateExpression("SET itemsJson = :j, tongCongMonAn = :t")
+                .expressionAttributeValues(Map.of(
+                    ":j", av(JsonUtil.toJson(sourceItems)),
+                    ":t", avn(sourceTotal)
+                ))
+                .build());
+
+            // 5. Cập nhật hóa đơn tách (Món tách + Tổng tiền tách)
+            db.updateItem(UpdateItemRequest.builder()
+                .tableName(TBL)
+                .key(Map.of("invoiceId", av(targetInvoiceId)))
+                .updateExpression("SET itemsJson = :j, tongCongMonAn = :t")
+                .expressionAttributeValues(Map.of(
+                    ":j", av(JsonUtil.toJson(itemsToMove)),
+                    ":t", avn(targetTotal)
+                ))
+                .build());
+
+            System.out.println("[DAO:Invoices] splitItems ✓: " + sourceInvoiceId + " (" + sourceTotal + ") -> " + targetInvoiceId + " (" + targetTotal + ")");
         } catch (Exception e) {
-            System.err.println("[DAO:Invoices] Lá»—i splitItems: " + e.getMessage());
+            System.err.println("[DAO:Invoices] Lỗi splitItems: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -482,26 +532,31 @@ public class InvoiceDAO {
                 try { hd.setGioRa(LocalDateTime.parse(m.get("checkoutAt").s())); } catch (Exception ignored) {}
             }
 
-            // 🔥 Map Tổng tiền và các khoản phí
+            // 🔥 Lấy các khoản phí và tổng tiền món từ DB (phải làm TRƯỚC khi tính total dự phòng)
+            if (m.containsKey("tongCongMonAn") && m.get("tongCongMonAn").n() != null) {
+                double tFood = Double.parseDouble(m.get("tongCongMonAn").n());
+                if (tFood > 0) {
+                    hd.setTongCongMonAn(tFood);
+                }
+            }
+            if (m.containsKey("phiDichVu") && m.get("phiDichVu").n() != null) hd.setPhiDichVu(Double.parseDouble(m.get("phiDichVu").n()));
+            if (m.containsKey("thueVAT") && m.get("thueVAT").n() != null) hd.setThueVAT(Double.parseDouble(m.get("thueVAT").n()));
+            if (m.containsKey("khuyenMai") && m.get("khuyenMai").n() != null) hd.setKhuyenMai(Double.parseDouble(m.get("khuyenMai").n()));
+
+            // 🔥 Map Tổng tiền
             double total = 0;
             if (m.containsKey("total") && m.get("total").n() != null) total = Double.parseDouble(m.get("total").n());
             else if (m.containsKey("totalAmount") && m.get("totalAmount").n() != null) total = Double.parseDouble(m.get("totalAmount").n());
             
-            // Nếu total vẫn bằng 0, sử dụng giá trị đã tính toán từ itemsJson
+            // Nếu total vẫn bằng 0, sử dụng giá trị đã tính toán từ itemsJson hoặc từ DB
             if (total <= 0 && hd.getTongCongMonAn() > 0) {
                 total = hd.getTongCongMonAn();
-                // Áp dụng thuế phí mặc định nếu cần (hoặc lấy từ DB nếu có)
-                double phiDV = m.containsKey("phiDichVu") ? Double.parseDouble(m.get("phiDichVu").n()) : 0;
-                double thue = m.containsKey("thueVAT") ? Double.parseDouble(m.get("thueVAT").n()) : total * 0.1;
-                double km = m.containsKey("khuyenMai") ? Double.parseDouble(m.get("khuyenMai").n()) : 0;
+                double phiDV = hd.getPhiDichVu();
+                double thue = hd.getThueVAT() > 0 ? hd.getThueVAT() : total * 0.1;
+                double km = hd.getKhuyenMai();
                 total = total + phiDV + thue - km;
             }
             hd.setTongTienThanhToan(total);
-
-            if (m.containsKey("tongCongMonAn") && m.get("tongCongMonAn").n() != null) hd.setTongCongMonAn(Double.parseDouble(m.get("tongCongMonAn").n()));
-            if (m.containsKey("phiDichVu") && m.get("phiDichVu").n() != null) hd.setPhiDichVu(Double.parseDouble(m.get("phiDichVu").n()));
-            if (m.containsKey("thueVAT") && m.get("thueVAT").n() != null) hd.setThueVAT(Double.parseDouble(m.get("thueVAT").n()));
-            if (m.containsKey("khuyenMai") && m.get("khuyenMai").n() != null) hd.setKhuyenMai(Double.parseDouble(m.get("khuyenMai").n()));
 
             // 🔥 Map Hình thức thanh toán
             String pm = null;

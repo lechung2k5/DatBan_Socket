@@ -221,6 +221,7 @@ private void updateButtonState() {
                 // Chuyển đổi MonTach sang ChiTietHoaDon
                 List<entity.ChiTietHoaDon> itemsToMove = monMoiList.stream().map(m -> {
                     entity.ChiTietHoaDon ct = new entity.ChiTietHoaDon();
+                    ct.setMaMon(m.getMaMon()); // 🔥 QUAN TRỌNG: Phải có mã món
                     ct.setTenMon(m.getTenMon());
                     ct.setSoLuong(m.getSoLuongTach());
                     ct.setDonGia(m.getDonGia());
@@ -238,9 +239,13 @@ private void updateButtonState() {
                 if (res.getStatusCode() == 200) {
                     showAlert(AlertType.INFORMATION, "Thành công", "Đã tách bàn thành công. Hóa đơn mới: " + res.getData());
                     if (mainController != null) {
-                        mainController.getTxtSearch().clear(); // Xóa trắng ô tìm kiếm
+                        String newId = (String) res.getData();
+                        mainController.getTxtSearch().clear(); 
                         mainController.loadTableGrids();
                         mainController.loadBookingCards();
+                        
+                        // 🔥 CHỈNH SỬA: Thay vì nạp lại HĐ cũ, hãy CHỌN LUÔN HĐ MỚI vừa tách
+                        mainController.selectInvoiceById(newId);
                     }
                     closePopup();
                 } else {
@@ -276,8 +281,11 @@ private void handleThanhToanGopTach(boolean thanhToanMoi) {
             // 1. TÍNH TOÁN DỮ LIỆU TÁCH MỚI (chỉ trong bộ nhớ)
             // Hóa đơn Mới (tạm thời) sẽ được tạo mã HD ngẫu nhiên để Preview
             HoaDon hdMoiTam = new HoaDon();
-            // 🔥 Sửa: Không cần gọi getNextMaHD() ở đây, chỉ cần tạo mã tạm.
             hdMoiTam.setMaHD("TMP" + "001"); // Mã tạm
+            hdMoiTam.setBan(hoaDonGoc.getBan());
+            hdMoiTam.setKhachHang(hoaDonGoc.getKhachHang());
+            hdMoiTam.setMaHDGoc(hoaDonGoc.getMaHD());
+            hdMoiTam.setTienCoc(0.0);
             // 2. Lựa chọn HĐ cần thanh toán và thông tin tiền cọc
             HoaDon hdToPreview = thanhToanMoi ? hdMoiTam : hoaDonGoc;
             // 3. Tính toán tổng tiền món ăn (cho Preview)

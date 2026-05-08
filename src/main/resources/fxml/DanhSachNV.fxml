@@ -46,49 +46,50 @@
 	</VBox>
 
     <Label text="Thông tin chi tiết" styleClass="section-title-medium" />
-    <GridPane hgap="15" vgap="12" styleClass="nv-form-container">
+    <GridPane hgap="10" vgap="10" styleClass="nv-form-container" VBox.vgrow="NEVER">
         <columnConstraints>
-           
- <ColumnConstraints halignment="RIGHT" percentWidth="15.0" />
-            <ColumnConstraints hgrow="ALWAYS" percentWidth="35.0" />
-            <ColumnConstraints halignment="RIGHT" percentWidth="15.0" />
-            <ColumnConstraints hgrow="ALWAYS" percentWidth="35.0" />
+            <ColumnConstraints halignment="RIGHT" percentWidth="12.0" />
+            <ColumnConstraints hgrow="ALWAYS" percentWidth="21.33" />
+            <ColumnConstraints halignment="RIGHT" percentWidth="12.0" />
+            <ColumnConstraints hgrow="ALWAYS" percentWidth="21.33" />
+            <ColumnConstraints halignment="RIGHT" percentWidth="12.0" />
+            <ColumnConstraints hgrow="ALWAYS" percentWidth="21.33" />
         </columnConstraints>
 
+        <!-- Row 0 -->
         <Label text="Mã nhân viên:" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="input-label" />
-        <TextField fx:id="txtMaNV" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="input-field-readonly"/>
+        <TextField fx:id="txtMaNV" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="input-field-readonly" prefHeight="28"/>
 
         <Label text="Họ và tên:" GridPane.rowIndex="0" GridPane.columnIndex="2" styleClass="input-label" />
-        <TextField fx:id="txtHoTen" GridPane.rowIndex="0" GridPane.columnIndex="3" styleClass="input-field"/>
+        <TextField fx:id="txtHoTen" GridPane.rowIndex="0" GridPane.columnIndex="3" styleClass="input-field" prefHeight="28"/>
 
-        <Label text="Số điện thoại:" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="input-label" />
-        <TextField fx:id="txtSDT" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="input-field"/>
+        <Label text="Số điện thoại:" GridPane.rowIndex="0" GridPane.columnIndex="4" styleClass="input-label" />
+        <TextField fx:id="txtSDT" GridPane.rowIndex="0" GridPane.columnIndex="5" styleClass="input-field" prefHeight="28"/>
 
-  
-      <Label text="Chức vụ:" GridPane.rowIndex="1" GridPane.columnIndex="2" styleClass="input-label" />
-        <ComboBox fx:id="cbxChucVu" GridPane.rowIndex="1" GridPane.columnIndex="3" styleClass="input-combo" maxWidth="Infinity"/>
+        <!-- Row 1 -->
+        <Label text="Chức vụ:" GridPane.rowIndex="1" GridPane.columnIndex="0" styleClass="input-label" />
+        <ComboBox fx:id="cbxChucVu" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="input-combo" maxWidth="Infinity" prefHeight="28"/>
 
-        <Label text="Ngày sinh:" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="input-label" />
-        <DatePicker fx:id="dpNgaySinh" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="input-date" maxWidth="Infinity"/>
+        <Label text="Ngày sinh:" GridPane.rowIndex="1" GridPane.columnIndex="2" styleClass="input-label" />
+        <DatePicker fx:id="dpNgaySinh" GridPane.rowIndex="1" GridPane.columnIndex="3" styleClass="input-date" maxWidth="Infinity" prefHeight="28"/>
 
-        <Label text="Ca làm yêu thích:" GridPane.rowIndex="2" GridPane.columnIndex="2" styleClass="input-label" />
-        <ComboBox fx:id="cbxCaLam" GridPane.rowIndex="2" GridPane.columnIndex="3" styleClass="input-combo" maxWidth="Infinity"/>
+        <Label text="Ca làm yêu thích:" GridPane.rowIndex="1" GridPane.columnIndex="4" styleClass="input-label" />
+        <ComboBox fx:id="cbxCaLam" GridPane.rowIndex="1" GridPane.columnIndex="5" styleClass="input-combo" maxWidth="Infinity" prefHeight="28"/>
 
-        <Label text="Mật khẩu:" GridPane.rowIndex="3" GridPane.columnIndex="0" styleClass="input-label" />
-     
-   <PasswordField fx:id="pfMatKhau" GridPane.rowIndex="3" GridPane.columnIndex="1" styleClass="input-field"/>
+        <!-- Row 2 -->
+        <Label text="Mật khẩu:" GridPane.rowIndex="2" GridPane.columnIndex="0" styleClass="input-label" />
+        <PasswordField fx:id="pfMatKhau" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="input-field" prefHeight="28"/>
 
-        <Label text="Trạng thái:" GridPane.rowIndex="3" GridPane.columnIndex="2" styleClass="input-label" />
-        <ComboBox fx:id="cbxTrangThai" GridPane.rowIndex="3" GridPane.columnIndex="3" styleClass="input-combo" maxWidth="Infinity"/>
+        <Label text="Trạng thái:" GridPane.rowIndex="2" GridPane.columnIndex="2" styleClass="input-label" />
+        <ComboBox fx:id="cbxTrangThai" GridPane.rowIndex="2" GridPane.columnIndex="3" styleClass="input-combo" maxWidth="Infinity" prefHeight="28"/>
     </GridPane>
 
-    <HBox spacing="15" alignment="CENTER" styleClass="action-buttons-container">
-        <Button fx:id="btnXoaRong" text="Xóa rỗng" onAction="#handleXoaRong" styleClass="action-button-clear" />
-        <Button fx:id="btnThem" text="Thêm" onAction="#handleThem" styleClass="action-button-add" />
-        <Button fx:id="btnSua" text="Sửa" onAction="#handleSua" styleClass="action-button-edit" />
-        <Button fx:id="btnLuu" text="Lưu" onAction="#handleLuu" styleClass="action-button-save" />
-        <Button 
-fx:id="btnXoa" text="Xóa" onAction="#handleXoa" styleClass="action-button-delete" />
-        <Button fx:id="btnHuy" text="Hủy" onAction="#handleHuy" styleClass="action-button-cancel" />
+    <HBox spacing="10" alignment="CENTER" styleClass="action-buttons-container" VBox.vgrow="NEVER">
+        <Button fx:id="btnXoaRong" text="Xóa rỗng" onAction="#handleXoaRong" styleClass="action-button-clear" prefHeight="35" />
+        <Button fx:id="btnThem" text="Thêm" onAction="#handleThem" styleClass="action-button-add" prefHeight="35" />
+        <Button fx:id="btnSua" text="Sửa" onAction="#handleSua" styleClass="action-button-edit" prefHeight="35" />
+        <Button fx:id="btnLuu" text="Lưu" onAction="#handleLuu" styleClass="action-button-save" prefHeight="35" />
+        <Button fx:id="btnXoa" text="Xóa" onAction="#handleXoa" styleClass="action-button-delete" prefHeight="35" />
+        <Button fx:id="btnHuy" text="Hủy" onAction="#handleHuy" styleClass="action-button-cancel" prefHeight="35" />
     </HBox>
 </VBox>

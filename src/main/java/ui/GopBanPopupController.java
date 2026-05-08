@@ -31,15 +31,15 @@ public class GopBanPopupController implements Initializable {
     private HoaDon hoaDonMaster;
     private DatBan mainController;
     private ObservableList<HoaDon> hdCanGopList = FXCollections.observableArrayList();
-    private Map<HoaDon, BooleanProperty> selectionMap = new HashMap<>(); // Map lÃÂ°u tráÂºÂ¡ng thÃÂ¡i cháÂ»Ân
+    private Map<HoaDon, BooleanProperty> selectionMap = new HashMap<>(); // Map líÂ°u tráÂºÂ¡ng thíÂ¡i cháÂ»Ân
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         listViewHDCanGop.setItems(hdCanGopList);
-        // BáÂ»Â qua SelectionMode.MULTIPLE vÃÂ¬ ta dÃÂ¹ng Checkbox
+        // BáÂ»Â qua SelectionMode.MULTIPLE víÂ¬ ta díÂ¹ng Checkbox
         btnHuy.setOnAction(e -> closePopup());
         btnXacNhanGop.setOnAction(e -> handleXacNhanGop());
-        btnXacNhanGop.setDisable(true); // Disable ban ÃâáÂºÂ§u
-        // === FIX: CÃÂ i ÃâáÂºÂ·t CellFactory váÂ»âºi Checkbox ===
+        btnXacNhanGop.setDisable(true); // Disable ban íâáÂºÂ§u
+        // === FIX: CíÂ i íâáÂºÂ·t CellFactory váÂ»âºi Checkbox ===
         listViewHDCanGop.setCellFactory(lv -> new ListCell<HoaDon>() {
             private final CheckBox checkBox = new CheckBox();
             private final Label label = new Label();
@@ -63,12 +63,12 @@ public class GopBanPopupController implements Initializable {
                 } else {
                 // LáÂºÂ¥y/TáÂºÂ¡o BooleanProperty
                 BooleanProperty selected = selectionMap.computeIfAbsent(hd, k -> new SimpleBooleanProperty(false));
-                // CáÂºÂ­p nháÂºÂ­t Checkbox vÃÂ  Label
+                // CáÂºÂ­p nháÂºÂ­t Checkbox víÂ  Label
                 checkBox.setSelected(selected.get());
-                checkBox.setDisable(false); // LuÃÂ´n cho phÃÂ©p cháÂ»Ân/báÂ»Â cháÂ»Ân
-                String ban = (hd.getBan() != null) ? hd.getBan().getMaBan() : "ChÃÂ°a GÃÂ¡n BÃÂ n";
+                checkBox.setDisable(false); // LuíÂ´n cho phíÂ©p cháÂ»Ân/báÂ»Â cháÂ»Ân
+                String ban = (hd.getBan() != null) ? hd.getBan().getMaBan() : "ChíÂ°a GíÂ¡n BíÂ n";
                 String trangThai = hd.getTrangThai().getDisplayName();
-                label.setText(String.format("%s (BÃÂ n %s, %s)", hd.getMaHD(), ban, trangThai));
+                label.setText(String.format("%s (BíÂ n %s, %s)", hd.getMaHD(), ban, trangThai));
                 setGraphic(hbox);
             }
         }
@@ -76,14 +76,14 @@ public class GopBanPopupController implements Initializable {
     // ===========================================
 }
 /**
-* NháÂºÂ­n HÃÂ³a ÃâÃÂ¡n Master (HÃÂ ÃâÃÂ°áÂ»Â£c cháÂ»Ân táÂ»Â« DatBan) vÃÂ  táÂºÂ£i danh sÃÂ¡ch HÃÂ cÃÂ³ tháÂ»Æ gáÂ»â¢p.
-* Ã°Å¸âÂ¥ ÃÂÃÆ SáÂ»Â¬A: CháÂ»â° láÂ»Âc HÃÂ³a ÃâÃÂ¡n cÃÂ³ tráÂºÂ¡ng thÃÂ¡i "ÃÂang pháÂ»Â¥c váÂ»Â¥".
+* NháÂºÂ­n HíÂ³a íâíÂ¡n Master (HíÂ íâíÂ°áÂ»Â£c cháÂ»Ân táÂ»Â« DatBan) víÂ  táÂºÂ£i danh síÂ¡ch HíÂ cíÂ³ tháÂ»Æ gáÂ»â¢p.
+* ðÅ¸âÂ¥ íÂíÆ SáÂ»Â¬A: CháÂ»â° láÂ»Âc HíÂ³a íâíÂ¡n cíÂ³ tráÂºÂ¡ng thíÂ¡i "íÂang pháÂ»Â¥c váÂ»Â¥".
 */
 public void setInitialData(HoaDon masterHD, DatBan parentCtrl) {
     this.hoaDonMaster = masterHD;
     this.mainController = parentCtrl;
-    lblHDMaster.setText(masterHD.getMaHD() + " (BÃÂ n " + masterHD.getBan().getMaBan() + ")");
-    // 1. TáÂºÂ£i TáÂºÂ¤T CáÂºÂ¢ HÃÂ Ãâang hoáÂºÂ¡t ÃâáÂ»â¢ng qua API
+    lblHDMaster.setText(masterHD.getMaHD() + " (BíÂ n " + masterHD.getBan().getMaBan() + ")");
+    // 1. TáÂºÂ£i TáÂºÂ¤T CáÂºÂ¢ HíÂ íâang hoáÂºÂ¡t íâáÂ»â¢ng qua API
     Response res = Client.send(CommandType.GET_INVOICES_PENDING, null);
     if (res.getStatusCode() == 200) {
         List<HoaDon> allActiveHDs = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(res.getData()), HoaDon.class);
@@ -93,7 +93,7 @@ public void setInitialData(HoaDon masterHD, DatBan parentCtrl) {
         .collect(Collectors.toList());
         hdCanGopList.setAll(canGop);
     }
-    // KháÂ»Å¸i táÂºÂ¡o selectionMap cho danh sÃÂ¡ch máÂ»âºi
+    // KháÂ»Å¸i táÂºÂ¡o selectionMap cho danh síÂ¡ch máÂ»âºi
     selectionMap.clear();
     for (HoaDon hd : hdCanGopList) {
         selectionMap.put(hd, new SimpleBooleanProperty(false));
@@ -101,27 +101,27 @@ public void setInitialData(HoaDon masterHD, DatBan parentCtrl) {
     updateButtonState();
 }
 private void handleXacNhanGop() {
-    // LáÂºÂ¥y danh sÃÂ¡ch HÃÂ³a ÃâÃÂ¡n ÃâÃÂ°áÂ»Â£c cháÂ»Ân táÂ»Â« Map
+    // LáÂºÂ¥y danh síÂ¡ch HíÂ³a íâíÂ¡n íâíÂ°áÂ»Â£c cháÂ»Ân táÂ»Â« Map
     List<HoaDon> selectedHDs = selectionMap.entrySet().stream()
     .filter(entry -> entry.getValue().get())
     .map(Map.Entry::getKey)
     .collect(Collectors.toList());
     if (selectedHDs.isEmpty()) return;
-    Optional<ButtonType> result = showAlertConfirm("XÃÂ¡c nháÂºÂ­n GáÂ»â¢p",
-    String.format("BáÂºÂ¡n cÃÂ³ cháÂºÂ¯c cháÂºÂ¯n muáÂ»ân gáÂ»â¢p %d HÃÂ³a ÃâÃÂ¡n ÃâÃÂ£ cháÂ»Ân vÃÂ o HÃÂ³a ÃâÃÂ¡n %s khÃÂ´ng?", selectedHDs.size(), hoaDonMaster.getMaHD()));
+    Optional<ButtonType> result = showAlertConfirm("XíÂ¡c nháÂºÂ­n GáÂ»â¢p",
+    String.format("BáÂºÂ¡n cíÂ³ cháÂºÂ¯c cháÂºÂ¯n muáÂ»ân gáÂ»â¢p %d HíÂ³a íâíÂ¡n íâíÂ£ cháÂ»Ân víÂ o HíÂ³a íâíÂ¡n %s khíÂ´ng?", selectedHDs.size(), hoaDonMaster.getMaHD()));
     if (result.isPresent() && result.get() == ButtonType.OK) {
         try {
-            // DuyáÂ»â¡t qua táÂ»Â«ng HÃÂ nguáÂ»ân vÃÂ  tháÂ»Â±c hiáÂ»â¡n giao dáÂ»â¹ch gáÂ»â¢p
+            // DuyáÂ»â¡t qua táÂ»Â«ng HíÂ nguáÂ»ân víÂ  tháÂ»Â±c hiáÂ»â¡n giao dáÂ»â¹ch gáÂ»â¢p
             for (HoaDon sourceHD : selectedHDs) {
-                // 1. ChuyáÂ»Æn mÃÂ³n táÂ»Â« HÃÂ nguáÂ»ân sang HÃÂ ÃâÃÂ­ch qua API
+                // 1. ChuyáÂ»Æn míÂ³n táÂ»Â« HíÂ nguáÂ»ân sang HíÂ íâíÂ­ch qua API
                 Client.sendWithParams(CommandType.MERGE_INVOICES, Map.of(
                 "targetId", hoaDonMaster.getMaHD(),
                 "sourceId", sourceHD.getMaHD()
                 ));
-                // 2. XÃÂ³a HÃÂ nguáÂ»ân vÃÂ  giáÂºÂ£i phÃÂ³ng bÃÂ n nguáÂ»ân qua API
+                // 2. XíÂ³a HíÂ nguáÂ»ân víÂ  giáÂºÂ£i phíÂ³ng bíÂ n nguáÂ»ân qua API
                 Client.sendWithParams(CommandType.CLEANUP_MERGED, Map.of("maHD", sourceHD.getMaHD()));
             }
-            showAlert(AlertType.INFORMATION, "ThÃÂ nh cÃÂ´ng", "ÃÂã gộp thành công " + selectedHDs.size() + " Hóa đơn vào HD " + hoaDonMaster.getMaHD());
+            showAlert(AlertType.INFORMATION, "ThíÂ nh cíÂ´ng", "íÂã gộp thành công " + selectedHDs.size() + " Hóa đơn vào HD " + hoaDonMaster.getMaHD());
             // 3. Refresh UI chính và đóng popup
             mainController.loadBookingCards();
             mainController.loadTableGrids();

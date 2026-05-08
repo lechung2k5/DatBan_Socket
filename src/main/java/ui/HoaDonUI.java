@@ -26,7 +26,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -207,9 +206,21 @@ private void loadAndFilterData() {
     Response res = Client.send(CommandType.GET_INVOICES_ALL, null);
     if (res.getStatusCode() == 200) {
         List<HoaDon> list = JsonUtil.fromJsonList(JsonUtil.toJson(res.getData()), HoaDon.class);
+        list.sort((a, b) -> {
+            if (a.getNgayLap() == null) return 1;
+            if (b.getNgayLap() == null) return -1;
+            return b.getNgayLap().compareTo(a.getNgayLap());
+        });
         // 🔥 Fallback calculation for zeroed financial fields
         for (HoaDon hd : list) {
-            if (hd.getTongTienThanhToan() == 0 && hd.getTongCongMonAn() > 0) {
+            if (hd.getTongTienThanhToan() <= 0) {
+                // Thử tính trực tiếp từ danh sách chi tiết hóa đơn
+                if (hd.getChiTietHoaDon() != null && !hd.getChiTietHoaDon().isEmpty()) {
+                    double totalFood = hd.getChiTietHoaDon().stream()
+                            .mapToDouble(item -> item.getDonGia() * item.getSoLuong())
+                            .sum();
+                    hd.setTongCongMonAn(totalFood);
+                }
                 hd.calculateTotals();
             }
         }
@@ -235,11 +246,14 @@ private void filterData() {
         boolean searchMatch = searchText.isEmpty() ||
         (hd.getSoDienThoaiKH() != null &&
         hd.getSoDienThoaiKH().toLowerCase().contains(searchText));
-        // << Logic lọc theo ngày >>
         boolean dateMatch = (selectedDate == null) ||
         (hd.getNgayLap() != null &&
         hd.getNgayLap().toLocalDate().equals(selectedDate));
-        return paymentMatch && searchMatch && dateMatch ; // << Thêm dateMatch vào điều kiện
+        
+        // 🔥 CHỈ HIỂN THỊ HÓA ĐƠN ĐÃ THANH TOÁN
+        boolean isPaid = hd.getTrangThai() != null && hd.getTrangThai() == entity.TrangThaiHoaDon.DA_THANH_TOAN;
+
+        return paymentMatch && searchMatch && dateMatch && isPaid; // << Thêm isPaid vào điều kiện
     })
     .collect(Collectors.toList());
     danhSachHoaDon.setAll(filteredList);
@@ -430,9 +444,9 @@ if (style != null) {
     cell.setCellStyle(style);
 }
 }
-// === CÁC HÀM TIỆN ÍCH CHO PDFBox (ĐàXÓA) ===
+// === CÁC HÀM TIỆN ÍCH CHO PDFBox (Đã XÓA) ===
 // ... (Đã xóa các hàm drawTextLeft, drawTextRight, drawLine, v.v. cũ) ...
-// === HÀM IN HÓA ĐƠN (PDF) - (ĐàXÓA HÀM CŨ) ===
+// === HÀM IN HÓA ĐƠN (PDF) - (Đã XÓA HÀM CŨ) ===
 // === 🔥 HÀM MỚI: HELPER CLASS CHO VỊ TRÍ Y (Copy từ TraCuu) ===
 private static class YPosition {
     public float y;

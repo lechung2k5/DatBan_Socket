@@ -105,7 +105,7 @@ public double getEmployeeRevenue(String maNV, LocalDate start, LocalDate end) {
         // Note: In real app, we should use GSI on staffId + createdAt
         ScanResponse res = db.scan(ScanRequest.builder()
         .tableName(TBL)
-        .filterExpression("staffId = :nv AND #s = :paid AND createdAt BETWEEN :s AND :e")
+        .filterExpression("employeeId = :nv AND #s = :paid AND createdAt BETWEEN :s AND :e")
         .expressionAttributeNames(Map.of("#s", "status"))
         .expressionAttributeValues(Map.of(
         ":nv", av(maNV),
@@ -125,7 +125,7 @@ public double getCashRevenueByEmployee(String maNV, LocalDate date) {
     try {
         ScanResponse res = db.scan(ScanRequest.builder()
         .tableName(TBL)
-        .filterExpression("staffId = :nv AND #s = :paid AND begins_with(createdAt, :d) AND pttt = :cash")
+        .filterExpression("employeeId = :nv AND #s = :paid AND begins_with(createdAt, :d) AND paymentMethod = :cash")
         .expressionAttributeNames(Map.of("#s", "status"))
         .expressionAttributeValues(Map.of(
         ":nv", av(maNV),

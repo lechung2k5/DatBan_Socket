@@ -18,6 +18,8 @@ public class NhanVien implements Serializable {
     private boolean trangThai_entity; // true = Đang làm
     private String caLamYeuThich_entity;
     private String username_entity;
+    private String chucVu_entity;
+    private String matKhau_entity;
     // Thuộc tính JavaFX (Transient - Không gửi qua mạng)
     private transient StringProperty maNV;
     private transient StringProperty hoTen;
@@ -33,7 +35,7 @@ public class NhanVien implements Serializable {
     private transient StringProperty caLamYeuThich;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     public NhanVien() {
-        initProperties();
+        // Không gọi initProperties() ở đây để Gson có thể nạp dữ liệu vào các biến _entity trước.
     }
     /**
     * Khởi tạo lại các JavaFX Properties từ dữ liệu entity thô.
@@ -47,10 +49,11 @@ public class NhanVien implements Serializable {
         if (ngaySinh == null) ngaySinh = new SimpleStringProperty(ngaySinh_entity != null ? ngaySinh_entity.toString() : "");
         if (diaChi == null) diaChi = new SimpleStringProperty(diaChi_entity);
         if (gioiTinh == null) gioiTinh = new SimpleStringProperty(gioiTinh_entity ? "Nam" : "Nữ");
-        if (trangThai == null) trangThai = new SimpleStringProperty(trangThai_entity ? "Đang làm" : "Nghỉ");
+        if (trangThai == null) trangThai = new SimpleStringProperty(trangThai_entity ? "Đang làm" : "Nghỉ việc");
         if (caLamYeuThich == null) caLamYeuThich = new SimpleStringProperty(caLamYeuThich_entity);
-        if (chucVu == null) chucVu = new SimpleStringProperty();
-        if (matKhau == null) matKhau = new SimpleStringProperty();
+        if (chucVu == null) chucVu = new SimpleStringProperty(chucVu_entity);
+        if (matKhau == null) matKhau = new SimpleStringProperty(matKhau_entity);
+        if (caLam == null) caLam = new SimpleStringProperty();
     }
     // --- Getters & Setters cho JavaFX Properties (Dùng cho UI Binding) ---
     public String getMaNV() { initProperties(); return maNV.get(); }
@@ -90,10 +93,10 @@ public class NhanVien implements Serializable {
     }
     public StringProperty trangThaiProperty() { initProperties(); return trangThai; }
     public String getChucVu() { initProperties(); return chucVu.get(); }
-    public void setChucVu(String value) { initProperties(); this.chucVu.set(value); }
+    public void setChucVu(String value) { initProperties(); this.chucVu.set(value); this.chucVu_entity = value; }
     public StringProperty chucVuProperty() { initProperties(); return chucVu; }
     public String getMatKhau() { initProperties(); return matKhau.get(); }
-    public void setMatKhau(String value) { initProperties(); this.matKhau.set(value); }
+    public void setMatKhau(String value) { initProperties(); this.matKhau.set(value); this.matKhau_entity = value; }
     public StringProperty matKhauProperty() { initProperties(); return matKhau; }
     public String getCaLam() { initProperties(); return caLam.get(); }
     public void setCaLam(String value) { initProperties(); this.caLam.set(value); }
@@ -116,6 +119,8 @@ public class NhanVien implements Serializable {
     public String getCaLamYeuThich_entity() { return caLamYeuThich_entity; }
     public String getUsername_entity() { return username_entity; }
     public void setUsername_entity(String username) { this.username_entity = username; }
+    public String getChucVu_entity() { return chucVu_entity; }
+    public String getMatKhau_entity() { return matKhau_entity; }
     private LocalDate parseDate(String dateStr) {
         if (dateStr == null || dateStr.isEmpty()) return null;
         try {

@@ -41,16 +41,16 @@ public class DoiBanPopupController {
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
     private int soBanCanChon = 0;
     // === HELPER Cáº¦N THIáº¾T Tá»ª DATBAN (ÄÆ¯á»¢C Gá»I QUA mainController) ===
-    // Äá» Controller nÃ y có thá» gá»i các hÃ m phức tạp trong DatBan
-    // (Giả Äá»nh mainController có các hÃ m sau, nếu không, ta phải tạo interface hoáº·c dùng Reflection)
-    // CÃCH Tá»T NHáº¤T: Bá» sung thêm các phương thức public cáº§n thiết vÃ o DatBan.java
-    // Cáº§n có má»t Set các mã bÃ n cũ Äá» kiá»m tra
+    // Äá» Controller này có thá» gá»i các hàm phức tạp trong DatBan
+    // (Giả Äá»nh mainController có các hàm sau, nếu không, ta phải tạo interface hoặc dùng Reflection)
+    // CíCH Tá»T NHáº¤T: Bá» sung thêm các phương thức public cần thiết vào DatBan.java
+    // Cần có má»t Set các mã bàn cũ Äá» kiá»m tra
     private Set<String> maBanCuSet;
     @FXML
     private void initialize() {
         listViewBanTrong.setItems(banTrongList);
         listViewBanTrong.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        // === KHÃI PHá»¤C LIST CELL Sá»¬ Dá»¤NG CHECKBOX VÃ BINDING Vá»I selectionMap ===
+        // === KHíI PHá»¤C LIST CELL Sá»¬ Dá»¤NG CHECKBOX Ví BINDING Vá»I selectionMap ===
         listViewBanTrong.setCellFactory(new Callback<ListView<Ban>, ListCell<Ban>>() {
             @Override
             public ListCell<Ban> call(ListView<Ban> lv) {
@@ -60,12 +60,12 @@ public class DoiBanPopupController {
                     private final HBox hbox = new HBox(5, checkBox, label);
                     {
                         hbox.setAlignment(Pos.CENTER_LEFT);
-                        // Khi Checkbox Äưá»£c click, cáº­p nháº­t trạng thái trong Map
+                        // Khi Checkbox Äược click, cập nhật trạng thái trong Map
                         checkBox.setOnAction(event -> {
                             if (getItem() != null) {
-                                // Cáº­p nháº­t BooleanProperty trong Map
+                                // Cập nhật BooleanProperty trong Map
                                 selectionMap.get(getItem()).set(checkBox.isSelected());
-                                updateXacNhanButtonState(); // Cáº­p nháº­t trạng thái nút
+                                updateXacNhanButtonState(); // Cập nhật trạng thái nút
                             }
                         });
                     }
@@ -76,22 +76,22 @@ public class DoiBanPopupController {
                             setText(null);
                             setGraphic(null);
                         } else {
-                        // Láº¥y/Tạo BooleanProperty vÃ  cáº­p nháº­t CheckBox
+                        // Lấy/Tạo BooleanProperty và cập nhật CheckBox
                         BooleanProperty selected = selectionMap.computeIfAbsent(item, k -> new SimpleBooleanProperty(false));
-                        // Sá»¬A Lá»I CÃ PHÃP: Dùng getDisplayName()
+                        // Sá»¬A Lá»I Cí PHíP: Dùng getDisplayName()
                         label.setText(item.getMaBan() + " (" + item.getSucChua() + " chá») - " + item.getTrangThai().getDisplayName());
                         // Set trạng thái của Checkbox từ Map
                         checkBox.setSelected(selected.get());
-                        // === LOGIC VÃ HIá»U HÃA CHECKBOX VÃ BÃN Báº¬N (FIX Lá»I B010) ===
+                        // === LOGIC Ví HIá»U HíA CHECKBOX Ví BíN Báº¬N (FIX Lá»I B010) ===
                         boolean laBanCu = maBanCuSet != null && maBanCuSet.contains(item.getMaBan());
-                        // BÃ n bá» coi lÃ  Báº¬N nếu trạng thái logic (logic 4/8 tiếng) không phải lÃ  TRONG
+                        // Bàn bá» coi là Báº¬N nếu trạng thái logic (logic 4/8 tiếng) không phải là TRONG
                         boolean isCurrentlyBusy = item.getTrangThai() != TrangThaiBan.TRONG;
-                        // Chá» cho phÃ©p chá»n nếu (Nó lÃ  BÃ n cũ) HOáº¶C (Nó hoÃ n toÃ n TRá»NG)
-                        // Nếu isCurrentlyBusy=true, vÃ  nó KHÃNG phải bÃ n cũ -> DISABLE
+                        // Chá» cho phép chá»n nếu (Nó là Bàn cũ) HOáº¶C (Nó hoàn toàn TRá»NG)
+                        // Nếu isCurrentlyBusy=true, và nó KHíNG phải bàn cũ -> DISABLE
                         checkBox.setDisable(isCurrentlyBusy && !laBanCu);
-                        // Set mÃ u ná»n (tùy chá»n)
+                        // Set màu ná»n (tùy chá»n)
                         if (isCurrentlyBusy) {
-                            setStyle("-fx-background-color: #fce4e4; -fx-opacity: 0.8;"); // MÃ u nhạt cho bÃ n báº­n
+                            setStyle("-fx-background-color: #fce4e4; -fx-opacity: 0.8;"); // Màu nhạt cho bàn bận
                         } else {
                         setStyle("");
                     }
@@ -110,12 +110,12 @@ btnHuy.setOnAction(e -> closePopup());
 btnXacNhanDoi.setDisable(true);
 }
 /**
-* Nháº­n dữ liá»u ban Äáº§u từ mÃ n hình DatBan
+* Nhận dữ liá»u ban Äầu từ màn hình DatBan
 */
 public void setInitialData(List<HoaDon> hoaDonGocVaPhu, DatBan mainController) {
     this.hoaDonGocVaPhu = hoaDonGocVaPhu;
     this.mainController = mainController;
-    // Láº¥y mã bÃ n cũ má»t láº§n duy nháº¥t
+    // Lấy mã bàn cũ má»t lần duy nhất
     this.maBanCuSet = hoaDonGocVaPhu.stream()
     .filter(hd -> hd.getBan() != null)
     .map(hd -> hd.getBan().getMaBan())
@@ -124,33 +124,33 @@ public void setInitialData(List<HoaDon> hoaDonGocVaPhu, DatBan mainController) {
     HoaDon hdGoc = hoaDonGocVaPhu.stream().filter(h -> h.getMaHDGoc() == null).findFirst().orElse(null);
     if (hdGoc != null) {
         lblMaHDGoc.setText(hdGoc.getMaHD());
-        soBanCanChon = hoaDonGocVaPhu.size(); // Sá» bÃ n cáº§n chá»n = sá» bÃ n hiá»n tại
+        soBanCanChon = hoaDonGocVaPhu.size(); // Sá» bàn cần chá»n = sá» bàn hiá»n tại
         lblSoBanHienTai.setText(String.valueOf(soBanCanChon));
         String dsBanCu = hoaDonGocVaPhu.stream()
         .map(h -> h.getBan() != null ? h.getBan().getMaBan() : "?")
         .collect(Collectors.joining(", "));
         lblDanhSachBanCu.setText(dsBanCu);
-        lblThongTinChonBan.setText(String.format("Chá»n Äúng %d bÃ n trá»ng dưá»i Äây:", soBanCanChon));
-        // Äáº·t thá»i gian máº·c Äá»nh lÃ  giá» vÃ o hiá»n tại của HÄ Gá»c
+        lblThongTinChonBan.setText(String.format("Chá»n Äúng %d bàn trá»ng dưá»i Äây:", soBanCanChon));
+        // Äặt thá»i gian mặc Äá»nh là giá» vào hiá»n tại của HÄ Gá»c
         if (hdGoc.getGioVao() != null) {
             datePickerThoiGianMoi.setValue(hdGoc.getGioVao().toLocalDate());
             txtThoiGianMoi.setText(hdGoc.getGioVao().toLocalTime().format(timeFormatter));
         } else {
-        // Hoáº·c giá» hiá»n tại nếu HÄ không có giá» vÃ o
+        // Hoặc giá» hiá»n tại nếu HÄ không có giá» vào
         datePickerThoiGianMoi.setValue(LocalDate.now());
         txtThoiGianMoi.setText(LocalTime.now().format(timeFormatter));
     }
-    // Tự Äá»ng tìm bÃ n trá»ng láº§n Äáº§u
+    // Tự Äá»ng tìm bàn trá»ng lần Äầu
     handleTimBanTrong();
 } else {
-// Xá»­ lý lá»i nếu không tìm tháº¥y HÄ Gá»c
-showAlert(AlertType.ERROR, "Lá»i Dữ liá»u", "Không tìm tháº¥y Hóa Äơn Gá»c trong danh sách truyá»n vÃ o.");
+// Xử lý lá»i nếu không tìm thấy HÄ Gá»c
+showAlert(AlertType.ERROR, "Lá»i Dữ liá»u", "Không tìm thấy Hóa Äơn Gá»c trong danh sách truyá»n vào.");
 closePopup();
 }
 }
-// DoiBanPopupController.java (Chá» pháº§n hÃ m handleTimBanTrong Äưá»£c sá»­a)
+// DoiBanPopupController.java (Chá» phần hàm handleTimBanTrong Äược sửa)
 /**
-* Xá»­ lý khi nháº¥n nút "Tìm bÃ n trá»ng"
+* Xử lý khi nhấn nút "Tìm bàn trá»ng"
 */
 private void handleTimBanTrong() {
     LocalDate ngayMoi = datePickerThoiGianMoi.getValue();
@@ -158,28 +158,28 @@ private void handleTimBanTrong() {
     LocalTime gioMoi;
     try {
         if (ngayMoi == null || gioMoiStr == null || gioMoiStr.trim().isEmpty()) {
-            showAlert(AlertType.WARNING, "Thiếu thá»i gian", "Vui lòng nháº­p NgÃ y vÃ  Giá» má»i.");
+            showAlert(AlertType.WARNING, "Thiếu thá»i gian", "Vui lòng nhập Ngày và Giá» má»i.");
             return;
         }
         gioMoi = LocalTime.parse(gioMoiStr, timeFormatter);
     } catch (Exception e) {
-    showAlert(AlertType.ERROR, "Lá»i Äá»nh dạng", "Giá» nháº­p không há»£p lá» (cáº§n HH:mm).");
+    showAlert(AlertType.ERROR, "Lá»i Äá»nh dạng", "Giá» nhập không hợp lá» (cần HH:mm).");
     return;
 }
-// Cáº§n tải lại ds HÄ Äang chá» cho logic hiá»n thá» trạng thái chÃ­nh xác
+// Cần tải lại ds HÄ Äang chá» cho logic hiá»n thá» trạng thái chính xác
 mainController.loadDsHoaDonDatTrongNgay(ngayMoi);
 banTrongList.clear();
 selectionMap.clear();
-// --- Láº¥y mã bÃ n cũ ---
+// --- Lấy mã bàn cũ ---
 Set<String> maBanCuSet = hoaDonGocVaPhu.stream()
 .filter(hd -> hd.getBan() != null)
 .map(hd -> hd.getBan().getMaBan())
 .collect(Collectors.toSet());
 // -----------------------
-// ð¥ FIX: Láº¥y Táº¤T Cáº¢ các bÃ n vÃ  kiá»m tra trạng thái Báº¬N Cá»¨NG (DAO Äã xá»­ lý loại trừ HÄ hiá»n tại)
-// GIáº¢ Äá»NH: DAO.getAllBanWithAvailability ÄÃ ÄÆ¯á»¢C FIX Äá» LOáº I TRá»ª Cá»¤M HÄ ÄANG XEM.
-// DO KHÃNG CÃ CODE DAO Äáº¦Y Äá»¦ á» ÄÃY, CHÃNG TA PHáº¢I Gá»I DAO Äá» Láº¤Y Táº¤T Cáº¢ BÃN
-// VÃ DÃNG LOGIC MÃU Cá»¦A CONTROLLER CHÃNH
+// ð¥ FIX: Lấy Táº¤T Cáº¢ các bàn và kiá»m tra trạng thái Báº¬N Cá»¨NG (DAO Äã xử lý loại trừ HÄ hiá»n tại)
+// GIáº¢ Äá»NH: DAO.getAllBanWithAvailability Äí ÄÆ¯á»¢C FIX Äá» LOáº I TRá»ª Cá»¤M HÄ ÄANG XEM.
+// DO KHíNG Cí CODE DAO Äáº¦Y Äá»¦ á» ÄíY, CHíNG TA PHáº¢I Gá»I DAO Äá» Láº¤Y Táº¤T Cáº¢ BíN
+// Ví DíNG LOGIC MíU Cá»¦A CONTROLLER CHíNH
 Response res = Client.send(CommandType.GET_TABLES, null);
 List<Ban> tatCaBan;
 if (res.getStatusCode() == 200) {
@@ -188,94 +188,94 @@ if (res.getStatusCode() == 200) {
 tatCaBan = FXCollections.observableArrayList();
 }
 for (Ban ban : tatCaBan) {
-    // 1. Láº¥y trạng thái Báº¬N (logic 4/8 tiếng) tại thá»i Äiá»m má»i
+    // 1. Lấy trạng thái Báº¬N (logic 4/8 tiếng) tại thá»i Äiá»m má»i
     TrangThaiBan trangThaiLogic = mainController.getTrangThaiHienThi(ban, gioMoi);
-    // 2. Tạo Äá»i tưá»£ng Ban má»i Äá» hiá»n thá» trong ListView
+    // 2. Tạo Äá»i tượng Ban má»i Äá» hiá»n thá» trong ListView
     Ban banHienThi = new Ban(ban.getMaBan(), ban.getViTri(), ban.getSucChua(), ban.getLoaiBan(), ban.getTrangThai());
-    // ð¥ LOGIC Má»I: Chá» loại trừ bÃ n cũ khá»i danh sách Báº¬N.
+    // ð¥ LOGIC Má»I: Chá» loại trừ bàn cũ khá»i danh sách Báº¬N.
     if (maBanCuSet.contains(ban.getMaBan())) {
-        // Nếu lÃ  bÃ n cũ -> luôn set lÃ  TRá»NG Äá» cho phÃ©p chá»n (dù logic 4/8 tiếng báo Äá»/CAM)
+        // Nếu là bàn cũ -> luôn set là TRá»NG Äá» cho phép chá»n (dù logic 4/8 tiếng báo Äá»/CAM)
         banHienThi.setTrangThai(TrangThaiBan.TRONG);
     } else if (trangThaiLogic != TrangThaiBan.TRONG) {
-    // Nếu lÃ  bÃ n má»i vÃ  Báº­n theo Logic 4/8 tiếng -> giữ trạng thái Báº¬N
+    // Nếu là bàn má»i và Bận theo Logic 4/8 tiếng -> giữ trạng thái Báº¬N
     banHienThi.setTrangThai(trangThaiLogic);
 } else {
-// Ngưá»£c lại -> TRá»NG
+// Ngược lại -> TRá»NG
 banHienThi.setTrangThai(TrangThaiBan.TRONG);
 }
 banTrongList.add(banHienThi);
-// Khá»i tạo trạng thái chá»n: Tá»° Äá»NG TICK BÃN CÅ¨
+// Khá»i tạo trạng thái chá»n: Tá»° Äá»NG TICK BíN CÅ¨
 boolean isSelected = maBanCuSet.contains(banHienThi.getMaBan());
 BooleanProperty prop = new SimpleBooleanProperty(isSelected);
 selectionMap.put(banHienThi, prop);
 }
-// Cáº§n refresh ListView Äá» ListCellFactory cáº­p nháº­t Checkbox
+// Cần refresh ListView Äá» ListCellFactory cập nhật Checkbox
 listViewBanTrong.refresh();
 updateXacNhanButtonState();
-lblThongTinChonBan.setText(String.format("Chá»n Äúng %d bÃ n trá»ng muá»n Äá»i Äến:", soBanCanChon));
+lblThongTinChonBan.setText(String.format("Chá»n Äúng %d bàn trá»ng muá»n Äá»i Äến:", soBanCanChon));
 }
 /**
-* ð¥ HÃM ÄÃ Sá»¬A: Xá»­ lý xác nháº­n Äá»i bÃ n (Bao gá»m các trưá»ng há»£p: 1-1, N-N, N-M, N-1)
-* ÄÃ Tá»I Æ¯U: Loại bá» vòng láº·p cáº­p nháº­t HÄ cũ vÃ  thay báº±ng các bưá»c Cáº­p nháº­t/Xóa rõ rÃ ng.
+* ð¥ HíM Äí Sá»¬A: Xử lý xác nhận Äá»i bàn (Bao gá»m các trưá»ng hợp: 1-1, N-N, N-M, N-1)
+* Äí Tá»I Æ¯U: Loại bá» vòng lặp cập nhật HÄ cũ và thay báº±ng các bưá»c Cập nhật/Xóa rõ ràng.
 */
 /**
-* ð¥ HÃM ÄÃ Sá»¬A: Xá»­ lý xác nháº­n Äá»i bÃ n (Bao gá»m các trưá»ng há»£p: 1-1, N-N, N-M, N-1)
-* ÄÃ Sá»¬A Lá»I: Gá»i hÃ m DAO má»i Äá» cáº­p nháº­t trạng thái NHIá»U bÃ n cùng lúc.
+* ð¥ HíM Äí Sá»¬A: Xử lý xác nhận Äá»i bàn (Bao gá»m các trưá»ng hợp: 1-1, N-N, N-M, N-1)
+* Äí Sá»¬A Lá»I: Gá»i hàm DAO má»i Äá» cập nhật trạng thái NHIá»U bàn cùng lúc.
 */
 private void handleXacNhanDoi() {
-    // ... (pháº§n code láº¥y selectedBanMoi, hoaDonGoc, maBanCuList, hoaDonPhuCuList, maBanMoiSet, maBanMoiGoc) ...
+    // ... (phần code lấy selectedBanMoi, hoaDonGoc, maBanCuList, hoaDonPhuCuList, maBanMoiSet, maBanMoiGoc) ...
     List<Ban> selectedBanMoi = selectionMap.entrySet().stream()
     .filter(entry -> entry.getValue().get())
     .map(Map.Entry::getKey)
     .collect(Collectors.toList());
     if (selectedBanMoi.isEmpty()) {
-        showAlert(AlertType.ERROR, "Chưa chá»n bÃ n", "Vui lòng chá»n Ã­t nháº¥t má»t bÃ n má»i.");
+        showAlert(AlertType.ERROR, "Chưa chá»n bàn", "Vui lòng chá»n ít nhất má»t bàn má»i.");
         return;
     }
-    // Kiá»m tra bÃ n không Äưá»£c báº­n (chá» kiá»m tra các bÃ n má»i không phải lÃ  bÃ n cũ)
+    // Kiá»m tra bàn không Äược bận (chá» kiá»m tra các bàn má»i không phải là bàn cũ)
     for (Ban ban : selectedBanMoi) {
         if (ban.getTrangThai() != TrangThaiBan.TRONG && !maBanCuSet.contains(ban.getMaBan())) {
-            showAlert(AlertType.ERROR, "Lá»i", "BÃ n " + ban.getMaBan() + " Äang báº­n. Vui lòng bá» chá»n bÃ n nÃ y.");
+            showAlert(AlertType.ERROR, "Lá»i", "Bàn " + ban.getMaBan() + " Äang bận. Vui lòng bá» chá»n bàn này.");
             return;
         }
     }
     HoaDon hoaDonGoc = hoaDonGocVaPhu.stream().filter(h -> h.getMaHDGoc() == null).findFirst().orElse(null);
     if (hoaDonGoc == null) return;
-    // Láº¥y mã bÃ n cũ vÃ  các HÄ phụ
+    // Lấy mã bàn cũ và các HÄ phụ
     List<String> maBanCuList = hoaDonGocVaPhu.stream().map(h -> h.getBan() != null ? h.getBan().getMaBan() : null)
     .filter(Objects::nonNull).collect(Collectors.toList());
     List<HoaDon> hoaDonPhuCuList = hoaDonGocVaPhu.stream().filter(h -> h.getMaHDGoc() != null).collect(Collectors.toList());
     Set<String> maBanMoiSet = selectedBanMoi.stream().map(Ban::getMaBan).collect(Collectors.toSet());
-    // BÃ n má»i gá»c lÃ  bÃ n Äáº§u tiên Äưá»£c chá»n
+    // Bàn má»i gá»c là bàn Äầu tiên Äược chá»n
     String maBanMoiGoc = selectedBanMoi.get(0).getMaBan();
     String maHDGoc = hoaDonGoc.getMaHD();
-    // --- Kiá»m tra trùng láº·p (Giữ nguyên) ---
+    // --- Kiá»m tra trùng lặp (Giữ nguyên) ---
     if (new HashSet<>(maBanCuList).equals(maBanMoiSet) && maBanCuList.size() == maBanMoiSet.size()) {
-        showAlert(AlertType.WARNING, "Không Äá»i", "BÃ n cũ vÃ  bÃ n má»i giá»ng nhau.");
+        showAlert(AlertType.WARNING, "Không Äá»i", "Bàn cũ và bàn má»i giá»ng nhau.");
         return;
     }
     // ----------------------------------------
-    Optional<ButtonType> result = showAlertConfirm("Xác nháº­n Äá»i bÃ n",
-    String.format("Bạn có cháº¯c cháº¯n muá»n Äá»i các bÃ n %s sang các bÃ n %s không?\n\n"
-    + "Lưu ý: Các hóa Äơn phụ/bÃ n cũ không còn Äưá»£c liên kết sáº½ bá» hủy/giải phóng.",
+    Optional<ButtonType> result = showAlertConfirm("Xác nhận Äá»i bàn",
+    String.format("Bạn có chắc chắn muá»n Äá»i các bàn %s sang các bàn %s không?\n\n"
+    + "Lưu ý: Các hóa Äơn phụ/bàn cũ không còn Äược liên kết sáº½ bá» hủy/giải phóng.",
     String.join(", ", maBanCuList), String.join(", ", maBanMoiSet)));
     if (result.isPresent() && result.get() == ButtonType.OK) {
         try {
             Timestamp thoiGianDoiMoi = Timestamp.valueOf(datePickerThoiGianMoi.getValue().atTime(LocalTime.parse(txtThoiGianMoi.getText(), timeFormatter)));
-            // 1. XÃA Táº¤T Cáº¢ HÃA ÄÆ N PHá»¤ CÅ¨ QUA API
+            // 1. XíA Táº¤T Cáº¢ HíA ÄÆ N PHá»¤ CÅ¨ QUA API
             for (HoaDon hdPhu : hoaDonPhuCuList) {
                 Client.sendWithParams(CommandType.CANCEL_INVOICE, Map.of(
                 "maHD", hdPhu.getMaHD(),
                 "trangThai", "DaHuy"
                 ));
             }
-            // 2. Cáº¬P NHáº¬T HÃA ÄÆ N Gá»C QUA API
+            // 2. Cáº¬P NHáº¬T HíA ÄÆ N Gá»C QUA API
             Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of(
             "maHD", maHDGoc,
             "maBan", maBanMoiGoc,
             "gioVao", thoiGianDoiMoi.toString()
             ));
-            // 3. Táº O HÃA ÄÆ N PHá»¤ Má»I (Nếu có nhiá»u hơn 1 bÃ n má»i)
+            // 3. Táº O HíA ÄÆ N PHá»¤ Má»I (Nếu có nhiá»u hơn 1 bàn má»i)
             if (selectedBanMoi.size() > 1) {
                 for (int i = 1; i < selectedBanMoi.size(); i++) {
                     Ban banMoi = selectedBanMoi.get(i);
@@ -294,8 +294,8 @@ private void handleXacNhanDoi() {
                 }
                 System.out.println("LOG: Äã tạo " + (selectedBanMoi.size() - 1) + " Hóa Äơn Phụ má»i.");
             }
-            // 4. GIáº¢I PHÃNG VÃ KHÃA BÃN
-            // 4.1. Giải phóng các bÃ n cũ KHÃNG còn Äưá»£c sá»­ dụng
+            // 4. GIáº¢I PHíNG Ví KHíA BíN
+            // 4.1. Giải phóng các bàn cũ KHíNG còn Äược sử dụng
             Set<String> maBanCuKhongDuocChonLai = new HashSet<>(maBanCuList);
             maBanCuKhongDuocChonLai.removeAll(maBanMoiSet);
             if (!maBanCuKhongDuocChonLai.isEmpty()) {
@@ -303,20 +303,20 @@ private void handleXacNhanDoi() {
                 "maBan", new ArrayList<>(maBanCuKhongDuocChonLai),
                 "newStatus", TrangThaiBan.TRONG.getDbValue()
                 ));
-                System.out.println("LOG: Äã giải phóng các bÃ n cũ: " + maBanCuKhongDuocChonLai);
+                System.out.println("LOG: Äã giải phóng các bàn cũ: " + maBanCuKhongDuocChonLai);
             }
-            // 4.2. Cáº­p nháº­t trạng thái Báº¬N cho Táº¤T Cáº¢ các bÃ n má»i Äưá»£c chá»n
+            // 4.2. Cập nhật trạng thái Báº¬N cho Táº¤T Cáº¢ các bàn má»i Äược chá»n
             String trangThaiBanMoi = (hoaDonGoc.getTrangThai() == TrangThaiHoaDon.DAT) ?
             TrangThaiHoaDon.DAT.getDbValue() : TrangThaiHoaDon.DANG_SU_DUNG.getDbValue();
-            // ð¥ Gá»I API Äá» Cáº¬P NHáº¬T NHIá»U BÃN
+            // ð¥ Gá»I API Äá» Cáº¬P NHáº¬T NHIá»U BíN
             Client.sendWithParams(CommandType.UPDATE_MANY_TABLES, Map.of(
             "maBan", new ArrayList<>(maBanMoiSet),
             "newStatus", trangThaiBanMoi
             ));
-            System.out.println("LOG: Äã khóa " + maBanMoiSet.size() + " bÃ n má»i vá»i trạng thái: " + trangThaiBanMoi);
-            // 5. Káº¾T THÃC
-            showAlert(AlertType.INFORMATION, "ThÃ nh công",
-            String.format("Äã Äá»i/gá»p bÃ n thÃ nh công!\nTừ: %s\nSang: %s",
+            System.out.println("LOG: Äã khóa " + maBanMoiSet.size() + " bàn má»i vá»i trạng thái: " + trangThaiBanMoi);
+            // 5. Káº¾T THíC
+            showAlert(AlertType.INFORMATION, "Thành công",
+            String.format("Äã Äá»i/gá»p bàn thành công!\nTừ: %s\nSang: %s",
             String.join(", ", maBanCuList), String.join(", ", maBanMoiSet)));
             if (mainController != null) {
                 mainController.loadTableGrids();
@@ -330,30 +330,30 @@ private void handleXacNhanDoi() {
             closePopup();
         } catch (Exception e) {
         e.printStackTrace();
-        showAlert(AlertType.ERROR, "Lá»i CSDL", "Không thá» Äá»i/gá»p bÃ n: " + e.getMessage());
+        showAlert(AlertType.ERROR, "Lá»i CSDL", "Không thá» Äá»i/gá»p bàn: " + e.getMessage());
     }
 }
 }
 /**
-* Cáº­p nháº­t trạng thái enable/disable của nút Xác nháº­n
-* ð¥ ÄÃ Sá»¬A: CHá» Cáº¦N CHá»N ÃT NHáº¤T 1 BÃN (cho phÃ©p gá»p bÃ n)
+* Cập nhật trạng thái enable/disable của nút Xác nhận
+* ð¥ Äí Sá»¬A: CHá» Cáº¦N CHá»N íT NHáº¤T 1 BíN (cho phép gá»p bàn)
 */
 private void updateXacNhanButtonState() {
-    // Láº¥y danh sách bÃ n Äang Äưá»£c chá»n từ Checkbox Map
+    // Lấy danh sách bàn Äang Äược chá»n từ Checkbox Map
     long countSelected = selectionMap.values().stream()
     .filter(BooleanProperty::get)
     .count();
-    // Chá» enable khi sá» lưá»£ng chá»n Lá»N HÆ N 0
+    // Chá» enable khi sá» lượng chá»n Lá»N HÆ N 0
     btnXacNhanDoi.setDisable(countSelected == 0);
 }
 /**
-* Äóng cá»­a sá» Popup
+* Äóng cửa sá» Popup
 */
 private void closePopup() {
     Stage stage = (Stage) btnHuy.getScene().getWindow();
     stage.close();
 }
-// --- HÃ m tiá»n ích ---
+// --- Hàm tiá»n ích ---
 private void showAlert(AlertType type, String title, String content) {
     Alert alert = new Alert(type);
     alert.setTitle(title);

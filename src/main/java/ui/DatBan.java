@@ -76,10 +76,43 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.scene.control.Label;
 
 public class DatBan implements Initializable, network.RealTimeSubscriber {
-    private static java.util.function.Consumer<network.RealTimeEvent> realTimeListener = null;
+    private final java.util.function.Consumer<network.RealTimeEvent> rtListener = this::handleRealTimeEvent;
+
+    @Override
+    public java.util.function.Consumer<network.RealTimeEvent> getRealTimeListener() {
+        return rtListener;
+    }
+
+    private void handleRealTimeEvent(network.RealTimeEvent event) {
+        String affectedId = event.getAffectedId();
+        Platform.runLater(() -> {
+            // Đợi một chút để DB ổn định
+            javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(300));
+            pause.setOnFinished(e -> {
+                loadTableGrids();
+                loadBookingCards();
+
+                // Nếu hóa đơn đang mở bị ảnh hưởng, nạp lại
+                if (currentHoaDon != null && affectedId != null) {
+                    if (affectedId.equals(currentHoaDon.getMaHD()) || "ALL".equals(affectedId)) {
+                        try {
+                            Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", currentHoaDon.getMaHD()));
+                            if (res.getStatusCode() == 200) {
+                                HoaDon updated = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
+                                if (updated != null) {
+                                    loadHoaDonToMainInterface(updated, true);
+                                }
+                            }
+                        } catch (Exception ex) { ex.printStackTrace(); }
+                    }
+                }
+            });
+            pause.play();
+        });
+    }
+
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
     // Data
     private ObservableList<MonOrder> monOrderList = FXCollections.observableArrayList();
@@ -94,7 +127,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     private ToggleGroup menuGroup;
     private ToggleGroup paymentGroup;
     private List<UuDai> dsUuDaiDangApDung = new ArrayList<>(); // 🔥 Danh sách ưu đãi đang áp dụng
-    private UuDai selectedUuDai = null; // 🔥 Ưu đãi đang được chá» n
+    private UuDai selectedUuDai = null; // 🔥 Ưu đãi đang được chọn
     private boolean daThanhToanCoc = false;
     // === CỘT 1 (Left Panel) ===
     @FXML
@@ -184,7 +217,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     private TableColumn<MonAn, Number> colGia;
     @FXML
     private TableColumn<MonAn, Void> colChon;
-    // Table Món Đã Chá» n (Order)
+    // Table Món Đã chọn (Order)
     @FXML
     private TableView<MonOrder> tblMonDaChon;
     @FXML
@@ -315,8 +348,23 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 .setItems(FXCollections.observableArrayList("Giảm 15% hóa đơn cho khách hàng VIP", "Không áp dụng"));
         promoComboBox.getSelectionModel().selectFirst();
         datePickerThoiGianDen.setValue(LocalDate.now());
+
         btnXacNhanBan.setOnAction(e -> handleXacNhanBan());
         btnXacNhanBan.setStyle("-fx-background-color: #2f9e44; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        // 🔥 THÊM DEBOUNCING LẮNG NGHE SỐ ĐIỆN THOẠI ĐỂ TỰ ĐỘNG ĐIỀN TÊN
+        if (txtSoDienThoai != null) {
+            javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(500));
+            txtSoDienThoai.textProperty().addListener((obs, oldVal, newVal) -> {
+                pause.setOnFinished(event -> {
+                    if (newVal != null && newVal.length() >= 10) {
+                        handleTimKhachHangNhanh(newVal);
+                    }
+                });
+                pause.playFromStart();
+            });
+        }
+
         if (btnThanhToanCoc != null) {
             btnThanhToanCoc.setOnAction(e -> openThanhToanCocPopup());
             btnThanhToanCoc.setStyle("-fx-background-color: #2f9e44; -fx-text-fill: white; -fx-font-weight: bold;");
@@ -344,19 +392,19 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                     return; // Không làm gì nếu SĐT không hợp lệ
                 }
                 try {
-                    // 🔥 Chỉ TÌM KIẾM, không TẠO MỚI (gá» i hàm mới ở Bước 1)
+                    // 🔥 Chỉ TÌM KIẾM, không TẠO MỚI (gọi hàm mới ở Bước 1)
                     Response resKH = Client.sendWithParams(CommandType.FIND_CUSTOMER_BY_PHONE, Map.of("phone", sdt));
                     KhachHang khachTimDuoc = null;
                     if (resKH.getStatusCode() == 200 && resKH.getData() != null) {
                         khachTimDuoc = utils.JsonUtil.convertValue(resKH.getData(), KhachHang.class);
                     }
                     if (khachTimDuoc != null) {
-                        // Nếu tìm thấy, điá» n tên khách hàng
+                        // Nếu tìm thấy, điọn tên khách hàng
                         // (Tên có thể là null nếu khách cũ không có tên)
                         txtTenKhachHang.setText(khachTimDuoc.getTenKH());
                     } else {
                         // Nếu không tìm thấy, XÓA TRẮNG ô tên
-                        // để ngưá» i dùng tự nhập tên cho KHàCH HÀNG MỚI.
+                        // để ngưọi dùng tự nhập tên cho KHàCH HÀNG MỚI.
                         txtTenKhachHang.clear();
                     }
                 } catch (Exception e) {
@@ -369,7 +417,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             vboxReceipt.setVisible(false);
         }
         // === THÊM MỚI: CÀI ĐẶT BỘ LỌC DANH SàCH Đĺ¶T BÀN ===
-        // 1. Thêm các lựa chá» n vào ComboBox lá» c
+        // 1. Thêm các lựa chọn vào ComboBox lọc
         if (comboFilter != null) {
             comboFilter.setItems(FXCollections.observableArrayList(
                     "Tất cả",
@@ -386,7 +434,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         }
         loadPromoComboBox();
         if (promoComboBox != null) {
-            // Sự kiện: Khi chá» n khuyến mãi, tính toán lại tổng tiá» n
+            // Sự kiện: Khi chọn khuyến mãi, tính toán lại tổng tiọn
             promoComboBox.valueProperty().addListener((obs, oldVal, newVal) -> handlePromoSelection(newVal));
         }
         // === THÊM MỚI: GàN SỰ KIỆN CHO CàC NÚT CHỨC NĂNG MỚI ===
@@ -424,7 +472,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         }
         if (comboThoiGian != null) {
             comboThoiGian.setItems(timeSlots);
-            // Set giá» hiện tại (làm tròn lên 30p tiếp theo)
+            // Set giờ hiện tại (làm tròn lên 30p tiếp theo)
             LocalTime now = LocalTime.now();
             if (now.getMinute() > 30) {
                 comboThoiGian.setValue(now.plusHours(1).withMinute(0).format(timeFormatter));
@@ -435,11 +483,11 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         // --- 🔥 THÊM MỚI: Khởi tạo ComboBox Khu Vực ---
         if (comboKhuVuc != null) {
             comboKhuVuc.setItems(FXCollections.observableArrayList(
-                    "Tự động", // Máy tự tính theo số ngưá» i
+                    "Tự động", // Máy tự tính theo số ngưọi
                     "Tầng trệt",
                     "Tầng 1",
                     "Phòng riêng",
-                    "Tất cả" // Hiện hết không lá» c
+                    "Tất cả" // Hiện hết không lọc
             ));
             comboKhuVuc.setValue("Tự động"); // Mặc định để máy tính
         }
@@ -448,7 +496,9 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 filterGioTheoNgay(newVal);
         });
 
-        // Thêm vào cuối hàm initialize() trong DatBan.java
+        // Đăng ký nhận sự kiện real-time
+        RealTimeClient.getInstance().addListener(rtListener);
+        
         Platform.runLater(() -> {
             if (vboxBookingCards.getScene() != null) {
                 // Sử dụng addEventFilter để giành quyền ưu tiên xử lý phím trước hệ thống
@@ -514,35 +564,6 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             }
         });
 
-        // 🔥 Đăng ký lắng nghe sự kiện Real-time từ Server (REDO: Robust Sync & Leak Fix)
-        if (realTimeListener != null) {
-            RealTimeClient.getInstance().removeListener(realTimeListener);
-        }
-        realTimeListener = event -> {
-            System.out.println("[UI-DATBAN] Nhận thông báo Real-time: " + event.getType() + " | MSG: " + event.getMessage());
-            
-            Platform.runLater(() -> {
-                javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(150));
-                pause.setOnFinished(e -> {
-                    String affectedId = event.getAffectedId();
-                    System.out.println("[UI-DATBAN] Đang render lại trạng thái... ID: " + affectedId);
-                    loadTableGrids();
-                    loadBookingCards();
-
-                    if (currentHoaDon != null && affectedId != null) {
-                        if (affectedId.equals(currentHoaDon.getMaHD()) || affectedId.equals("ALL")) {
-                            Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", currentHoaDon.getMaHD()));
-                            if (res.getStatusCode() == 200) {
-                                HoaDon updatedHd = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
-                                loadHoaDonToMainInterface(updatedHd, true);
-                            }
-                        }
-                    }
-                });
-                pause.play(); // 🔥 Kích hoạt bộ đếm thời gian để chạy lệnh load dữ liệu
-            });
-        };
-        RealTimeClient.getInstance().addListener(realTimeListener);
     }
 
     // =========================================================
@@ -555,8 +576,8 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         alert.setHeaderText("Hỗ trợ thao tác nhanh cho Thu ngân");
         alert.setContentText(
                 " Ctrl + Enter: Mở bảng thanh toán\n\n" +
-                        " Delete: Xóa món đang chá» n hoặc Hủy bàn\n" +
-                        " ESC: Hủy chá» n bàn và xóa trắng form");
+                        " Delete: Xóa món đang chọn hoặc Hủy bàn\n" +
+                        " ESC: Hủy chọn bàn và xóa trắng form");
         alert.showAndWait();
     }
 
@@ -565,33 +586,33 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
      */
     private void handleCapNhatTrangThaiNhanh() {
         if (currentHoaDon == null || currentHoaDon.getMaHD() == null) {
-            showAlert(Alert.AlertType.WARNING, "Lỗi", "Vui lòng chá» n một hóa đơn để cập nhật.");
+            showAlert(Alert.AlertType.WARNING, "Lỗi", "Vui lòng chọn một hóa đơn để cập nhật.");
             return;
         }
         String trangThaiMoiDisplay = comboTrangThaiHienTai.getValue();
         if (trangThaiMoiDisplay == null)
             return;
-        // 1. Map từ tên hiển thị Tiếng Việt vá» DB Value
+        // 1. Map từ tên hiển thị Tiếng Việt vọDB Value
         String trangThaiMoiDb = "";
         if (trangThaiMoiDisplay.equals("Đã nhận bàn"))
             trangThaiMoiDb = TrangThaiHoaDon.DANG_SU_DUNG.getDbValue();
         else if (trangThaiMoiDisplay.equals("Đã đặt"))
             trangThaiMoiDb = TrangThaiHoaDon.DAT.getDbValue();
-        else if (trangThaiMoiDisplay.equals("Chá»  xác nhận"))
+        else if (trangThaiMoiDisplay.equals("Chờ xác nhận"))
             trangThaiMoiDb = TrangThaiHoaDon.CHO_XAC_NHAN.getDbValue();
         else {
             showAlert(Alert.AlertType.ERROR, "Lỗi", "Trạng thái không hợp lệ.");
             return;
         }
-        // 2. 🔥 LOGIC CHẶN LÙI TRẠNG THàI (Quan trá» ng)
+        // 2. 🔥 LOGIC CHẶN LÙI TRẠNG THàI (Quan trọng)
         String trangThaiHienTaiDb = currentHoaDon.getTrangThai().getDbValue();
-        // Nếu đang là ĐàĐẶT hoặc ĐàNHẬN BÀN -> Không được vá» CHỜ XàC NHẬN
+        // Nếu đang là ĐàĐẶT hoặc ĐàNHẬN BÀN -> Không được vọCHỜ XàC NHẬN
         if ((trangThaiHienTaiDb.equals(TrangThaiHoaDon.DAT.getDbValue()) ||
                 trangThaiHienTaiDb.equals(TrangThaiHoaDon.DANG_SU_DUNG.getDbValue()))
                 && trangThaiMoiDb.equals(TrangThaiHoaDon.CHO_XAC_NHAN.getDbValue())) {
             showAlert(Alert.AlertType.WARNING, "Sai quy trình",
-                    "Hóa đơn đã được xác nhận hoặc đang phục vụ.\nKhông thể quay lại trạng thái 'Chá»  xác nhận'.");
-            // Reset lại combobox vá» cũ
+                    "Hóa đơn đã được xác nhận hoặc đang phục vụ.\nKhông thể quay lại trạng thái 'Chờ xác nhận'.");
+            // Reset lại combobox vọcũ
             loadHoaDonToMainInterface(currentHoaDon, false);
             return;
         }
@@ -617,7 +638,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     }
 
     /**
-     * 🔥 HÀM SỬA CUá» I CÙNG: Xử lý nút In Hóa đơn (In Hóa đơn TẠM TàNH).
+     * 🔥 HÀM SỬA CUọI CÙNG: Xử lý nút In Hóa đơn (In Hóa đơn TẠM TàNH).
      * Cho phép in nếu HĐ đang ở trạng thái ĐANG SỬ DỤNG hoặc ĐàĐẶT (Chưa thanh
      * toán).
      */
@@ -658,7 +679,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     }
 
     /**
-     * 🔥 HÀM SỬA CUá» I CÙNG CHO MOMO: Mở Popup hiển thị QR Thanh toán (Sử dụng
+     * 🔥 HÀM SỬA CUọI CÙNG CHO MOMO: Mở Popup hiển thị QR Thanh toán (Sử dụng
      * LOGO và BIN BVBank).
      * === ĐàTHÊM: Tên tài khoản và Số tài khoản ===
      */
@@ -723,7 +744,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         }
         Label lblAmount = new Label("Số tiền: " + String.format("%,.0f Đ", tongTienThanhToan));
         lblAmount.setStyle("-fx-font-size: 1.2em; -fx-font-weight: 500; -fx-text-fill: red;");
-        // === THÊM MỚI: TÊN VÀ Sá» TÀI KHOẢN ===
+        // === THÊM MỚI: TÊN VÀ SọTÀI KHOẢN ===
         Label lblAccountName = new Label("Tên tài khoản: " + YOUR_ACCOUNT_NAME);
         lblAccountName.setStyle("-fx-font-size: 1.1em; -fx-font-weight: 500; -fx-text-fill: #333;");
         Label lblAccountNumber = new Label("Số tài khoản: " + YOUR_ACCOUNT_NUMBER);
@@ -746,7 +767,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         VBox root = new VBox(15, logoView, qrView, infoBox, buttonBox); // Giảm spacing
         root.setPadding(new Insets(20));
         root.setAlignment(Pos.CENTER);
-        root.setPrefSize(400, 600); // Tăng chiá» u cao
+        root.setPrefSize(400, 600); // Tăng chiọu cao
         Stage popupStage = new Stage();
         popupStage.setTitle("Thanh toán MoMo/VietQR");
         popupStage.setScene(new Scene(root));
@@ -853,38 +874,38 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
 
     // [Thêm hàm mới này vào file DatBan.java]
     /**
-     * 🔥 HÀM MỚI: Mở Popup hiển thị QR Thanh toán Tiá» n Cá» c.
-     * Chỉ hoạt động khi Hóa đơn đang ở trạng thái "Chá» xác nhận".
+     * 🔥 HÀM MỚI: Mở Popup hiển thị QR Thanh toán Tiọn Cọc.
+     * Chỉ hoạt động khi Hóa đơn đang ở trạng thái "Chọxác nhận".
      */
     private void openThanhToanCocPopup() {
         // 1. Kiểm tra hóa đơn và trạng thái
         if (currentHoaDon == null || currentHoaDon.getMaHD() == null) {
-            showAlert(Alert.AlertType.WARNING, "Lỗi", "Vui lòng chá» n một Hóa đơn để thanh toán cá» c.");
+            showAlert(Alert.AlertType.WARNING, "Lỗi", "Vui lòng chọn một Hóa đơn để thanh toán cọc.");
             return;
         }
         if (currentHoaDon.getTrangThai() != TrangThaiHoaDon.CHO_XAC_NHAN) {
             showAlert(Alert.AlertType.WARNING, "Lỗi",
-                    "Chỉ có thể thanh toán cá» c cho Hóa đơn đang ở trạng thái 'Chá»  xác nhận'.");
+                    "Chỉ có thể thanh toán cọc cho Hóa đơn đang ở trạng thái 'Chờ xác nhận'.");
             return;
         }
-        // 2. Lấy số tiá» n cá» c từ TextField
+        // 2. Lấy số tiọn cọc từ TextField
         double tienCoc = 0;
         try {
             String tienCocRaw = txtTienCoc.getText().replaceAll("[^0-9.]", "");
             tienCoc = Double.parseDouble(tienCocRaw.isEmpty() ? "0" : tienCocRaw);
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Số tiá» n cá» c không hợp lệ.");
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Số tiọn cọc không hợp lệ.");
             return;
         }
         if (tienCoc <= 0) {
-            showAlert(Alert.AlertType.WARNING, "Lỗi", "Số tiá» n cá» c phải lớn hơn 0.");
+            showAlert(Alert.AlertType.WARNING, "Lỗi", "Số tiọn cọc phải lớn hơn 0.");
             return;
         }
         // 3. Thông tin QR (Giống Ngân hàng, chỉ khác nội dung)
         final String YOUR_BANK_CODE = "970422"; // MB Bank BIN (Ví dụ)
         final String YOUR_ACCOUNT_NUMBER = "0927432020905"; // Số tài khoản của bạn
         String maHD = currentHoaDon.getMaHD();
-        // Nội dung: Rõ ràng là thanh toán cá» c
+        // Nội dung: Rõ ràng là thanh toán cọc
         String rawContent = "Coc" + maHD.toUpperCase().replace(" ", "_"); // VD: CocHD079
         String encodedContent;
         try {
@@ -897,7 +918,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 "https://img.vietqr.io/image/%s-%s-compact.png?amount=%d&addInfo=%s",
                 YOUR_BANK_CODE,
                 YOUR_ACCOUNT_NUMBER,
-                (int) Math.ceil(tienCoc), // Số tiá» n cá» c
+                (int) Math.ceil(tienCoc), // Số tiọn cọc
                 encodedContent);
         // 5. Tải ảnh QR
         Image qrImage = generateQrCodeImageFromUrl(qrUrl, 250);
@@ -910,7 +931,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         ImageView qrView = new ImageView(qrImage);
         qrView.setFitWidth(250);
         qrView.setFitHeight(250);
-        Label lblTitle = new Label("Quét mã cá» c tiá» n hóa đơn: " + maHD);
+        Label lblTitle = new Label("Quét mã chuyển tiền hóa đơn: " + maHD);
         lblTitle.setStyle("-fx-font-size: 1.5em; -fx-font-weight: bold; -fx-text-fill: #007bff;");
         Label lblAmount = new Label("Số tiền cọc: " + String.format("%,.0f Đ", tienCoc)); // Sửa text
         lblAmount.setStyle("-fx-font-size: 1.2em; -fx-font-weight: 500; -fx-text-fill: red;");
@@ -1489,7 +1510,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     @FXML
     private void handleDoiBan() {
         if (currentHoaDon == null) {
-            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chá» n một hóa đơn đang phục vụ để đổi bàn.");
+            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chọn một hóa đơn đang phục vụ để đổi bàn.");
             return;
         }
         try {
@@ -1532,7 +1553,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
      */
     private void handleLuuMon() {
         if (currentHoaDon == null || currentHoaDon.getMaHD() == null) {
-            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chá» n một hóa đơn đang phục vụ để lưu món.");
+            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chọn một hóa đơn đang phục vụ để lưu món.");
             return;
         }
         
@@ -1592,6 +1613,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 Response res = Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of(
                         "maHD", currentHoaDon.getMaHD(),
                         "soDT", sdt,
+                        "tenKH", tenKH,
                         "tienCoc", tienCoc,
                         "itemsJson", utils.JsonUtil.toJson(convertToChiTiet(monOrderList))
                 ));
@@ -1748,7 +1770,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
      * @throws Exception nếu có lỗi CSDL hoặc lỗi nghiệp vụ.
      */
     public String tachBan(String maHDCu) throws Exception {
-        Response res = Client.sendWithParams(CommandType.SPLIT_INVOICE, Map.of("maHDCu", maHDCu));
+        Response res = Client.sendWithParams(CommandType.SPLIT_INVOICE, Map.of("sourceId", maHDCu));
         if (res.getStatusCode() == 200) {
             return (String) res.getData();
         } else {
@@ -1759,14 +1781,26 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     private List<entity.ChiTietHoaDon> convertToChiTiet(List<MonOrder> orders) {
         if (orders == null)
             return new ArrayList<>();
-        return orders.stream().map(o -> {
-            entity.ChiTietHoaDon ct = new entity.ChiTietHoaDon();
-            ct.setMonAn(new entity.MonAn(o.getMaMon(), o.getTenMon(), o.getDonGia()));
-            ct.setSoLuong(o.getSoLuong());
-            ct.setDonGia(o.getDonGia());
-            ct.setThanhTien(o.getDonGia() * o.getSoLuong()); // 🔥 ĐàTHÊM: Tính thành tiền
-            return ct;
-        }).collect(Collectors.toList());
+        
+        // 🔥 Gộp món trước khi gửi lên Server
+        java.util.Map<String, entity.ChiTietHoaDon> aggregated = new java.util.LinkedHashMap<>();
+        for (MonOrder o : orders) {
+            String ma = o.getMaMon();
+            if (aggregated.containsKey(ma)) {
+                entity.ChiTietHoaDon existing = aggregated.get(ma);
+                existing.setSoLuong(existing.getSoLuong() + o.getSoLuong());
+                existing.setThanhTien(existing.getSoLuong() * existing.getDonGia());
+            } else {
+                entity.ChiTietHoaDon ct = new entity.ChiTietHoaDon();
+                ct.setMaMon(ma);
+                ct.setTenMon(o.getTenMon());
+                ct.setSoLuong(o.getSoLuong());
+                ct.setDonGia(o.getDonGia());
+                ct.setThanhTien(o.getDonGia() * o.getSoLuong());
+                aggregated.put(ma, ct);
+            }
+        }
+        return new ArrayList<>(aggregated.values());
     }
 
     /**
@@ -1788,7 +1822,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             }
         }
         if (currentHoaDon != null) {
-            // 🔥 TRƯỜNG HỢP: NHẬN BÀN ĐÃ ĐẶT TRƯỚC (Bàn màu đỏ -> màu cam)
+            // 🔥 TRƯỜNG HỢP: NHẬN BÀN ĐÝĐẶT TRƯỚC (Bàn màu đỏ -> màu cam)
             String maHD = currentHoaDon.getMaHD();
             if (maHD != null) {
                 // Cập nhật trạng thái hóa đơn sang DANG_SU_DUNG và set giờ vào thực tế
@@ -1895,38 +1929,49 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     // =========================================================
     // Cần phải là public để Controller khác có thể gọi
     public void loadTableGrids() {
-        // 1. Tải lại ds HĐ Đang Chờ qua API
-        LocalDate dateToLoadForGrid = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue()
-                : LocalDate.now();
-        Response resInvoices = Client.sendWithParams(CommandType.GET_PENDING_INVOICES,
-                Map.of("date", dateToLoadForGrid.toString()));
-        if (resInvoices.getStatusCode() == 200 && resInvoices.getData() != null) {
-            this.dsHoaDonDatTrongNgay = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resInvoices.getData()),
-                    HoaDon.class);
-        }
-        if (this.dsHoaDonDatTrongNgay == null) {
-            this.dsHoaDonDatTrongNgay = new ArrayList<>();
-        }
-        // 2. Tải danh sách bàn qua API
-        Response resTables = Client.send(CommandType.GET_TABLES, null);
-        List<Ban> tatCaBan = null;
-        if (resTables.getStatusCode() == 200 && resTables.getData() != null) {
-            tatCaBan = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resTables.getData()), Ban.class);
-        }
-        if (tatCaBan == null) {
-            tatCaBan = new ArrayList<>();
-        }
-        List<Ban> banHienThi = new ArrayList<>();
-        LocalTime thoiGianHienTai = LocalTime.now();
-        // 2. Tính toán trạng thái hiển thị
-        for (Ban ban : tatCaBan) {
-            Ban banMoi = new Ban(ban.getMaBan(), ban.getViTri(), ban.getSucChua(), ban.getLoaiBan(),
-                    ban.getTrangThai());
-            TrangThaiBan trangThaiHienThi = getTrangThaiHienThi(banMoi, thoiGianHienTai);
-            banMoi.setTrangThai(trangThaiHienThi);
-            banHienThi.add(banMoi);
-        }
-        loadTableGridsBase(banHienThi);
+        // Chuyển việc tải dữ liệu sang luồng chạy ngầm để tránh treo UI
+        new Thread(() -> {
+            try {
+                // 1. Tải ds HĐ Đang Chờ qua API
+                LocalDate dateToLoadForGrid = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue()
+                        : LocalDate.now();
+                Response resInvoices = Client.sendWithParams(CommandType.GET_PENDING_INVOICES,
+                        Map.of("date", dateToLoadForGrid.toString()));
+                
+                final List<HoaDon> fetchedInvoices = new ArrayList<>();
+                if (resInvoices.getStatusCode() == 200 && resInvoices.getData() != null) {
+                    List<HoaDon> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resInvoices.getData()), HoaDon.class);
+                    if (list != null) fetchedInvoices.addAll(list);
+                }
+
+                // 2. Tải danh sách bàn qua API
+                Response resTables = Client.send(CommandType.GET_TABLES, null);
+                final List<HoaDon> finalInvoices = fetchedInvoices;
+                
+                Platform.runLater(() -> {
+                    this.dsHoaDonDatTrongNgay = finalInvoices;
+                    
+                    List<Ban> tatCaBan = new ArrayList<>();
+                    if (resTables.getStatusCode() == 200 && resTables.getData() != null) {
+                        List<Ban> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resTables.getData()), Ban.class);
+                        if (list != null) tatCaBan.addAll(list);
+                    }
+
+                    List<Ban> banHienThi = new ArrayList<>();
+                    LocalTime thoiGianHienTai = LocalTime.now();
+                    for (Ban ban : tatCaBan) {
+                        Ban banMoi = new Ban(ban.getMaBan(), ban.getViTri(), ban.getSucChua(), ban.getLoaiBan(),
+                                ban.getTrangThai());
+                        TrangThaiBan trangThaiHienThi = getTrangThaiHienThi(banMoi, thoiGianHienTai);
+                        banMoi.setTrangThai(trangThaiHienThi);
+                        banHienThi.add(banMoi);
+                    }
+                    loadTableGridsBase(banHienThi);
+                });
+            } catch (Exception e) {
+                System.err.println("[DatBan] Lỗi loadTableGrids: " + e.getMessage());
+            }
+        }).start();
     }
 
     private void loadTableGridsBase(List<Ban> dsBan) {
@@ -2119,131 +2164,87 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     // Cần phải là public để Controller khác có thể gọi
     // Cần phải là public để Controller khác có thể gọi
     public void loadBookingCards() {
-        vboxBookingCards.getChildren().clear();
-        LocalDate dateToLoadForGrid = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue()
-                : LocalDate.now();
-        try {
-            // 1. Lấy TẤT CẢ đơn đang chờ qua API
-            Response res = Client.send(CommandType.GET_PENDING_INVOICES, null);
-            List<HoaDon> tempBookings = new ArrayList<>();
-            if (res.getStatusCode() == 200 && res.getData() != null) {
-                List<HoaDon> fetched = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(res.getData()), HoaDon.class);
-                if (fetched != null) {
-                    tempBookings = fetched;
+        new Thread(() -> {
+            try {
+                Response res = Client.send(CommandType.GET_PENDING_INVOICES, null);
+                final List<HoaDon> allPendingBookings = new ArrayList<>();
+                if (res.getStatusCode() == 200 && res.getData() != null) {
+                    List<HoaDon> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(res.getData()), HoaDon.class);
+                    if (list != null) allPendingBookings.addAll(list);
                 }
-            }
-            final List<HoaDon> allPendingBookings = tempBookings;
-            // 2. Lấy giá trị filter và search từ UI
-            String selectedStatus = comboFilter.getValue();
-            String searchQuery = txtSearch.getText().trim().toLowerCase(); // Lấy và chuẩn hóa query
-            // 3. ÁP DỤNG FILTER VÀ SEARCH
-            List<HoaDon> filteredList = allPendingBookings.stream()
-                    // Lọc theo Trạng thái (Giữ nguyên logic gốc nhưng cho phép HOA_DON_TAM hiển
-                    // thị)
-                    .filter(hd -> {
-                        boolean statusMatch = true;
-                        if (selectedStatus != null && !selectedStatus.equals("Tất cả")) {
-                            // ... (logic lọc status giữ nguyên) ...
-                            String dbStatusValue = "";
-                            TrangThaiHoaDon selectedEnum = TrangThaiHoaDon.fromDisplayName(selectedStatus); // Chuyển
-                                                                                                            // đổi
-                                                                                                            // display
-                                                                                                            // name sang
-                                                                                                            // enum
-                            if (selectedEnum != null) {
-                                dbStatusValue = selectedEnum.getDbValue();
-                            }
-                            // Bao gồm cả HĐ Tạm nếu filter là "Đang phục vụ"
-                            if (selectedStatus.equals(TrangThaiHoaDon.DANG_SU_DUNG.getDisplayName())) {
-                                statusMatch = hd.getTrangThai() != null &&
-                                        (hd.getTrangThai() == TrangThaiHoaDon.DANG_SU_DUNG ||
-                                                hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM);
-                            } else if (!dbStatusValue.isEmpty()) {
-                                statusMatch = hd.getTrangThai() != null
-                                        && hd.getTrangThai().getDbValue().equals(dbStatusValue);
-                            } else {
-                                statusMatch = false; // Không tìm thấy trạng thái hợp lệ
-                            }
-                        }
-                        return statusMatch;
-                    })
-                    // --- 🔥 LỌC THEO TÌM KIẾM (SĐT, Mã HĐ, Mã Bàn) ---
-                    .filter(hd -> {
-                        if (searchQuery.isEmpty()) {
-                            return true; // Nếu ô tìm kiếm trống thì không lọc gì cả
-                        }
-                        // Kiểm tra SĐT (khách hàng có thể null)
-                        boolean sdtMatch = hd.getKhachHang() != null &&
-                                hd.getKhachHang().getSoDT() != null &&
-                                hd.getKhachHang().getSoDT().toLowerCase().contains(searchQuery);
-                        // Kiểm tra Mã HĐ
-                        boolean maHdMatch = hd.getMaHD() != null &&
-                                hd.getMaHD().toLowerCase().contains(searchQuery);
-                        // Kiểm tra Mã Bàn (bàn có thể null)
-                        // Cần kiểm tra cả các bàn phụ nếu là HĐ Gốc
-                        boolean maBanMatch = false;
-                        List<HoaDon> relatedHDs = new ArrayList<>();
-                        relatedHDs.add(hd); // Add chính nó
-                        if (hd.getMaHDGoc() == null) { // Nếu là HĐ Gốc, tìm HĐ Phụ trong list đã fetch
-                            List<HoaDon> subs = allPendingBookings.stream()
-                                    .filter(sub -> hd.getMaHD().equals(sub.getMaHDGoc()))
-                                    .collect(Collectors.toList());
-                            relatedHDs.addAll(subs);
-                        }
-                        // Kiểm tra mã bàn trên tất cả HĐ liên quan
-                        for (HoaDon relatedHd : relatedHDs) {
-                            if (relatedHd.getBan() != null && relatedHd.getBan().getMaBan() != null &&
-                                    relatedHd.getBan().getMaBan().toLowerCase().contains(searchQuery)) {
-                                maBanMatch = true;
-                                break;
-                            }
-                        }
-                        // Trả về true nếu khớp bất kỳ trường nào
-                        return sdtMatch || maHdMatch || maBanMatch;
-                    })
-                    // ---------------------------------------------
-                    .collect(Collectors.toList());
-            // 4. Tải các đơn trong ngày qua API (CHO LOGIC SƠ ĐỒ BÀN)
-            Response resToday = Client.sendWithParams(CommandType.GET_INVOICES_TODAY,
-                    Map.of("date", dateToLoadForGrid.toString()));
-            if (resToday.getStatusCode() == 200) {
-                this.dsHoaDonDatTrongNgay = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resToday.getData()),
-                        HoaDon.class);
-            } else {
-                this.dsHoaDonDatTrongNgay = new ArrayList<>();
-            }
-            // 5. Hiển thị danh sách ĐàLỌC (Giữ nguyên)
-            System.out.println("\n*** LOG: Tải thành công " + filteredList.size() + " đơn ĐANG CHỜ (đã lọc) ***");
-            if (filteredList.isEmpty()) {
-                // ... (hiển thị thông báo không tìm thấy) ...
-                Label lbl = new Label("Không tìm thấy đơn nào khớp.");
-                lbl.setPadding(new Insets(10));
-                vboxBookingCards.getChildren().add(lbl);
-            } else {
-                // Chỉ hiển thị HĐ Gốc (Giữ nguyên)
-                List<HoaDon> hdGocFilter = filteredList.stream()
-                        .filter(hd -> hd.getMaHDGoc() == null
-                                || (hd.getTrangThai() != null && hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM))
-                        .collect(Collectors.toList());
-                for (HoaDon hd : hdGocFilter) {
-                    VBox card = createBookingCard(hd);
-                    card.setOnMouseClicked(e -> loadHoaDonToMainInterface(hd, false));
-                    vboxBookingCards.getChildren().add(card);
+
+                LocalDate dateToLoad = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue() : LocalDate.now();
+                Response resToday = Client.sendWithParams(CommandType.GET_INVOICES_TODAY, Map.of("date", dateToLoad.toString()));
+                final List<HoaDon> todayInvoices = new ArrayList<>();
+                if (resToday.getStatusCode() == 200 && resToday.getData() != null) {
+                    List<HoaDon> list = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resToday.getData()), HoaDon.class);
+                    if (list != null) todayInvoices.addAll(list);
                 }
+
+                Platform.runLater(() -> {
+                    this.dsHoaDonDatTrongNgay = todayInvoices;
+                    vboxBookingCards.getChildren().clear();
+                    String selectedStatus = comboFilter.getValue();
+                    String searchQuery = txtSearch.getText().trim().toLowerCase();
+
+                    List<HoaDon> filteredList = allPendingBookings.stream()
+                            .filter(hd -> {
+                                if (selectedStatus == null || selectedStatus.equals("Tất cả")) return true;
+                                TrangThaiHoaDon selectedEnum = TrangThaiHoaDon.fromDisplayName(selectedStatus);
+                                if (selectedEnum == null) return true;
+                                if (selectedEnum == TrangThaiHoaDon.DANG_SU_DUNG) {
+                                    return hd.getTrangThai() == TrangThaiHoaDon.DANG_SU_DUNG || hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM;
+                                }
+                                return hd.getTrangThai() != null && hd.getTrangThai() == selectedEnum;
+                            })
+                            .filter(hd -> {
+                                if (searchQuery.isEmpty()) return true;
+                                String sdt = (hd.getKhachHang() != null) ? hd.getKhachHang().getSoDT() : "";
+                                return hd.getMaHD().toLowerCase().contains(searchQuery) || sdt.toLowerCase().contains(searchQuery);
+                            })
+                            .collect(Collectors.toList());
+
+                    List<HoaDon> hdGocFilter = filteredList.stream()
+                            .filter(hd -> hd.getMaHDGoc() == null || hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM)
+                            .collect(Collectors.toList());
+
+                    if (hdGocFilter.isEmpty()) {
+                        Label lbl = new Label("Không tìm thấy đơn nào khớp.");
+                        lbl.setPadding(new Insets(10));
+                        vboxBookingCards.getChildren().add(lbl);
+                    } else {
+                        for (HoaDon hd : hdGocFilter) {
+                            VBox card = createBookingCard(hd, allPendingBookings);
+                            card.setOnMouseClicked(e -> loadHoaDonToMainInterface(hd, false));
+                            vboxBookingCards.getChildren().add(card);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("[DatBan] Lỗi loadBookingCards ngầm: " + e.getMessage());
             }
-        } catch (Exception e) {
-            // ... (xử lý lỗi) ...
-            System.err.println("Lỗi tải danh sách đặt bàn: " + e.getMessage());
-            Label lbl = new Label("LỖI TẢI DỮ LIỆU: " + e.getMessage());
-            lbl.setPadding(new Insets(10));
-            vboxBookingCards.getChildren().add(lbl);
-        }
+        }).start();
     }
 
     // (Bên dưới hàm handleSelectBookingCard)
     /**
-     * 🔥 HÀM LOAD HÓA ĐƠN: Đã cập nhật để set giờ vào ComboBox
+     * 🔥 HÀM MỚI: Tìm và chọn một hóa đơn theo ID (Dùng để điều hướng sau khi tách)
      */
+    public void selectInvoiceById(String maHD) {
+        if (maHD == null || maHD.isEmpty())
+            return;
+        try {
+            Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHD));
+            if (res.getStatusCode() == 200) {
+                HoaDon hd = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
+                if (hd != null) {
+                    Platform.runLater(() -> loadHoaDonToMainInterface(hd, false));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     public void loadHoaDonToMainInterface(HoaDon hd, boolean isRealTimeUpdate) {
         // 0. Tự động lưu hóa đơn cũ trước khi chuyển sang hóa đơn mới (CHỈ LÀM NẾU KHÔNG PHẢI REALTIME UPDATE)
         if (!isRealTimeUpdate && this.currentHoaDon != null && this.currentHoaDon.getMaHD() != null) {
@@ -2264,8 +2265,10 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         }
         // 1. Set hóa đơn hiện tại
         this.currentHoaDon = hd;
-        // 2. KIỂM TRA GỐC/PHỤ
-        if (hd.getMaHDGoc() != null) {
+        // 2. KIỂM TRA GỐC/PHỤ (Chỉ ép về gốc nếu không phải là Hóa đơn tách)
+        boolean isSplitInvoice = "HoaDonTam".equalsIgnoreCase(hd.getTrangThai() != null ? hd.getTrangThai().getDbValue() : "");
+        
+        if (hd.getMaHDGoc() != null && !isSplitInvoice) {
             Response resGoc = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", hd.getMaHDGoc()));
             if (resGoc.getStatusCode() == 200) {
                 this.currentHoaDon = utils.JsonUtil.convertValue(resGoc.getData(), HoaDon.class);
@@ -2289,14 +2292,22 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 List<entity.ChiTietHoaDon> details = utils.JsonUtil
                         .fromJsonList(utils.JsonUtil.toJson(resDetails.getData()), entity.ChiTietHoaDon.class);
                 System.out.println("[UI-DATBAN] Tải thành công " + details.size() + " món cho HĐ: " + this.currentHoaDon.getMaHD());
+                // 🔥 SỬA: Gộp món khi load từ Server về UI
+                java.util.Map<String, MonOrder> aggregatedMap = new java.util.LinkedHashMap<>();
                 for (entity.ChiTietHoaDon ct : details) {
-                    String key = (ct.getTenMon() != null) ? ct.getTenMon() : "Unknown";
-                    monOrderList.add(new MonOrder(key, ct.getTenMon(), ct.getDonGia(), ct.getSoLuong()));
+                    String maMon = ct.getMaMon() != null ? ct.getMaMon() : ct.getTenMon();
+                    if (aggregatedMap.containsKey(maMon)) {
+                        MonOrder existing = aggregatedMap.get(maMon);
+                        existing.setSoLuong(existing.getSoLuong() + ct.getSoLuong());
+                    } else {
+                        aggregatedMap.put(maMon, new MonOrder(maMon, ct.getTenMon(), ct.getDonGia(), ct.getSoLuong()));
+                    }
                 }
+                monOrderList.addAll(aggregatedMap.values());
             }
         }
         // ---------------------------------------------------------
-        // 🔥 ĐOẠN LOGIC MỚI: LOAD ƯU ĐÃI TỪ HÓA ĐƠN LÊN COMBOBOX
+        // 🔥 ĐOẠN LOGIC MỚI: LOAD ƯU ĐíI TỪ HÓA ĐƠN LÊN COMBOBOX
         // ---------------------------------------------------------
         // Mặc định là null
         this.selectedUuDai = null;
@@ -2344,7 +2355,12 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             // Mặc định chọn giờ đầu tiên hoặc giờ hiện tại
             comboThoiGian.getSelectionModel().selectFirst();
         }
-        txtTienCoc.setText(String.format("%,.0f", currentHoaDon.getTienCoc()));
+        // 🔥 SỬA: Nếu là hóa đơn phụ (tách bàn), tiền cọc = 0 (vì tiền cọc nằm ở hóa đơn gốc)
+        double hienThiTienCoc = currentHoaDon.getTienCoc();
+        if (currentHoaDon.getMaHDGoc() != null && !currentHoaDon.getMaHDGoc().isEmpty()) {
+            hienThiTienCoc = 0;
+        }
+        txtTienCoc.setText(String.format("%,.0f", hienThiTienCoc));
         // 6. Populate Label Bàn
         String tatCaBan = currentHoaDonGocVaPhu.stream()
                 .map(h -> (h.getBan() != null) ? h.getBan().getMaBan() : "N/A")
@@ -2364,7 +2380,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             else if (dbVal.equals(TrangThaiHoaDon.DAT.getDbValue()))
                 displayStatus = "Đã đặt";
             else if (dbVal.equals(TrangThaiHoaDon.CHO_XAC_NHAN.getDbValue()))
-                displayStatus = "Chá»  xác nhận";
+                displayStatus = "Chờ xác nhận";
             else
                 displayStatus = "";
             comboTrangThaiHienTai.setValue(displayStatus);
@@ -2393,10 +2409,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             vboxReceipt.setVisible(false);
     }
 
-    /**
-     * Tạo thẻ booking hiển thị bên trái với nút chức năng thông minh.
-     */
-    private VBox createBookingCard(HoaDon hd) {
+    private VBox createBookingCard(HoaDon hd, List<HoaDon> allPendingBookings) {
         // 1. Khởi tạo Card
         VBox card = new VBox(8);
         card.getStyleClass().add("booking-card");
@@ -2407,42 +2420,28 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         String trangThaiDb = hd.getTrangThai() != null ? hd.getTrangThai().getDbValue() : "Unknown";
         String trangThaiViet = switch (trangThaiDb) {
             case "Dat" -> "Đã đặt";
-            case "DangSuDung" -> "Đã nhận bàn"; // Tên mới theo yêu cầu
+            case "DangSuDung" -> "Đã nhận bàn";
             case "HoaDonTam" -> "Hóa đơn tách";
-            case "ChoXacNhan" -> "Chá»  xác nhận";
+            case "ChoXacNhan" -> "Chờ xác nhận";
             default -> trangThaiDb;
         };
         String gioVao = (hd.getGioVao() != null) ? hd.getGioVao().toLocalTime().format(timeFormatter) : "N/A";
         String sdtKhach = (hd.getKhachHang() != null && hd.getKhachHang().getSoDT() != null)
                 ? hd.getKhachHang().getSoDT()
                 : "N/A";
-        // 3. Logic tìm tên bàn (Bao gồm cả bàn của HĐ Phụ)
+        // 3. Logic tìm tên bàn (SỬA LẠI: Tìm từ list CỤC BỘ thay vì gọi API N+1)
         String danhSachBanDayDu = "N/A";
         try {
             List<HoaDon> allRelatedHDs = new ArrayList<>();
-            String maHDGocDeTim;
-            // Xác định HĐ Gốc
-            if (hd.getMaHDGoc() == null) {
-                maHDGocDeTim = hd.getMaHD();
-                allRelatedHDs.add(hd);
-            } else {
-                maHDGocDeTim = hd.getMaHDGoc();
-                Response resGoc = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGocDeTim));
-                if (resGoc.getStatusCode() == 200) {
-                    allRelatedHDs.add(utils.JsonUtil.convertValue(resGoc.getData(), HoaDon.class));
+            String maHDGocDeTim = (hd.getMaHDGoc() == null) ? hd.getMaHD() : hd.getMaHDGoc();
+            
+            // Tìm tất cả hóa đơn có cùng mã gốc (hoặc bản thân nó là gốc)
+            for (HoaDon item : allPendingBookings) {
+                if (item.getMaHD().equals(maHDGocDeTim) || maHDGocDeTim.equals(item.getMaHDGoc())) {
+                    allRelatedHDs.add(item);
                 }
             }
-            // Tìm các HĐ Phụ
-            Response resSub = Client.sendWithParams(CommandType.GET_SUB_INVOICES, Map.of("maHDGoc", maHDGocDeTim));
-            List<HoaDon> hdPhuList = new ArrayList<>();
-            if (resSub.getStatusCode() == 200) {
-                hdPhuList = utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resSub.getData()), HoaDon.class);
-            }
-            for (HoaDon hp : hdPhuList) {
-                if (!allRelatedHDs.stream().anyMatch(h -> h.getMaHD().equals(hp.getMaHD()))) {
-                    allRelatedHDs.add(hp);
-                }
-            }
+
             // Gom danh sách mã bàn
             Set<String> uniqueBanSet = allRelatedHDs.stream()
                     .filter(h -> h.getBan() != null && h.getBan().getMaBan() != null
@@ -2460,7 +2459,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         Label lblSDT = new Label("SĐT: " + sdtKhach);
         Label lblTrangThai = new Label("Trạng thái: " + trangThaiViet);
         lblTrangThai.getStyleClass().add("booking-status-" + trangThaiDb.toLowerCase()); // CSS class theo trạng thái
-        Label lblThoiGian = new Label("Giá» : " + gioVao);
+        Label lblThoiGian = new Label("Giờ : " + gioVao);
         Label lblBan = new Label("Bàn: " + danhSachBanDayDu);
         // 5. 🔥 TẠO NÚT "SMART CommandType" 🔥
         Button btnSmartAction = new Button();
@@ -2470,16 +2469,16 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         // --- CẤU HÌNH NÚT THEO TRẠNG THàI ---
         TrangThaiHoaDon ttEnum = hd.getTrangThai();
         if (ttEnum == TrangThaiHoaDon.DAT) {
-            // Trưá» ng hợp 1: ĐàĐẶT -> Hành động: NHẬN BÀN
+            // Trưọng hợp 1: ĐàĐẶT -> Hành động: NHẬN BÀN
             btnSmartAction.setText("▶ Nhận bàn ngay");
             btnSmartAction.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
             btnSmartAction.setOnAction(e -> {
                 e.consume();
-                handleNhanBanNhanh(hd); // Gá» i hàm nhận bàn
+                handleNhanBanNhanh(hd); // Gọi hàm nhận bàn
             });
         } else if (ttEnum == TrangThaiHoaDon.CHO_XAC_NHAN) {
-            // Trưá» ng hợp 2: CHỜ CỌC -> Hành động: XàC NHẬN CỌC
-            btnSmartAction.setText("💰 Xác nhận cá» c");
+            // Trưọng hợp 2: CHỜ CỌC -> Hành động: XàC NHẬN CỌC
+            btnSmartAction.setText("💰 Xác nhận cọc");
             btnSmartAction.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;");
             btnSmartAction.setOnAction(e -> {
                 e.consume();
@@ -2487,7 +2486,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 openThanhToanCocPopup();
             });
         } else if (ttEnum == TrangThaiHoaDon.DANG_SU_DUNG || ttEnum == TrangThaiHoaDon.HOA_DON_TAM) {
-            // Trưá» ng hợp 3: ĐANG PHỤC VỤ / ĐàNHẬN BÀN -> Hành động: THANH TOàN
+            // Trưọng hợp 3: ĐANG PHỤC VỤ / ĐàNHẬN BÀN -> Hành động: THANH TOàN
             btnSmartAction.setText("💲 Thanh toán");
             btnSmartAction.setStyle("-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold;");
             btnSmartAction.setOnAction(e -> {
@@ -2496,7 +2495,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 handleThanhToan();
             });
         } else {
-            // Trưá» ng hợp khác: Chỉ xem
+            // Trưọng hợp khác: Chỉ xem
             btnSmartAction.setText("Xem chi tiết");
             btnSmartAction.setOnAction(e -> {
                 e.consume();
@@ -2514,51 +2513,36 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
      * Cập nhật cả HĐ Gốc và các HĐ Phụ, cập nhật màu bàn.
      */
     private void handleNhanBanNhanh(HoaDon hd) {
-        // 1. Xác định HĐ Gốc
-        String maHDGoc = (hd.getMaHDGoc() != null) ? hd.getMaHDGoc() : hd.getMaHD();
-        try {
-            // 2. Tìm tất cả HĐ liên quan (Gốc + Phụ) qua API
-            List<HoaDon> allRelated = new ArrayList<>();
-            Response resGoc = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGoc));
-            if (resGoc.getStatusCode() == 200) {
-                allRelated.add(utils.JsonUtil.convertValue(resGoc.getData(), HoaDon.class));
-            }
-            Response resSub = Client.sendWithParams(CommandType.GET_SUB_INVOICES, Map.of("maHDGoc", maHDGoc));
-            if (resSub.getStatusCode() == 200) {
-                allRelated.addAll(utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resSub.getData()), HoaDon.class));
-            }
-            // 3. Cập nhật DB: Chuyển tất cả sang DANG_SU_DUNG
-            String newStatusDb = TrangThaiHoaDon.DANG_SU_DUNG.getDbValue();
-            String newBanStatus = TrangThaiBan.DANG_SU_DUNG.getDbValue();
-            for (HoaDon item : allRelated) {
-                // Update Hóa đơn qua API
-                Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of(
-                        "maHD", item.getMaHD(),
-                        "trangThai", newStatusDb));
-                // Update Bàn qua API
-                if (item.getBan() != null) {
-                    Client.sendWithParams(CommandType.UPDATE_TABLE_STATUS, Map.of(
-                            "maBan", item.getBan().getMaBan(),
-                            "newStatus", newBanStatus));
+        new Thread(() -> {
+            String maHDGoc = (hd.getMaHDGoc() != null) ? hd.getMaHDGoc() : hd.getMaHD();
+            try {
+                List<HoaDon> allRelated = new ArrayList<>();
+                Response resGoc = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGoc));
+                if (resGoc.getStatusCode() == 200) {
+                    allRelated.add(utils.JsonUtil.convertValue(resGoc.getData(), HoaDon.class));
                 }
+                Response resSub = Client.sendWithParams(CommandType.GET_SUB_INVOICES, Map.of("maHDGoc", maHDGoc));
+                if (resSub.getStatusCode() == 200) {
+                    allRelated.addAll(utils.JsonUtil.fromJsonList(utils.JsonUtil.toJson(resSub.getData()), HoaDon.class));
+                }
+
+                String newStatusDb = TrangThaiHoaDon.DANG_SU_DUNG.getDbValue();
+                String newBanStatus = TrangThaiBan.DANG_SU_DUNG.getDbValue();
+                for (HoaDon item : allRelated) {
+                    Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of("maHD", item.getMaHD(), "trangThai", newStatusDb));
+                    if (item.getBan() != null) {
+                        Client.sendWithParams(CommandType.UPDATE_TABLE_STATUS, Map.of("maBan", item.getBan().getMaBan(), "newStatus", newBanStatus));
+                    }
+                }
+                Platform.runLater(() -> {
+                    showAlert(Alert.AlertType.INFORMATION, "Nhận bàn thành công", "Đã nhận bàn cho HĐ " + maHDGoc + ". Khách bắt đầu sử dụng.");
+                    loadTableGrids();
+                    loadBookingCards();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Lỗi", "Lỗi nhận bàn: " + e.getMessage()));
             }
-            // 4. Thông báo và Refresh
-            showAlert(Alert.AlertType.INFORMATION, "Nhận bàn thành công",
-                    "Đã nhận bàn cho HĐ " + maHDGoc + ". Khách bắt đầu sử dụng.");
-            // 5. 🔥 TỰ ĐỘNG LOAD VÀ CẬP NHẬT
-            loadTableGrids();
-            loadBookingCards();
-            loadTableGrids();
-            // Tìm lại HĐ mới nhất qua API để có trạng thái đúng
-            Response resMoi = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGoc));
-            if (resMoi.getStatusCode() == 200) {
-                HoaDon hdMoi = utils.JsonUtil.convertValue(resMoi.getData(), HoaDon.class);
-                loadHoaDonToMainInterface(hdMoi, false);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể nhận bàn: " + e.getMessage());
-        }
+        }).start();
     }
 
     // =========================================================
@@ -2599,7 +2583,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
 
     private void setupMonAnTable() {
         colTenMon.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTenMon()));
-        // Format giá tiá» n hiển thị cho đẹp (VD: 120,000)
+        // Format giá tiọn hiển thị cho đẹp (VD: 120,000)
         colGia.setCellValueFactory(cellData -> cellData.getValue().giaProperty());
         colGia.setCellFactory(tc -> new TableCell<MonAn, Number>() {
             @Override
@@ -2649,9 +2633,9 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         });
         // 🔥 NÚT CHỌN: MÀU XANH Là
         colChon.setCellFactory(tc -> new TableCell<MonAn, Void>() {
-            final Button btn = new Button("Chá» n");
+            final Button btn = new Button("chọn");
             {
-                // Style cho nút Chá» n
+                // Style cho nút chọn
                 btn.setStyle(
                         "-fx-background-color: #2f9e44; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
                 btn.setPrefWidth(60);
@@ -2688,7 +2672,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             final Button btnMinus = new Button("-");
             final Button btnPlus = new Button("+");
             {
-                // Style nút Trừ (-) : Màu Cam/Đá» nhạt
+                // Style nút Trừ (-) : Màu Cam/Đọnhạt
                 btnMinus.setStyle(
                         "-fx-background-color: #f08c00; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 30px; -fx-cursor: hand;");
                 // Style nút Cộng (+) : Màu Xanh dương
@@ -2724,7 +2708,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         colOrderHuy.setCellFactory(tc -> new TableCell<MonOrder, Void>() {
             final Button btnHuy = new Button("X");
             {
-                // Style nút Hủy : Màu Đá» đậm
+                // Style nút Hủy : Màu Đọđậm
                 btnHuy.setStyle(
                         "-fx-background-color: #e03131; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 30px; -fx-cursor: hand;");
                 btnHuy.setOnAction(event -> {
@@ -2788,7 +2772,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             currentHoaDon.setPhiDichVu(phiDichVu);
             currentHoaDon.setThueVAT(thueVAT);
         }
-        // 4. Tiá» n cá» c
+        // 4. Tiọn cọc
         double tienCocDaThanhToan = 0.0;
         try {
             String tienCocRaw = txtTienCoc.getText().replaceAll("[^0-9.]", "");
@@ -2814,7 +2798,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     }
 
     public void clearFormDatBan() {
-        // 1. Clear các trưá» ng nhập liệu
+        // 1. Clear các trưọng nhập liệu
         comboThoiGian.getSelectionModel().selectFirst();
         datePickerThoiGianDen.setValue(LocalDate.now()); //
         txtTenKhachHang.clear(); //
@@ -2823,7 +2807,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         txtYeuCau.clear(); //
         txtTienCoc.clear(); //
         if (lblBanDangChon != null)
-            lblBanDangChon.setText("Chưa chá» n"); //
+            lblBanDangChon.setText("Chưa chọn"); //
         if (lblTrangThaiBan != null)
             lblTrangThaiBan.setText("Trống"); //
         monOrderList.clear(); //
@@ -2839,7 +2823,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 if (hdCu.getBan() != null) {
                     Button btn = tableButtonMap.get(hdCu.getBan().getMaBan());
                     if (btn != null) {
-                        // Trả bàn vá» trạng thái thực tế (tính toán lại theo giá» hiện tại)
+                        // Trả bàn vọtrạng thái thực tế (tính toán lại theo giọhiện tại)
                         Ban banHienTai = hdCu.getBan();
                         TrangThaiBan trangThaiThuc = getTrangThaiHienThi(banHienTai, LocalTime.now());
                         applyTableStyle(btn, trangThaiThuc);
@@ -2849,23 +2833,23 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         }
         currentHoaDonGocVaPhu.clear(); // Reset list HĐ gốc/phụ
         // =========================================================================
-        // 2. Reset màu của các bàn ĐANG CHỌN (màu xanh lá) vá» màu gốc
+        // 2. Reset màu của các bàn ĐANG CHỌN (màu xanh lá) vọmàu gốc
         for (Button btn : selectedButtonList) { //
-            // Tìm đối tượng Ban tương ứng (cần để gá» i getTrangThaiHienThi)
+            // Tìm đối tượng Ban tương ứng (cần để gọi getTrangThaiHienThi)
             Ban banGoc = selectedBanList.stream()
                     .filter(b -> selectedButtonList.indexOf(btn) == selectedBanList.indexOf(b))
                     .findFirst().orElse(null);
             if (banGoc != null) {
                 TrangThaiBan trangThaiGoc = getTrangThaiHienThi(banGoc, LocalTime.now()); //
-                applyTableStyle(btn, trangThaiGoc); // Trả lại màu trắng/đá» tùy trạng thái gốc
+                applyTableStyle(btn, trangThaiGoc); // Trả lại màu trắng/đọtùy trạng thái gốc
             } else {
-                // Fallback: Nếu không tìm thấy Ban, cứ trả vá» màu trắng
+                // Fallback: Nếu không tìm thấy Ban, cứ trả vọmàu trắng
                 applyTableStyle(btn, TrangThaiBan.TRONG);
             }
         }
-        selectedBanList.clear(); // Xóa danh sách bàn đang chá» n
-        selectedButtonList.clear(); // Xóa danh sách nút đang chá» n
-        // 🔥 THÊM MỚI: Vô hiệu hóa nút Thanh toán cá» c
+        selectedBanList.clear(); // Xóa danh sách bàn đang chọn
+        selectedButtonList.clear(); // Xóa danh sách nút đang chọn
+        // 🔥 THÊM MỚI: Vô hiệu hóa nút Thanh toán cọc
         if (btnThanhToanCoc != null) {
             btnThanhToanCoc.setDisable(true);
         }
@@ -2873,7 +2857,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         isBookingConfirmed = false; //
         currentHoaDon = null; // Reset hóa đơn đang xem
         this.daThanhToanCoc = false;
-        // 4. Cập nhật hiển thị nút vá» trạng thái TẠO MỚI
+        // 4. Cập nhật hiển thị nút vọtrạng thái TẠO MỚI
         updateButtonVisibility(false); //
     }
 
@@ -2891,7 +2875,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         LocalTime end = LocalTime.of(22, 0);
         LocalTime limit = LocalTime.now();
         while (!start.isAfter(end)) {
-            // Nếu chá» n hôm nay, chỉ hiện các giá» sau hiện tại 15 phút
+            // Nếu chọn hôm nay, chỉ hiện các giọsau hiện tại 15 phút
             if (ngayChon.equals(LocalDate.now())) {
                 if (start.isAfter(limit.plusMinutes(15))) {
                     dynamicSlots.add(start.format(timeFormatter));
@@ -2907,7 +2891,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     }
 
     // =========================================================
-    // XỬ Là TÌM BÀN TRá» NG - LOGIC Tá» I ƯU (SMART FIT)
+    // XỬ Là TÌM BÀN TRọNG - LOGIC TọI ƯU (SMART FIT)
     // =========================================================
     private void handleTimBanTrong() {
         LocalDate ngay;
@@ -2932,14 +2916,14 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 }
             }
             if (ngay == null || gioStr == null || gioStr.trim().isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chá» n Ngày và Giá» .");
+                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Ngày và Giờ .");
                 return;
             }
             gio = LocalTime.parse(gioStr, timeFormatter);
             LocalDateTime thoiGianChon = ngay.atTime(gio);
             if (thoiGianChon.isBefore(LocalDateTime.now())) {
-                showAlert(Alert.AlertType.ERROR, "Thá» i gian khýng hợp lệ",
-                        "Bạn không thể đặt bàn cho thá» i điểm đã trôi qua. Vui lòng chá» n lại!");
+                showAlert(Alert.AlertType.ERROR, "Thọi gian khýng hợp lệ",
+                        "Bạn không thể đặt bàn cho thọi điểm đã trôi qua. Vui lòng chọn lại!");
                 return;
             }
             ts = java.sql.Timestamp.valueOf(thoiGianChon);
@@ -2980,11 +2964,11 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 if (khuVucChon != null && soLuongKhach > 0) {
                     if (khuVucChon.equals("Tự động")) {
                         // --- A. PHÂN LOẠI KHU VỰC ---
-                        // Nhóm < 9 ngưá» i: Ẩn Phòng riêng (để dành phòng cho nhóm 9-10 trở lên)
+                        // Nhóm < 9 ngưọi: Ẩn Phòng riêng (để dành phòng cho nhóm 9-10 trở lên)
                         if (soLuongKhach < 9 && ban.getLoaiBan() == LoaiBan.PHONG) {
                             passKhuVuc = false;
                         }
-                        // Nhóm >= 10 ngưá» i: Ẩn bàn Sảnh (thưá» ng bàn sảnh chỉ max 8)
+                        // Nhóm >= 10 ngưọi: Ẩn bàn Sảnh (thưọng bàn sảnh chỉ max 8)
                         else if (soLuongKhach >= 10 && ban.getLoaiBan() != LoaiBan.PHONG) {
                             passKhuVuc = false;
                         }
@@ -3004,7 +2988,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                             }
                         }
                     }
-                    // Logic lá» c cứng nếu user chá» n cụ thể Khu vực (Tầng trệt/1/Phòng)
+                    // Logic lọc cứng nếu user chọn cụ thể Khu vực (Tầng trệt/1/Phòng)
                     else if (!khuVucChon.equals("Tất cả")) {
                         if (khuVucChon.equals("Tầng trệt") && ban.getLoaiBan() != LoaiBan.TANG_TRET)
                             passKhuVuc = false;
@@ -3031,12 +3015,12 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             if (banHienThi.isEmpty()) {
                 String msg = "Không tìm thấy bàn trống phù hợp.";
                 if (soLuongKhach > 0 && "Tự động".equals(khuVucChon)) {
-                    msg += "\n(Hệ thống đang ẩn các bàn quá rộng hoặc quá chật để tối ưu. Hãy thử chá» n khu vực 'Tất cả' để xem toàn bộ bàn).";
+                    msg += "\n(Hệ thống đang ẩn các bàn quá rộng hoặc quá chật để tối ưu. Hãy thử chọn khu vực 'Tất cả' để xem toàn bộ bàn).";
                 }
                 showAlert(Alert.AlertType.INFORMATION, "Thông báo", msg);
             }
         } catch (java.time.format.DateTimeParseException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi định dạng", "Giá»  không hợp lệ.");
+            showAlert(Alert.AlertType.ERROR, "Lỗi định dạng", "Giờ  không hợp lệ.");
         } catch (Exception ex) {
             ex.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể tìm bàn: " + ex.getMessage());
@@ -3085,17 +3069,30 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     // HÀNH ĐỘNG CHO HÓA ĐƠN CŨ (SỬA, HỦY, ĐỔI)
     // =========================================================
     /**
-     * 🔥 XỬ Là SỬA HÓA ĐƠN (Thông tin KH, Tiá» n cá» c, Danh sách món)
+     * 🔥 XỬ Là SỬA HÓA ĐƠN (Thông tin KH, Tiọn cọc, Danh sách món)
      */
 
     // ui.DatBan.java
     /**
-     * 🔥 XỬ Là SỬA HÓA ĐƠN (Thông tin KH, Tiá» n cá» c, Danh sách món, VÀ KHUYẾN
-     * MÃI)
+     * 🔥 XỬ Là SỬA HÓA ĐƠN (Thông tin KH, Tiọn cọc, Danh sách món, VÀ KHUYẾN
+     * MíI)
      */
+    // 🔥 THÊM: Bộ đệm để tránh lag khi chọn món liên tục
+    private javafx.animation.Timeline saveDelayTimeline;
+
     private void handleSuaHoaDon() {
+        if (saveDelayTimeline != null) {
+            saveDelayTimeline.stop();
+        }
+        saveDelayTimeline = new javafx.animation.Timeline(new javafx.animation.KeyFrame(
+                javafx.util.Duration.millis(800), // Đợi 800ms sau lần click cuối mới lưu
+                e -> performSuaHoaDonActual()));
+        saveDelayTimeline.play();
+    }
+
+    private void performSuaHoaDonActual() {
         if (currentHoaDon == null) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không có hóa đơn nào được chá» n để sửa.");
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không có hóa đơn nào được chọn để sửa.");
             return;
         }
         try {
@@ -3124,39 +3121,31 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 tienCoc = Double.parseDouble(tienCocRaw.isEmpty() ? "0" : tienCocRaw);
             } catch (NumberFormatException e) {
             }
-            // 3. Cập nhật thông tin chính qua API
-            Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of(
-                    "maHD", currentHoaDon.getMaHD(),
-                    "soDT", kh.getSoDT(),
-                    "tienCoc", tienCoc));
-            // 4. Cập nhật chi tiết món ăn qua API (Sử dụng CREATE_ORDER logic để ghi đè
-            // hoặc UPDATE_INVOICE_DETAILS)
-            // Giả sử có CommandType.UPDATE_INVOICE_DETAILS
-            Client.sendWithParams(CommandType.UPDATE_INVOICE, Map.of(
-                    "maHD", currentHoaDon.getMaHD(),
-                    "itemsJson", utils.JsonUtil.toJson(convertToChiTiet(monOrderList))));
-            // ---------------------------------------------------------
-            // 🔥 ĐOẠN LOGIC MỚI BỔ SUNG: CẬP NHậT KHUYẾN MÃI
-            // ---------------------------------------------------------
-            // Tính toán tổng tiá» n món để tính % giảm giá
-            double tongTienMon = monOrderList.stream().mapToDouble(m -> m.getDonGia() * m.getSoLuong()).sum();
-            double tienKhuyenMai = 0;
-            String maUuDai = null;
+            // 3. Gộp tất cả thay đổi vào MỘT yêu cầu mạng duy nhất để tránh lag
+            Map<String, Object> updateParams = new java.util.HashMap<>();
+            updateParams.put("maHD", currentHoaDon.getMaHD());
+            updateParams.put("soDT", kh.getSoDT());
+            updateParams.put("tenKH", kh.getTenKH());
+            updateParams.put("tienCoc", tienCoc);
+            updateParams.put("itemsJson", utils.JsonUtil.toJson(convertToChiTiet(monOrderList)));
+            
             if (selectedUuDai != null) {
-                maUuDai = selectedUuDai.getMaUuDai();
-                // Tính tiá» n giảm giá dựa trên % giá trị ưu đãi
-                tienKhuyenMai = tongTienMon * (selectedUuDai.getGiaTri() / 100.0);
+                updateParams.put("maUuDai", selectedUuDai.getMaUuDai());
             }
-            // Gá» i API cập nhật khuyến mãi
-            Client.sendWithParams(CommandType.UPDATE_INVOICE_PROMO, Map.of(
-                    "maHD", currentHoaDon.getMaHD(),
-                    "maUuDai", maUuDai != null ? maUuDai : "",
-                    "tienKhuyenMai", tienKhuyenMai));
+
+            Client.sendWithParams(CommandType.UPDATE_INVOICE, updateParams);
+            System.out.println("[PERF] Đã lưu hóa đơn tự động (Gộp + Debounced).");
             // Cập nhật lại object hiện tại trên RAM để đồng bộ
-            currentHoaDon.setMaUuDai(maUuDai);
-            currentHoaDon.setKhuyenMai(tienKhuyenMai);
+            if (selectedUuDai != null) {
+                currentHoaDon.setMaUuDai(selectedUuDai.getMaUuDai());
+                double tongTienMon = monOrderList.stream().mapToDouble(m -> m.getDonGia() * m.getSoLuong()).sum();
+                currentHoaDon.setKhuyenMai(tongTienMon * (selectedUuDai.getGiaTri() / 100.0));
+            } else {
+                currentHoaDon.setMaUuDai(null);
+                currentHoaDon.setKhuyenMai(0.0);
+            }
             // ---------------------------------------------------------
-            // Chỉ hiện thông báo thành công nếu ngưá» i dùng nhấn nút Sửa Món
+            // Chỉ hiện thông báo thành công nếu ngưọi dùng nhấn nút Sửa Món
             if (btnSuaMon.isFocused()) {
                 showAlert(Alert.AlertType.INFORMATION, "Thành công",
                         "Đã cập nhật Hóa đơn " + currentHoaDon.getMaHD() + " thành công.");
@@ -3312,10 +3301,18 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             if (resDetails.getStatusCode() == 200) {
                 List<entity.ChiTietHoaDon> details = utils.JsonUtil
                         .fromJsonList(utils.JsonUtil.toJson(resDetails.getData()), entity.ChiTietHoaDon.class);
+                // 🔥 Gộp món khi load lại cho thanh toán
+                java.util.Map<String, MonOrder> aggregatedMap = new java.util.LinkedHashMap<>();
                 for (entity.ChiTietHoaDon ct : details) {
-                    String key = (ct.getTenMon() != null) ? ct.getTenMon() : "Unknown";
-                    monOrderList.add(new MonOrder(key, ct.getTenMon(), ct.getDonGia(), ct.getSoLuong()));
+                    String maMon = ct.getMaMon() != null ? ct.getMaMon() : ct.getTenMon();
+                    if (aggregatedMap.containsKey(maMon)) {
+                        MonOrder existing = aggregatedMap.get(maMon);
+                        existing.setSoLuong(existing.getSoLuong() + ct.getSoLuong());
+                    } else {
+                        aggregatedMap.put(maMon, new MonOrder(maMon, ct.getTenMon(), ct.getDonGia(), ct.getSoLuong()));
+                    }
                 }
+                monOrderList.addAll(aggregatedMap.values());
             }
         }
         // 3. Tính toán lại tổng tiền
@@ -3384,21 +3381,8 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 } else {
                 }
             }
-            // 6. ĐỔ DỮ LIỆU TỔNG TIỀN VÀO CÁC LABEL
-            currentHoaDon.setTongCongMonAn(monOrderList.stream()
-                    .mapToDouble(order -> order.getDonGia() * order.getSoLuong()).sum());
-            if (lblTongTienMonAn != null)
-                lblTongTienMonAn.setText(String.format("%,.0f Đ", currentHoaDon.getTongCongMonAn()));
-            if (lblPhiDichVu != null)
-                lblPhiDichVu.setText(String.format("%,.0f Đ", currentHoaDon.getPhiDichVu()));
-            if (lblThueVAT != null)
-                lblThueVAT.setText(String.format("%,.0f Đ", currentHoaDon.getThueVAT()));
-            if (lblTienCocSummary != null)
-                lblTienCocSummary.setText(String.format("%,.0f Đ", currentHoaDon.getTienCoc()));
-            if (lblKhuyenMai != null)
-                lblKhuyenMai.setText(String.format("%,.0f Đ", currentHoaDon.getKhuyenMai()));
-            if (lblTongTienThanhToan != null)
-                lblTongTienThanhToan.setText(String.format("%,.0f Đ", currentHoaDon.getTongTienThanhToan()));
+            // 6. TÍNH TOÁN VÀ HIỂN THỊ TỔNG TIỀN (Sử dụng hàm tập trung để tránh sai lệch)
+            calculateTotal();
         }
     }
 
@@ -3551,9 +3535,25 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 .filter(hd -> hd.getBan() != null)
                 .anyMatch(hd -> hd.getBan().getMaBan().equals(ban.getMaBan()));
     }
-
-    @Override
-    public java.util.function.Consumer<network.RealTimeEvent> getRealTimeListener() {
-        return realTimeListener;
+    /**
+     * 🔥 THÊM MỚI: Tự động tìm tên khách hàng khi gõ số điện thoại
+     */
+    private void handleTimKhachHangNhanh(String phone) {
+        try {
+            Response res = Client.sendWithParams(CommandType.FIND_CUSTOMER_BY_PHONE, java.util.Map.of("phone", phone));
+            if (res.getStatusCode() == 200 && res.getData() != null) {
+                entity.KhachHang kh = utils.JsonUtil.convertValue(res.getData(), entity.KhachHang.class);
+                if (kh != null && kh.getTenKH() != null) {
+                    javafx.application.Platform.runLater(() -> {
+                        // Chỉ điền tên nếu ô tên đang trống để tránh ghi đè dữ liệu nhân viên đang nhập dở
+                        if (txtTenKhachHang.getText() == null || txtTenKhachHang.getText().trim().isEmpty() || txtTenKhachHang.getText().startsWith("Khách ")) {
+                            txtTenKhachHang.setText(kh.getTenKH());
+                        }
+                    });
+                }
+            }
+        } catch (Exception e) {
+            // Im lặng bỏ qua nếu không tìm thấy (Khách mới)
+        }
     }
 }
