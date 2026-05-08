@@ -190,8 +190,8 @@ private static void seedCustomers() {
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("customerId", s(c[0]));
         item.put("name",       s(c[1]));
-        item.put("type",       s(c[2]));
-        item.put("points",     n(c[3]));
+        item.put("membership",  s(c[2]));
+        item.put("diemTichLuy", n(c[3]));
         ddb.putItem(PutItemRequest.builder().tableName("Customers").item(item).build());
     }
     System.out.println("✓ Đã nạp 3 khách hàng mẫu.");
