@@ -105,7 +105,48 @@ const BookingScreen = () => {
     }
     try {
       setLoading(true);
-      const res = await ApiService.getTables();
+
+      // 🔥 [KIỂM TRA] Xem khách hàng có đơn nào đang chờ xác nhận không TRƯỚC KHI tìm bàn
+      const checkRes = await SocketService.request('GET_INVOICES_BY_CUSTOMER', { maKH: phone });
+      
+      if (checkRes.statusCode === 200 && checkRes.data) {
+        const pendingInvoice = checkRes.data.find(inv => inv.trangThai === 'ChoXacNhan');
+        if (pendingInvoice) {
+            Alert.alert(
+                'Thông báo', 
+                'Bạn đang có một đơn đặt bàn chưa hoàn tất. Vui lòng thanh toán cọc hoặc hủy đơn cũ trước khi đặt đơn mới.',
+                [
+                    { text: 'Thanh toán ngay', onPress: () => {
+                        setCurrentInvoice({
+                            maHD: pendingInvoice.maHD,
+                            maBan: pendingInvoice.maBan,
+                            tienCoc: pendingInvoice.tienCoc || 150000
+                        });
+                        setPaymentModalVisible(true);
+                    }},
+                    { text: 'Hủy đặt bàn này', style: 'destructive', onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await SocketService.request('CANCEL_INVOICE', { 
+                                maHD: pendingInvoice.maHD, 
+                                trangThai: 'DaHuy' 
+                            });
+                            Alert.alert('Thành công', 'Đã hủy đơn đặt bàn cũ.');
+                        } catch (err) {
+                            Alert.alert('Lỗi', 'Không thể hủy đơn: ' + err.message);
+                        } finally {
+                            setLoading(false);
+                        }
+                    }},
+                    { text: 'Đóng', style: 'cancel' }
+                ]
+            );
+            return;
+        }
+      }
+
+      // Sử dụng SocketService để đồng bộ với Java Server
+      const res = await SocketService.request('GET_TABLES');
       if (res.statusCode === 200) {
         const filtered = res.data.filter(table => 
           table.trangThai === 'Trong' && 
@@ -587,10 +628,7 @@ const BookingScreen = () => {
       <Modal visible={paymentModalVisible} animationType="fade" transparent>
         <StyledView className="flex-1 bg-black/70 justify-center items-center p-6">
            <StyledView className="bg-white w-full rounded-[40px] p-8 items-center">
-              <StyledText className="text-2xl font-bold text-gray-800 mb-2">Thanh toán cọc</StyledText>
-              <StyledText className="text-gray-500 mb-6 text-center">
-                Vui lòng chuyển khoản {getDepositAmount(selectedTable).toLocaleString()}đ để hoàn tất đặt bàn.
-              </StyledText>
+              <StyledText className="text-2xl font-bold text-gray-800 mb-2">Thanh toán</StyledText>
               
               <StyledView className="bg-white p-4 rounded-3xl border border-gray-100 shadow-xl mb-6">
                  <Image 
@@ -603,11 +641,11 @@ const BookingScreen = () => {
               <StyledView className="w-full bg-gray-50 p-4 rounded-2xl mb-8">
                  <StyledView className="flex-row justify-between mb-2">
                     <StyledText className="text-gray-400">Số tiền:</StyledText>
-                    <StyledText className="font-bold text-gray-800">{getDepositAmount(selectedTable).toLocaleString()} VNĐ</StyledText>
+                    <StyledText className="font-bold text-gray-800">{(currentInvoice?.tienCoc || getDepositAmount(selectedTable)).toLocaleString()} VNĐ</StyledText>
                  </StyledView>
                  <StyledView className="flex-row justify-between">
                     <StyledText className="text-gray-400">Mã đơn:</StyledText>
-                    <StyledText className="font-bold text-red-700">{currentInvoice?.invoiceId}</StyledText>
+                    <StyledText className="font-bold text-red-700">{currentInvoice?.maHD}</StyledText>
                  </StyledView>
               </StyledView>
 
@@ -618,6 +656,36 @@ const BookingScreen = () => {
               >
                 {loading ? <ActivityIndicator color="white" /> : <StyledText className="text-white text-lg font-bold">Tôi đã thanh toán</StyledText>}
               </StyledTouchableOpacity>
+
+              <StyledTouchableOpacity 
+                 onPress={async () => {
+                    Alert.alert(
+                        'Xác nhận',
+                        'Bạn có chắc chắn muốn hủy đơn đặt bàn này không?',
+                        [
+                            { text: 'Quay lại' },
+                            { text: 'Hủy đặt bàn', style: 'destructive', onPress: async () => {
+                                try {
+                                    setLoading(true);
+                                    await SocketService.request('CANCEL_INVOICE', { 
+                                        maHD: currentInvoice?.maHD, 
+                                        trangThai: 'DaHuy' 
+                                    });
+                                    setPaymentModalVisible(false);
+                                    Alert.alert('Thành công', 'Đã hủy đơn đặt bàn.');
+                                } catch (err) {
+                                    Alert.alert('Lỗi', 'Không thể hủy đơn: ' + err.message);
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                        ]
+                    );
+                 }}
+                 className="mt-4 w-full py-4 border border-red-200 rounded-2xl items-center"
+               >
+                  <StyledText className="text-red-500 font-bold">Hủy đặt bàn này</StyledText>
+               </StyledTouchableOpacity>
 
               <StyledTouchableOpacity 
                 onPress={() => setPaymentModalVisible(false)}

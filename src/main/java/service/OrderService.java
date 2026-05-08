@@ -54,8 +54,19 @@ public class OrderService {
                 Object hoaDonParam = request.getParam("hoaDon");
                 if (hoaDonParam instanceof java.util.Map) {
                     java.util.Map<String, Object> rawHoaDon = (java.util.Map<String, Object>) hoaDonParam;
+                    // Trường hợp 1: maBan ở root hoaDon
                     if (rawHoaDon.containsKey("maBan")) {
                         tableId = (String) rawHoaDon.get("maBan");
+                    } 
+                    // Trường hợp 2: maBan lồng trong object ban
+                    else if (rawHoaDon.get("ban") instanceof java.util.Map) {
+                        java.util.Map<String, Object> rawBan = (java.util.Map<String, Object>) rawHoaDon.get("ban");
+                        if (rawBan.containsKey("maBan")) {
+                            tableId = (String) rawBan.get("maBan");
+                        }
+                    }
+                    
+                    if (!tableId.equals("N/A")) {
                         hd.setMaBan(tableId); // Cập nhật ngược lại object hd
                     }
                 }
