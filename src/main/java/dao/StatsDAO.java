@@ -191,6 +191,22 @@ public List<Map<String, AttributeValue>> getRawInvoicesByRange(LocalDate start, 
         }
     }
 
+    public List<Map<String, AttributeValue>> getRawInvoicesAll() {
+        try {
+            return db.scan(ScanRequest.builder()
+            .tableName(TBL)
+            .filterExpression("#s = :paid")
+            .expressionAttributeNames(Map.of("#s", "status"))
+            .expressionAttributeValues(Map.of(
+            ":paid", av(STATUS_PAID)
+            ))
+            .build()).items();
+        } catch (Exception e) {
+            System.err.println("[DAO:Stats] Lỗi getRawInvoicesAll: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
 // ─── Helpers ─────────────────────────────────────────────────────────────
 private AttributeValue av(String s) { return AttributeValue.builder().s(s != null ? s : "").build(); }
 }

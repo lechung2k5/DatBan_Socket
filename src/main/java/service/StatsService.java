@@ -146,36 +146,50 @@ public Response handleGetKpisForDate(Request request) {
     return Response.error(e.getMessage());
 }
 }
-public Response handleGetInvoiceStats(Request request) {
-    try {
-        Integer day = (Integer) request.getParam("day");
-        Integer month = (Integer) request.getParam("month");
-        Integer year = (Integer) request.getParam("year");
-        List<Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue>> items;
-        if (day != null && month != null) {
-            items = statsDAO.getRawInvoicesByDate(LocalDate.of(year, month, day));
-        } else if (month != null) {
-            items = statsDAO.getRawInvoicesByMonth(year, month);
-        } else {
-            items = statsDAO.getRawInvoicesByYear(year);
+    public Response handleGetInvoiceStats(Request request) {
+        try {
+            Integer day = (Integer) request.getParam("day");
+            Integer month = (Integer) request.getParam("month");
+            Integer year = (Integer) request.getParam("year");
+            List<Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue>> items;
+            if (year != null) {
+                if (day != null && month != null) {
+                    items = statsDAO.getRawInvoicesByDate(LocalDate.of(year, month, day));
+                } else if (month != null) {
+                    items = statsDAO.getRawInvoicesByMonth(year, month);
+                } else {
+                    items = statsDAO.getRawInvoicesByYear(year);
+                }
+            } else {
+                items = statsDAO.getRawInvoicesAll();
+            }
+            List<Map<String, Object>> list = items.stream().map(item -> {
+                Map<String, Object> m = new HashMap<>();
+                // 🔥 SỬA: Key chính xác là invoiceId, không phải id
+                m.put("maHD", item.containsKey("invoiceId") ? item.get("invoiceId").s() : "N/A");
+                m.put("thoiGianVao", item.containsKey("createdAt") ? item.get("createdAt").s() : "N/A");
+                
+                double total = 0;
+                if (item.containsKey("total") && item.get("total").n() != null) {
+                    total = Double.parseDouble(item.get("total").n());
+                } else if (item.containsKey("totalAmount") && item.get("totalAmount").n() != null) {
+                    total = Double.parseDouble(item.get("totalAmount").n());
+                }
+                m.put("tongTien", total);
+                return m;
+            }).collect(java.util.stream.Collectors.toList());
+            
+            double totalRev = list.stream().mapToDouble(m -> (double) m.get("tongTien")).sum();
+            Map<String, Object> res = new HashMap<>();
+            res.put("list", list);
+            res.put("totalInvoices", list.size());
+            res.put("totalRevenue", totalRev);
+            return Response.ok(res);
+        } catch (Exception e) {
+            System.err.println("[StatsService] Lỗi handleGetInvoiceStats: " + e.getMessage());
+            return Response.error("Lỗi lấy dữ liệu hóa đơn: " + e.getMessage());
         }
-List<Map<String, Object>> list = items.stream().map(item -> {
-    Map<String, Object> m = new HashMap<>();
-    m.put("maHD", item.get("id").s());
-    m.put("thoiGianVao", item.get("createdAt").s());
-    m.put("tongTien", Double.parseDouble(item.get("total").n()));
-    return m;
-}).collect(java.util.stream.Collectors.toList());
-double totalRev = list.stream().mapToDouble(m -> (double) m.get("tongTien")).sum();
-Map<String, Object> res = new HashMap<>();
-res.put("list", list);
-res.put("totalInvoices", list.size());
-res.put("totalRevenue", totalRev);
-return Response.ok(res);
-} catch (Exception e) {
-return Response.error(e.getMessage());
-}
-}
+    }
 public Response handleGetDailyRevenueForWeek(Request request) {
     try {
         LocalDate start = LocalDate.parse((String) request.getParam("start"));
@@ -225,29 +239,46 @@ public Response handleGetTopSellingItems(Request request) {
         Integer month = (Integer) request.getParam("month");
         Integer year = (Integer) request.getParam("year");
         List<Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue>> invoices;
-        if (day != null && month != null) {
-            invoices = statsDAO.getRawInvoicesByDate(LocalDate.of(year, month, day));
-        } else if (month != null) {
-            invoices = statsDAO.getRawInvoicesByMonth(year, month);
+        if (year != null) {
+            if (day != null && month != null) {
+                invoices = statsDAO.getRawInvoicesByDate(LocalDate.of(year, month, day));
+            } else if (month != null) {
+                invoices = statsDAO.getRawInvoicesByMonth(year, month);
+            } else {
+                invoices = statsDAO.getRawInvoicesByYear(year);
+            }
         } else {
-            invoices = statsDAO.getRawInvoicesByYear(year);
+            invoices = statsDAO.getRawInvoicesAll();
         }
 // Map<ItemName, Quantity>
 Map<String, Integer> itemCounts = new HashMap<>();
 Map<String, Double> itemRevenue = new HashMap<>();
-for (Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> inv : invoices) {
-    if (inv.containsKey("details")) {
-        List<software.amazon.awssdk.services.dynamodb.model.AttributeValue> details = inv.get("details").l();
-        for (software.amazon.awssdk.services.dynamodb.model.AttributeValue detail : details) {
-            Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> dMap = detail.m();
-            String name = dMap.get("productName").s();
-            int qty = Integer.parseInt(dMap.get("quantity").n());
-            double price = Double.parseDouble(dMap.get("price").n());
-            itemCounts.put(name, itemCounts.getOrDefault(name, 0) + qty);
-            itemRevenue.put(name, itemRevenue.getOrDefault(name, 0.0) + (qty * price));
-        }
-    }
-}
+            for (Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> inv : invoices) {
+                if (inv.containsKey("itemsJson")) {
+                    try {
+                        String json = inv.get("itemsJson").s();
+                        // Dùng List<Map> để linh hoạt, không cần import ChiTietHoaDon
+                        List<Map> details = utils.JsonUtil.fromJsonList(json, Map.class);
+                        for (Map ct : details) {
+                            String name = (String) ct.get("tenMon");
+                            if (name == null) {
+                                // Fallback nếu có lồng monAn (tùy phiên bản cũ)
+                                Map<String, Object> monAn = (Map<String, Object>) ct.get("monAn");
+                                if (monAn != null) name = (String) monAn.get("tenMon");
+                            }
+                            if (name == null) continue;
+                            
+                            int qty = ((Number) ct.get("soLuong")).intValue();
+                            double price = ((Number) ct.get("donGia")).doubleValue();
+                            
+                            itemCounts.put(name, itemCounts.getOrDefault(name, 0) + qty);
+                            itemRevenue.put(name, itemRevenue.getOrDefault(name, 0.0) + (qty * price));
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[StatsService] Lỗi parse itemsJson: " + e.getMessage());
+                    }
+                }
+            }
 List<Map<String, Object>> result = new ArrayList<>();
 int stt = 1;
 List<String> sortedNames = itemCounts.entrySet().stream()
