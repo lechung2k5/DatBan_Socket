@@ -210,11 +210,24 @@ public class ThucDon {
         for (MonAn monAn : listFromDB) {
             Image fxImage = null;
             if (monAn.getHinhAnhUrl() != null && !monAn.getHinhAnhUrl().isEmpty()) {
-                // Add timestamp to URL to bypass JavaFX cache
+                // Ưu tiên tải từ URL (Cloudinary)
                 String urlWithBuster = monAn.getHinhAnhUrl() + (monAn.getHinhAnhUrl().contains("?") ? "&" : "?") + "t=" + System.currentTimeMillis();
-                fxImage = new Image(urlWithBuster, true);
+                fxImage = new Image(urlWithBuster, true); // true = background loading
+                
+                // Thêm listener xử lý lỗi khi tải ảnh từ URL
+                final Image finalImg = fxImage;
+                fxImage.errorProperty().addListener((obs, oldV, newV) -> {
+                    if (newV) {
+                        System.err.println("[UI:ThucDon] Lỗi tải ảnh từ URL: " + monAn.getHinhAnhUrl());
+                    }
+                });
             } else if (monAn.getHinhAnh() != null && monAn.getHinhAnh().length > 0) {
-                fxImage = new Image(new ByteArrayInputStream(monAn.getHinhAnh()));
+                // Fallback sang dữ liệu nhị phân (legacy)
+                try {
+                    fxImage = new Image(new ByteArrayInputStream(monAn.getHinhAnh()));
+                } catch (Exception e) {
+                    System.err.println("[UI:ThucDon] Lỗi tạo ảnh từ byte array: " + e.getMessage());
+                }
             }
 
             // Find category name
@@ -390,6 +403,7 @@ public class ThucDon {
         public String getMaMon() { return maMon.get(); }
         public String getName() { return name.get(); }
         public Image getImage() { return image.get(); }
+        public SimpleObjectProperty<Image> imageProperty() { return image; }
         public double getPrice() { return price.get(); }
         public String getMaDM() { return maDM.get(); }
         public String getCategoryName() { return categoryName.get(); }

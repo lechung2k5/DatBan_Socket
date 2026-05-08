@@ -236,7 +236,7 @@ public void setInitialData(HoaDon hd, DatBan controller, double tongMonAn, doubl
     HoaDon hdGocDeLayThongTin = hd;
     if (isNewInvoice && maHDGocSnapshot != null) {
         try {
-            Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("invoiceId", maHDGocSnapshot));
+            Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDGocSnapshot));
             if (res.getStatusCode() == 200) {
                 HoaDon fetchedHdGoc = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
                 if (fetchedHdGoc != null) hdGocDeLayThongTin = fetchedHdGoc;
@@ -360,7 +360,7 @@ showAlert(AlertType.ERROR, "Lỗi hệ thống", "Lỗi: " + e.getMessage());
         if (maHDCanIn == null) return;
         
         try {
-            Response resHD = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("invoiceId", maHDCanIn));
+            Response resHD = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", maHDCanIn));
             if (resHD.getStatusCode() != 200) {
                 showAlert(AlertType.ERROR, "Lỗi", "Không tìm thấy hóa đơn đã thanh toán để in.");
                 return;

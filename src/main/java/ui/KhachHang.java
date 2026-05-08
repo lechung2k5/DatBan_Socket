@@ -1,4 +1,4 @@
-﻿package ui;
+package ui;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -8,10 +8,10 @@ import java.util.Optional; // Import Optional
 import java.time.LocalDateTime;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Region;
-import java.util.regex.Pattern; // === THAY íÂáÂ»âI ===: ThíÂªm import íâáÂ»Æ kiáÂ»Æm tra regex
-import entity.TaiKhoan; // íÂáÂ»Æ láÂºÂ¥y tíÂªn NV
+import java.util.regex.Pattern; // === THAY ĐỔI ===: Thêm import để kiểm tra regex
+import entity.TaiKhoan; // Để lấy tên NV
 import ui.MainApp;
-//=== CíÂC IMPORT CHO IN áÂºÂ¤N Víâ¬ PDFBOX ===
+//=== CÁC IMPORT CHO IN ẤN VÀ PDFBOX ===
 
 
 
@@ -36,23 +36,23 @@ import network.CommandType;
 import network.Response;
 import utils.JsonUtil;
 import entity.*;
-import javafx.beans.property.SimpleObjectProperty; // THíÅ M IMPORT SimpleObjectProperty
+import javafx.beans.property.SimpleObjectProperty; // THÊM IMPORT SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets; // THíÅ M IMPORT Insets
+import javafx.geometry.Insets; // THÊM IMPORT Insets
 import javafx.geometry.Pos;
-import javafx.scene.control.*; // Import táÂºÂ¥t cáÂºÂ£ control
+import javafx.scene.control.*; // Import tất cả control
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority; // THíÅ M IMPORT Priority
-import javafx.scene.layout.VBox; // THíÅ M IMPORT VBox
+import javafx.scene.layout.Priority; // THÊM IMPORT Priority
+import javafx.scene.layout.VBox; // THÊM IMPORT VBox
 public class KhachHang {
-    // === Khai bíÂ¡o FXML ===
+    // === Khai báo FXML ===
     @FXML private TableView<entity.KhachHang> tblKhachHang;
     @FXML private TableColumn<entity.KhachHang, String> colMaKH;
     @FXML private TableColumn<entity.KhachHang, String> colHoTen;
@@ -61,30 +61,30 @@ public class KhachHang {
     @FXML private TableColumn<entity.KhachHang, String> colEmail;
     @FXML private TableColumn<entity.KhachHang, String> colNgayDangKy;
     @FXML private TableColumn<entity.KhachHang, String> colLoaiKH;
-    @FXML private TableColumn<entity.KhachHang, Integer> colTongTien; // KiáÂ»Æu String víÂ¬ sáÂºÂ½ hiáÂ»Æn tháÂ»â¹ text
+    @FXML private TableColumn<entity.KhachHang, Integer> colTongTien; // Kiểu String vì sẽ hiển thị text
     @FXML private TableColumn<entity.KhachHang, Void> colXemLichSu;
     @FXML private TextField txtHoTen, txtSDT, txtDiaChi, txtEmail, txtSearch, txtDiem;
     @FXML private DatePicker datePickerNgayDangKy;
     @FXML private ComboBox<String> filterComboBox;
     @FXML private Button btnThem, btnXoa, btnSua, btnXoaTrang;
-    @FXML private Button btnTim; // NíÂºt tíÂ¬m kiáÂºÂ¿m
-    // === ThuáÂ»â¢c tíÂ­nh khíÂ¡c ===
-    // âÅâ¦ íÂáÂºÂ£m báÂºÂ£o cíÂ¡c formatter níÂ y íâíÂ°áÂ»Â£c kháÂ»Å¸i táÂºÂ¡o íâíÂºng víÂ  líÂ  final
+    @FXML private Button btnTim; // Nút tìm kiếm
+    // === Thuộc tính khác ===
+    // ✅ Đảm bảo các formatter này được khởi tạo đúng và là final
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private ObservableList<entity.KhachHang> masterCustomerList; // Danh síÂ¡ch gáÂ»âc
-    private FilteredList<entity.KhachHang> filteredCustomerList; // Danh síÂ¡ch hiáÂ»Æn tháÂ»â¹ sau láÂ»Âc
-    // === THAY íÂáÂ»âI ===: ThíÂªm cíÂ¡c biáÂºÂ¿n Regex íâáÂ»Æ kiáÂ»Æm tra
+    private ObservableList<entity.KhachHang> masterCustomerList; // Danh sách gốc
+    private FilteredList<entity.KhachHang> filteredCustomerList; // Danh sách hiển thị sau lọc
+    // === THAY ĐỔI ===: Thêm các biến Regex để kiểm tra
     private static final Pattern PHONE_REGEX = Pattern.compile("^0\\d{9}$");
     private static final Pattern EMAIL_REGEX = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$");
     // ==================================
-    // KHáÂ»Å¾I TáÂºÂ O (INITIALIZE)
+    // KHỞI TẠO (INITIALIZE)
     // ==================================
     public void initialize() {
-        setupTableColumns();        // CíÂ i Äâ€˜áÂºÂ·t cíÂ¡c cáÂ»â„¢t báÂºÂ£ng
-        loadDatabaseData();         // TáÂºÂ£i dáÂ»Â¯ liáÂ»â€¡u ban Äâ€˜áÂºÂ§u
-        setupFiltersAndSearch();    // CíÂ i Äâ€˜áÂºÂ·t báÂ»â„¢ láÂ»Â c víÂ  tíÂ¬m kiáÂºÂ¿m
+        setupTableColumns();        // Cài đặt các cột bảng
+        loadDatabaseData();         // Tải dữ liệu ban đầu
+        setupFiltersAndSearch();    // Cài đặt bộ lọc và tìm kiếm
         setupActionButtons();       // Gán sự kiện cho các nút Thêm/Sửa/Xóa
         setupSelectionListener();   // Lắng nghe sự kiện chọn dòng
         clearForm();                // Xóa trắng form ban đầu
@@ -101,33 +101,33 @@ public class KhachHang {
         }
     }
     // ==================================
-    // Cíâ‚¬I ÄÂ áÂºÂ¶T GIAO DIáÂ»â€ N
+    // CÀI ĐẶT GIAO DIỆN
     // ==================================
-    /** CíÂ i Äâ€˜áÂºÂ·t báÂ»â„¢ láÂ»Â c ComboBox víÂ  sáÂ»Â± kiáÂ»â€¡n níÂºt TíÂ¬m */
+    /** Cài đặt bộ lọc ComboBox và sự kiện nút Tìm */
     private void setupFiltersAndSearch() {
-        // === THAY íÂáÂ»âI: íÂíÂ£ xíÂ³a "Guest" kháÂ»Âi danh síÂ¡ch ===
+        // === THAY ĐỔI: Đã xóa "Guest" khỏi danh sách ===
         filterComboBox.setItems(FXCollections.observableArrayList(
         "Tất cả", "Member", "Gold", "Diamond"
         ));
-        // === KáÂºÂ¾T THíÅ¡C THAY íÂáÂ»âI ===
-        filterComboBox.setValue("Tất cả"); // GiíÂ¡ tráÂ»â¹ máÂºÂ·c íâáÂ»â¹nh
-        // LáÂºÂ¯ng nghe thay íâáÂ»â¢i ComboBox víÂ  íÂ´ tíÂ¬m kiáÂºÂ¿m, gáÂ»Âi updateFilter
+        // === KẾT THÚC THAY ĐỔI ===
+        filterComboBox.setValue("Tất cả"); // Giá trị mặc định
+        // Lắng nghe thay đổi ComboBox và ô tìm kiếm, gọi updateFilter
         filterComboBox.valueProperty().addListener((obs, oldVal, newVal) -> updateFilter());
-        //txtSearch.textProperty().addListener((obs, oldVal, newVal) -> updateFilter()); // LáÂ»Âc ngay khi gíÂµ
-        // NíÂºt TíÂ¬m cíÂ³ tháÂ»Æ khíÂ´ng cáÂºÂ§n thiáÂºÂ¿t náÂºÂ¿u láÂ»Âc live, nhíÂ°ng váÂºÂ«n giáÂ»Â¯ láÂºÂ¡i
+        //txtSearch.textProperty().addListener((obs, oldVal, newVal) -> updateFilter()); // Lọc ngay khi gõ
+        // Nút Tìm có thể không cần thiết nếu lọc live, nhưng vẫn giữ lại
         btnTim.setOnAction(e -> updateFilter());
     }
-    /** GíÂ¡n sáÂ»Â± kiáÂ»â¡n cho cíÂ¡c níÂºt ThíÂªm, SáÂ»Â­a, XíÂ³a, XíÂ³a tráÂºÂ¯ng */
+    /** Gán sự kiện cho các nút Thêm, Sửa, Xóa, Xóa trắng */
     private void setupActionButtons() {
         btnThem.setOnAction(e -> handleThem());
         btnSua.setOnAction(e -> handleSua());
         btnXoa.setOnAction(e -> handleXoa());
         btnXoaTrang.setOnAction(e -> {
             clearForm();
-            txtHoTen.requestFocus(); // CháÂ»â° focus khi ngíÂ°áÂ»Âi díÂ¹ng cáÂ»â tíÂ¬nh báÂºÂ¥m níÂºt XíÂ³a tráÂºÂ¯ng
+            txtHoTen.requestFocus(); // Chỉ focus khi người dùng cố tình bấm nút Xóa trắng
         });
     }
-    /** LáÂºÂ¯ng nghe sáÂ»Â± kiáÂ»â¡n cháÂ»Ân díÂ²ng tríÂªn TableView */
+    /** Lắng nghe sự kiện chọn dòng trên TableView */
         private void setupSelectionListener() {
         tblKhachHang.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
@@ -143,7 +143,7 @@ public class KhachHang {
         });
     }
 
-/** CáÂºÂ¥u híÂ¬nh cíÂ¡c cáÂ»â„¢t cho TableView KhíÂ¡ch HíÂ ng */
+/** Cấu hình các cột cho TableView Khách Hàng */
     private void setupTableColumns() {
         tblKhachHang.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         colMaKH.setCellValueFactory(new PropertyValueFactory<>("maKH"));
@@ -158,10 +158,10 @@ public class KhachHang {
             String formattedDate = (date != null) ? date.format(dateFormatter) : "";
             return new SimpleStringProperty(formattedDate);
         });
-    // CáÂ»â„¢t TáÂ»â€¢ng tiáÂ»Â n HÄÂ  (HiáÂ»â€¡n Äâ€˜ang áÂºÂ©n víÂ  hiáÂ»Æ’n tháÂ»â€¹ "N/A")
-    // CáÂºÂ§n getTongTienHoaDon() hoáÂºÂ·c tíÂ­nh toíÂ¡n riíÂªng náÂºÂ¿u muáÂ»â€˜n hiáÂ»Æ’n tháÂ»â€¹ giíÂ¡ tráÂ»â€¹
-     // áÂºÂ¨n cáÂ»â„¢t níÂ y Äâ€˜i
-    // CáÂ»â„¢t níÂºt Xem LáÂ»â€¹ch SáÂ»Â­
+    // Cột Tổng tiền HĐ (Hiện đang ẩn và hiển thị "N/A")
+    // Cần getTongTienHoaDon() hoặc tính toán riêng nếu muốn hiển thị giá trị
+     // ẩn cột này đi
+    // Cột nút Xem Lịch Sử
     colXemLichSu.setCellFactory(param -> new TableCell<entity.KhachHang, Void>() {
         private final Button viewButton = new Button("Xem");
         private final HBox pane = new HBox(viewButton);
@@ -171,9 +171,9 @@ public class KhachHang {
             viewButton.setOnAction(event -> {
                 entity.KhachHang customer = getTableView().getItems().get(getIndex());
                 if (customer != null && customer.getMaKH() != null) {
-                    showInvoiceHistoryDialog(customer); // GáÂ»Â i híÂ m hiáÂ»Æ’n tháÂ»â€¹ láÂ»â€¹ch sáÂ»Â­
+                    showInvoiceHistoryDialog(customer); // Gọi hàm hiển thị lịch sử
                 } else {
-                showAlert(Alert.AlertType.WARNING, "LáÂ»â€”i", "KhíÂ´ng tháÂ»Æ’ láÂºÂ¥y thíÂ´ng tin khíÂ¡ch híÂ ng.");
+                showAlert(Alert.AlertType.WARNING, "Lỗi", "Không thể lấy thông tin khách hàng.");
             }
         });
     }
@@ -185,7 +185,7 @@ public class KhachHang {
 });
 }
 // ==================================
-// XáÂ»Â¬ LíÂ  DáÂ»Â® LIáÂ»â€ U Víâ‚¬ SáÂ»Â° KIáÂ»â€ N
+// XỬ LÝ DỮ LIỆU VÀ SỰ KIỆN
 // ==================================
 /** Tải dữ liệu từ CSDL vào danh sách gốc và áp dụng bộ lọc */
     /** Tải dữ liệu từ CSDL vào danh sách gốc và áp dụng bộ lọc */
@@ -273,7 +273,7 @@ private void handleThem() {
 private void handleSua() {
     entity.KhachHang selectedCustomer = tblKhachHang.getSelectionModel().getSelectedItem();
     if (selectedCustomer == null) {
-        showAlert(Alert.AlertType.WARNING, "ChíÂ°a cháÂ»Ân", "Vui líÂ²ng cháÂ»Ân khíÂ¡ch híÂ ng cáÂºÂ§n sáÂ»Â­a.");
+        showAlert(Alert.AlertType.WARNING, "Chưa chọn", "Vui lòng chọn khách hàng cần sửa.");
         return;
     }
     String hoTen = txtHoTen.getText().trim();
@@ -283,9 +283,9 @@ private void handleSua() {
     LocalDate ngayDangKy = datePickerNgayDangKy.getValue();
 
     if (!validateInput(hoTen, sdt, diaChi, email, ngayDangKy, selectedCustomer)) {
-        return; // DáÂ»Â«ng náÂºÂ¿u dáÂ»Â¯ liáÂ»â€¡u khíÂ´ng háÂ»Â£p láÂ»â€¡
+        return; // Dừng nếu dữ liệu không hợp lệ
     }
-    // === KáÂºÂ¾T THíÅ¡C THAY ÄÂ áÂ»â€ I ===
+    // === KẾT THÚC THAY ĐỔI ===
     // Cập nhật đối tượng trong bộ nhớ
     selectedCustomer.setTenKH(hoTen);
     selectedCustomer.setSoDT(sdt);
@@ -651,15 +651,15 @@ private void showInvoiceDetailDialog(String maHD) {
         d.showAndWait();
     }
 // ==============================================================================
-// ðÅ¸âÂ¥ CíÂC Híâ¬M XáÂ»Â¬ LíÂ IN HíâA íÂíÂ N (COPY TáÂ»Âª HoaDonUI.java)
+// 💥 CÁC HÀM XỬ LÝ IN HÓA ĐƠN (COPY TỪ HoaDonUI.java)
 // ==============================================================================
-// Helper Class cho váÂ»â¹ tríÂ­ Y
+// Helper Class cho vị trí Y
 private static class YPosition {
     public float y;
     public YPosition(float initialY) { this.y = initialY; }
 }
 /**
-* XáÂ»Â­ líÂ½ sáÂ»Â± kiáÂ»â¡n nháÂºÂ¥n níÂºt In HíÂ³a íÂíÂ¡n
+* Xử lý sự kiện nhấn nút In Hóa Đơn
 */
     private void handleInHoaDon(HoaDon hd) {
         if (hd == null) return;
@@ -689,7 +689,7 @@ private void addInfoRow(GridPane grid, int row, String l1, String v1, String l2,
     grid.add(lbl1, 0, row); grid.add(val1, 1, row);
     grid.add(lbl2, 2, row); grid.add(val2, 3, row);
 }
-/** HíÂ m tiáÂ»â¡n íÂ­ch táÂºÂ¡o máÂ»â¢t díÂ²ng HBox cho pháÂºÂ§n táÂ»â¢ng tiáÂ»Ân */
+/** Hàm tiện ích tạo một dòng HBox cho phần tổng tiền */
 private HBox createTotalRow(String labelText, String valueText) {
     HBox hbox = new HBox();
     Label label = new Label(labelText); label.getStyleClass().add("info-title");
@@ -698,21 +698,10 @@ private HBox createTotalRow(String labelText, String valueText) {
     hbox.getChildren().addAll(label, spacer, value);
     return hbox;
 }
-/** HiáÂ»Æn tháÂ»â¹ Alert íâí¡n giản */
+/** Hiển thị Alert đơn giản */
 private void showAlert(Alert.AlertType type, String title, String content) {
     Alert alert = new Alert(type);
     alert.setTitle(title); alert.setHeaderText(null); alert.setContentText(content);
     alert.showAndWait();
 }
 }
-
-
-
-
-
-
-
-
-
-
-

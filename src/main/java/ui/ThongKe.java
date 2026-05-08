@@ -113,6 +113,26 @@ public class ThongKe {
         // 🔥 Sử dụng Platform.runLater để không chặn luồng UI khi khởi tạo
         Platform.runLater(() -> {
             loadInitialKpiData();
+            setupRealTimeUpdate();
+        });
+    }
+
+    private void setupRealTimeUpdate() {
+        network.RealTimeClient.getInstance().addListener(event -> {
+            if (event.getType() == network.CommandType.CHECK_OUT || event.getType() == network.CommandType.UPDATE_INVOICE) {
+                System.out.println("[ThongKe] Nhận sự kiện real-time: " + event.getType() + ". Đang làm mới dữ liệu...");
+                refreshAllData();
+            }
+        });
+    }
+
+    private void refreshAllData() {
+        Platform.runLater(() -> {
+            loadInitialKpiData();
+            loadHoaDonDataFromDAO();
+            loadMonAnDataFromDAO();
+            loadDoanhThuDataForWeek();
+            loadKhuVucDataForWeek();
         });
     }
     // --- Setup Methods ---
@@ -340,11 +360,14 @@ public class ThongKe {
         // 1. Lấy dữ liệu đầy đủ từ API
         HoaDon hoaDonFull = null;
         List<ChiTietHoaDon> chiTietList = new ArrayList<>();
-        Response resHD = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("id", selectedHoaDon.getMaHD()));
+        
+        // 🔥 Đồng bộ tên tham số "maHD" với Server
+        Response resHD = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", selectedHoaDon.getMaHD()));
         if (resHD.getStatusCode() == 200) {
-            hoaDonFull = JsonUtil.fromJson(JsonUtil.toJson(resHD.getData()), HoaDon.class);
+            hoaDonFull = JsonUtil.convertValue(resHD.getData(), HoaDon.class);
         }
-        Response resCT = Client.sendWithParams(CommandType.GET_INVOICE_DETAILS, Map.of("invoiceId", selectedHoaDon.getMaHD()));
+        
+        Response resCT = Client.sendWithParams(CommandType.GET_INVOICE_DETAILS, Map.of("maHD", selectedHoaDon.getMaHD()));
         if (resCT.getStatusCode() == 200) {
             chiTietList = JsonUtil.fromJsonList(JsonUtil.toJson(resCT.getData()), ChiTietHoaDon.class);
         }

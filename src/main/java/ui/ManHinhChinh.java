@@ -769,7 +769,7 @@ public class ManHinhChinh {
         Platform.exit();
     }
 
-    // === CHỨC NĂNG GỬI EMAIL (ĐàKHÔI PHỤC) ===
+    // === CHỨC NĂNG GỬI EMAIL (Đã KHÔI PHỤC) ===
     @FXML
     private void handleGuiChuongTrinhTV() {
         ObservableList<KhachHang> dsKhachHangCoEmail;
@@ -942,7 +942,7 @@ public class ManHinhChinh {
         });
     }
 
-    // === CHỨC NĂNG MỞ PDF (ĐàNÂNG CẤP - CHẠY ĐƯỢC TRÊN MỌI MÁY) ===
+    // === CHỨC NĂNG MỞ PDF (Đã NÂNG CẤP - CHẠY ĐƯỢC TRÊN MỌI MÁY) ===
     private void saveKiemKeLog(double heThong, double thucTe) {
         java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         String thoiGian = dtf.format(java.time.LocalDateTime.now());

@@ -1,4 +1,4 @@
-﻿package ui;
+package ui;
 import network.Client;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -26,7 +26,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -251,7 +250,7 @@ private void filterData() {
         (hd.getNgayLap() != null &&
         hd.getNgayLap().toLocalDate().equals(selectedDate));
         
-        // 🔥 CHỈ HIỂN THỊ HÓA ĐƠN ĐÝTHANH TOÁN
+        // 🔥 CHỈ HIỂN THỊ HÓA ĐƠN ĐÃ THANH TOÁN
         boolean isPaid = hd.getTrangThai() != null && hd.getTrangThai() == entity.TrangThaiHoaDon.DA_THANH_TOAN;
 
         return paymentMatch && searchMatch && dateMatch && isPaid; // << Thêm isPaid vào điều kiện
@@ -445,9 +444,9 @@ if (style != null) {
     cell.setCellStyle(style);
 }
 }
-// === CÁC HÀM TIỆN ÍCH CHO PDFBox (ĐàXÓA) ===
+// === CÁC HÀM TIỆN ÍCH CHO PDFBox (Đã XÓA) ===
 // ... (Đã xóa các hàm drawTextLeft, drawTextRight, drawLine, v.v. cũ) ...
-// === HÀM IN HÓA ĐƠN (PDF) - (ĐàXÓA HÀM CŨ) ===
+// === HÀM IN HÓA ĐƠN (PDF) - (Đã XÓA HÀM CŨ) ===
 // === 🔥 HÀM MỚI: HELPER CLASS CHO VỊ TRÍ Y (Copy từ TraCuu) ===
 private static class YPosition {
     public float y;
@@ -505,4 +504,3 @@ private void showAlert(String title, String message) {
     });
 }
 }
-
