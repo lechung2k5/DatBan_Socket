@@ -1,7 +1,5 @@
 package network;
 
-import network.Request;
-import network.Response;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -28,11 +26,12 @@ public class ClientHandler implements Runnable {
                 try {
                     // Đọc Request từ client
                     Object obj = in.readObject();
-                    if (!(obj instanceof Request)) continue;
-                    
+                    if (!(obj instanceof Request))
+                        continue;
+
                     Request request = (Request) obj;
                     System.out.println("[REQUEST RECEIVED] CommandType: " + request.getAction());
-                    
+
                     // 🔥 Xử lý Đăng ký Real-time
                     if (request.getAction() == CommandType.SUBSCRIBE_REALTIME) {
                         Service.registerNotificationClient(out);
@@ -43,7 +42,7 @@ public class ClientHandler implements Runnable {
 
                     // Xử lý và lấy Response thông thường
                     Response response = dispatcher.dispatch(request);
-                    
+
                     // Gửi Response về client
                     out.writeObject(response);
                     out.flush();
@@ -72,9 +71,12 @@ public class ClientHandler implements Runnable {
                 Service.unregisterNotificationClient(out);
             }
             try {
-                if (in != null) in.close();
-                if (out != null) out.close();
-                if (socket != null && !socket.isClosed()) socket.close();
+                if (in != null)
+                    in.close();
+                if (out != null)
+                    out.close();
+                if (socket != null && !socket.isClosed())
+                    socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

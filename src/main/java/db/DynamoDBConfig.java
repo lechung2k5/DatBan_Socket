@@ -1,5 +1,5 @@
 package db;
-import db.EnvConfig;
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -26,14 +26,16 @@ public class DynamoDBConfig {
         }
         return client;
     }
+
     public static String getTableName() {
         return EnvConfig.get("DYNAMODB_TABLE_NAME", "QuanLyDatBan-Table");
     }
+
     public static DynamoDbEnhancedClient getEnhancedClient() {
         if (enhancedClient == null) {
             enhancedClient = DynamoDbEnhancedClient.builder()
-            .dynamoDbClient(getClient())
-            .build();
+                    .dynamoDbClient(getClient())
+                    .build();
         }
         return enhancedClient;
     }

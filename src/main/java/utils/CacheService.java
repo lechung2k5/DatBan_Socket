@@ -1,4 +1,4 @@
-﻿package utils;
+package utils;
 import db.RedisConfig;
 import redis.clients.jedis.Jedis;
 /**
