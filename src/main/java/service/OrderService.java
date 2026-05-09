@@ -162,6 +162,14 @@ public Response handleUpdateInvoicePromo(Request request) {
             if (maHD == null) return Response.error("Thiếu mã hóa đơn");
             HoaDon hd = invoiceDAO.findById(maHD);
             if (hd == null) return Response.error("Không tìm thấy hóa đơn");
+            
+            // 🔥 Đảm bảo maBan luôn có giá trị để Mobile không hiện N/A
+            if ((hd.getBan() == null || hd.getBan().getMaBan() == null) && hd.getMaBan() != null) {
+                entity.Ban ban = new entity.Ban();
+                ban.setMaBan(hd.getMaBan());
+                hd.setBan(ban);
+            }
+            
             return Response.ok(hd);
         } catch (Exception e) {
             return Response.error("Lỗi: " + e.getMessage());

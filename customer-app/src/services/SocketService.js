@@ -93,8 +93,8 @@ class SocketService {
             });
 
             this.io.on('NEW_NOTIFICATION', (data) => {
-                console.log('[Socket.io] New Notification received!');
-                // Chuyển đổi format cho giống Java WS response để App.js không phải sửa nhiều
+                console.log('[Socket.io] New Notification received:', data.type || data.CommandType);
+                // Phát tới tất cả listeners
                 this.listeners.forEach(callback => callback(data));
             });
 
@@ -167,13 +167,17 @@ class SocketService {
 
     /**
      * Đăng ký nhận phản hồi
+     * Trả về callback để thuận tiện cho việc unsubscribe
      */
     addListener(callback) {
         this.listeners.add(callback);
+        return callback; 
     }
 
     removeListener(callback) {
-        this.listeners.delete(callback);
+        if (callback) {
+            this.listeners.delete(callback);
+        }
     }
 
     /**

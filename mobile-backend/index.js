@@ -106,10 +106,12 @@ app.get('/api/menu', async (req, res) => {
             maMon: item.itemId,
             tenMon: item.name,
             donGia: item.price,
-            giaBan: item.price, // Keep for backward compatibility
+            giaBan: item.price, 
             maDM: item.categoryId,
-            hinhAnh: item.imageUrl,
-            available: item.available
+            hinhAnhUrl: item.imageUrl, // Dùng cho HomeScreen.js
+            imageUrl: item.imageUrl,   // Tên gốc trong Database
+            available: item.available,
+            moTa: item.description 
         }));
         res.json({ statusCode: 200, data: items });
     } catch (err) {

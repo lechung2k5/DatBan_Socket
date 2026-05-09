@@ -285,7 +285,9 @@ const BookingDetailScreen = ({ route, navigation }) => {
                     </StyledView>
                     <StyledView>
                         <StyledText className="text-gray-400 text-[10px] font-bold uppercase">Bàn phục vụ</StyledText>
-                        <StyledText className="text-lg font-black text-red-900">{booking.ban?.maBan || booking.maBan || 'N/A'}</StyledText>
+                        <StyledText className="text-lg font-black text-red-900">
+                            {booking.ban?.maBan || booking.maBan || booking.tableId || 'N/A'}
+                        </StyledText>
                     </StyledView>
                 </StyledView>
                 <StyledView className="items-end">

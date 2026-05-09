@@ -14,6 +14,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import { useEffect, useState } from 'react';
 import ApiService from '../../services/ApiService';
+import SocketService from '../../services/SocketService';
 
 const StyledSafeAreaView = styled(SafeAreaView);
 const StyledScrollView = styled(ScrollView);
@@ -35,10 +36,22 @@ const HomeScreen = () => {
   useEffect(() => {
     fetchData();
 
-    // 🔥 CƠ CHẾ REAL-TIME (POLLING): Tự động cập nhật dữ liệu mỗi 30 giây
-    const pollingInterval = setInterval(fetchData, 30000);
+    // 🔥 KẾT NỐI REAL-TIME: Lắng nghe sự kiện cập nhật thực đơn từ Server
+    const unsubscribe = SocketService.addListener((event) => {
+      // Kiểm tra cả 'type' (RealTimeEvent) và 'CommandType' (Request/Response) cho chắc chắn
+      if (event.type === 'UPDATE_MENU' || event.CommandType === 'UPDATE_MENU') {
+        console.log('[HomeScreen] Nhận thông báo cập nhật thực đơn real-time! Đang làm mới...');
+        fetchData();
+      }
+    });
 
-    return () => clearInterval(pollingInterval);
+    // Vẫn giữ Polling 60s để đảm bảo dữ liệu luôn mới nhất
+    const pollingInterval = setInterval(fetchData, 60000);
+
+    return () => {
+      clearInterval(pollingInterval);
+      SocketService.removeListener(unsubscribe);
+    };
   }, []);
 
   const fetchData = async () => {
