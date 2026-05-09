@@ -15,29 +15,33 @@ public class EnvConfig {
                         .directory("./")
                         .ignoreIfMissing()
                         .load();
-                System.out.println("[EnvConfig] .env loaded from " + System.getProperty("user.dir"));
             } catch (Exception e) {
-                System.err.println("[EnvConfig] Warning: Could not load .env: " + e.getMessage());
+                // Nếu lỗi, khởi tạo một cấu hình rỗng để tránh NullPointerException
+                dotenv = Dotenv.configure()
+                        .ignoreIfMissing()
+                        .load();
             }
         }
         return dotenv;
     }
 
     public static String get(String key) {
-        return getInstance().get(key);
+        Dotenv inst = getInstance();
+        return inst != null ? inst.get(key) : null;
     }
 
     public static String get(String key, String defaultValue) {
-        return getInstance().get(key, defaultValue);
+        Dotenv inst = getInstance();
+        return inst != null ? inst.get(key, defaultValue) : defaultValue;
     }
 
     public static int getInt(String key) {
-        String val = getInstance().get(key);
+        String val = get(key);
         return val != null ? Integer.parseInt(val) : 0;
     }
 
     public static int getInt(String key, int defaultValue) {
-        String val = getInstance().get(key);
+        String val = get(key);
         return val != null ? Integer.parseInt(val) : defaultValue;
     }
 
