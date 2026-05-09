@@ -1,6 +1,7 @@
 package network;
 import java.io.Serializable;
 public class Response implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int statusCode; // 200: OK, 400: Error, etc.
     private String message;
     private Object data;

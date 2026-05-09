@@ -3,6 +3,7 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.HashMap;
 public class Request implements Serializable {
+    private static final long serialVersionUID = 1L;
     private CommandType CommandType;
     private Map<String, Object> params;
     private Object data; // Bổ sung data field cho entity
