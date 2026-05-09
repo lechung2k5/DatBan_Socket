@@ -7,9 +7,9 @@
 /* (Giữ nguyên) */
 .top-bar {
     -fx-background-color: #fff;
-    -fx-padding: 20 25;
+    -fx-padding: 10 25;
     -fx-alignment: center-left;
-    -fx-spacing: 20;
+    -fx-spacing: 15;
     -fx-border-color: #E0E0E0;
     -fx-border-width: 0 0 1 0;
 }
@@ -49,7 +49,7 @@
 /* (Giữ nguyên) */
 .content-area {
     -fx-background-image: url("/images/background.jpg");
-    -fx-padding: 20;
+    -fx-padding: 10;
 }
 
 /* ==================== DASHBOARD ==================== */
