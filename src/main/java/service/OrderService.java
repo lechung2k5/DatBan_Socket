@@ -111,28 +111,32 @@ public Response handleGetInvoice(Request request) {
     return Response.error("Lỗi: " + e.getMessage());
 }
 }
-public Response handleGetInvoicesToday(Request request) {
-    try {
-        Object dateParam = request.getParam("date");
-        LocalDate date = (dateParam instanceof String) ? LocalDate.parse((String) dateParam) : LocalDate.now();
-        List<HoaDon> list = invoiceDAO.findByDate(date);
-        return Response.ok(list);
-    } catch (Exception e) {
-    return Response.error("Lỗi: " + e.getMessage());
-}
-}
-    public Response handleGetInvoicesPending(Request request) {
+    public Response handleGetInvoicesToday(Request request) {
         try {
-            List<HoaDon> list = invoiceDAO.findPending();
-            
-            // 🔥 Merge locks from Redis
+            Object dateParam = request.getParam("date");
+            LocalDate date = (dateParam instanceof String) ? LocalDate.parse((String) dateParam) : LocalDate.now();
+            List<HoaDon> list = invoiceDAO.findByDate(date);
+
+            // 🔥 Merge locks from Redis for Table Grid status
             List<HoaDon> locks = utils.CacheService.getAllLocks();
             if (locks != null) {
                 list.addAll(locks);
             }
-            
+
             return Response.ok(list);
         } catch (Exception e) {
+            return Response.error("Lỗi: " + e.getMessage());
+        }
+    }
+
+    public Response handleGetInvoicesPending(Request request) {
+        try {
+            List<HoaDon> list = invoiceDAO.findPending();
+            return Response.ok(list);
+        } catch (Exception e) {
+            return Response.error("Lỗi: " + e.getMessage());
+        }
+    }
             return Response.error("Lỗi: " + e.getMessage());
         }
     }

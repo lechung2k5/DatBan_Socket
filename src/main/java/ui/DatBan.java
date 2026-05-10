@@ -1948,7 +1948,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                 // 1. Tải ds HĐ Đang Chờ qua API
                 LocalDate dateToLoadForGrid = datePickerThoiGianDen.getValue() != null ? datePickerThoiGianDen.getValue()
                         : LocalDate.now();
-                Response resInvoices = Client.sendWithParams(CommandType.GET_PENDING_INVOICES,
+                Response resInvoices = Client.sendWithParams(CommandType.GET_INVOICES_TODAY,
                         Map.of("date", dateToLoadForGrid.toString()));
                 
                 final List<HoaDon> fetchedInvoices = new ArrayList<>();
