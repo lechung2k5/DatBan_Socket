@@ -59,6 +59,10 @@ class SocketService {
         }
     }
 
+    isLoggedIn() {
+        return !!this.token && !!this.userProfile;
+    }
+
     /**
      * Khởi tạo kết nối (Cả WS và IO)
      */
@@ -93,6 +97,7 @@ class SocketService {
             });
 
             this.io.on('NEW_NOTIFICATION', (data) => {
+                if (!data) return; // Phòng vệ rỗng
                 console.log('[Socket.io] New Notification received:', data.type || data.CommandType);
                 // Phát tới tất cả listeners
                 this.listeners.forEach(callback => callback(data));

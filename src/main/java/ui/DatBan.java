@@ -204,8 +204,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
     private Button btnHuyBan;
     @FXML
     private Button btnLuuMon; // 🔥 MỚI
-    @FXML
-    private Button btnLamMoi; // 🔥 MỚI
+
     // Table Món Ăn (Menu)
     @FXML
     private TableView<MonAn> tblMonAn;
@@ -290,9 +289,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
         if (btnLuuMon != null) {
             btnLuuMon.setOnAction(e -> handleLuuMon());
         }
-        if (btnLamMoi != null) {
-            btnLamMoi.setOnAction(e -> handleLamMoi());
-        }
+
 
         // Load danh mục món qua API
         Response resDM = Client.send(CommandType.GET_MENU_CATEGORIES, null);
@@ -1525,28 +1522,14 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             popupStage.initModality(Modality.APPLICATION_MODAL);
             popupStage.showAndWait();
 
-            handleLamMoi(); // Refresh giao diện sau khi đổi
+            loadTableGrids();
+            loadBookingCards();
         } catch (Exception e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể mở popup đổi bàn: " + e.getMessage());
         }
     }
-    /**
-     * 🔥 HÀM MỚI: Làm mới toàn bộ dữ liệu từ máy chủ (Thủ công)
-     */
-    private void handleLamMoi() {
-        System.out.println("[UI-DATBAN] Đang làm mới dữ liệu thủ công...");
-        loadBookingCards();
-        loadTableGrids();
-        if (currentHoaDon != null) {
-            Response res = Client.sendWithParams(CommandType.GET_INVOICE_BY_ID, Map.of("maHD", currentHoaDon.getMaHD()));
-            if (res.getStatusCode() == 200) {
-                HoaDon updatedHd = utils.JsonUtil.convertValue(res.getData(), HoaDon.class);
-                loadHoaDonToMainInterface(updatedHd, false);
-            }
-        }
-        // showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã làm mới dữ liệu từ máy chủ.");
-    }
+
 
     /**
      * 🔥 HÀM MỚI: Lưu danh sách món ăn (Bắn socket ngay lập tức)
@@ -1698,6 +1681,10 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
 
                 showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã tạo hóa đơn mới: " + nextMaHD);
                 
+                // 🔥 GIẢI PHÓNG KHÓA BÀN SAU KHI LƯU THÀNH CÔNG
+                List<String> maBansToUnlock = selectedBanList.stream().map(Ban::getMaBan).collect(Collectors.toList());
+                Client.sendWithParams(CommandType.UNLOCK_TABLES, Map.of("maBans", maBansToUnlock));
+                
                 // 7. Refresh và chọn hóa đơn vừa tạo
                 loadBookingCards();
                 loadTableGrids();
@@ -1812,11 +1799,32 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             return;
         }
         if (currentHoaDon == null) {
+            // 🔥 KIỂM TRA KHÓA BÀN TRƯỚC KHI XÁC NHẬN
+            List<String> maBans = selectedBanList.stream().map(Ban::getMaBan).collect(Collectors.toList());
+            String date = datePickerThoiGianDen.getValue().toString();
+            String time = comboThoiGian.getValue();
+            String employeeId = (ClientSessionManager.getInstance().getCurrentEmployee() != null) 
+                                ? ClientSessionManager.getInstance().getCurrentEmployee().getMaNV() : "Unknown";
+
+            Response lockRes = Client.sendWithParams(CommandType.LOCK_TABLES, Map.of(
+                    "maBans", maBans,
+                    "date", date,
+                    "time", time,
+                    "employeeId", employeeId
+            ));
+
+            if (lockRes.getStatusCode() != 200) {
+                showAlert(Alert.AlertType.WARNING, "Bàn đang bị khóa", lockRes.getMessage());
+                return;
+            }
+
             for (Ban selectedBan : selectedBanList) {
                 TrangThaiBan trangThaiHienThi = getTrangThaiHienThi(selectedBan, LocalTime.now());
                 if (trangThaiHienThi == TrangThaiBan.DA_DAT || trangThaiHienThi == TrangThaiBan.DANG_SU_DUNG) {
                     showAlert(Alert.AlertType.WARNING, "Bàn đang bận", "Bàn " + selectedBan.getMaBan()
                             + " đang bận hoặc đã được đặt trước (trong vòng 4 tiếng trước giờ vào). Vui lòng chọn bàn khác.");
+                    // Mở khóa nếu đã lỡ khóa ở bước trên (về lý thuyết bước trên sẽ fail nếu bận, nhưng cẩn thận)
+                    Client.sendWithParams(CommandType.UNLOCK_TABLES, Map.of("maBans", maBans));
                     return;
                 }
             }
@@ -1897,6 +1905,7 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                         (hd.getTrangThai() == TrangThaiHoaDon.DAT ||
                                 hd.getTrangThai() == TrangThaiHoaDon.DANG_SU_DUNG ||
                                 hd.getTrangThai() == TrangThaiHoaDon.HOA_DON_TAM ||
+                                hd.getTrangThai() == TrangThaiHoaDon.DANG_XAC_NHAN ||
                                 hd.getTrangThai() == TrangThaiHoaDon.CHO_XAC_NHAN)) // <<< THÊM MỚI
                 .min(Comparator.comparing(HoaDon::getGioVao));
         if (hdDangCho.isPresent()) {
@@ -1904,6 +1913,10 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             // 2. Ưu tiên CAM (DANG_SU_DUNG / HOA_DON_TAM)
             if (trangThaiHD == TrangThaiHoaDon.DANG_SU_DUNG || trangThaiHD == TrangThaiHoaDon.HOA_DON_TAM) {
                 return TrangThaiBan.DANG_SU_DUNG; // Cam
+            }
+            // 2.5 Ưu tiên TÍM (DANG_XAC_NHAN - Khóa tạm Redis)
+            if (trangThaiHD == TrangThaiHoaDon.DANG_XAC_NHAN) {
+                return TrangThaiBan.DANG_XAC_NHAN; // Tím
             }
             // 3. Xử lý ĐỎ (ĐàĐẶT - DAT hoặc Chờ xác nhận - CHO_XAC_NHAN)
             if (trangThaiHD == TrangThaiHoaDon.DAT || trangThaiHD == TrangThaiHoaDon.CHO_XAC_NHAN) { // <<< THÊM MỚI
@@ -2046,11 +2059,13 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
 
     private void applyTableStyle(Button button, TrangThaiBan trangThai) {
         button.getStyleClass().removeAll("table-button-booked", "table-button-serving", "table-button-available",
-                "table-button-selected");
+                "table-button-locking", "table-button-selected");
         if (trangThai == TrangThaiBan.DA_DAT) {
             button.getStyleClass().add("table-button-booked");
         } else if (trangThai == TrangThaiBan.DANG_SU_DUNG) {
             button.getStyleClass().add("table-button-serving");
+        } else if (trangThai == TrangThaiBan.DANG_XAC_NHAN) {
+            button.getStyleClass().add("table-button-locking");
         } else {
             button.getStyleClass().add("table-button-available");
         }
@@ -2077,8 +2092,22 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
                     "Giờ nhập không hợp lệ (cần HH:mm). Vui lòng sửa lại trước khi chọn bàn.");
             return;
         }
-        // 2. 🔥 MỚI: Nếu bàn đang BẬN (Serving/Booked), tự động load Hóa đơn đó lên
+        // 2. 🔥 MỚI: Nếu bàn đang BẬN (Serving/Booked/Locking), xử lý alert hoặc load hóa đơn
         TrangThaiBan trangThaiHienThi = getTrangThaiHienThi(ban, thoiGianKiemTra);
+        
+        if (trangThaiHienThi == TrangThaiBan.DANG_XAC_NHAN) {
+            Optional<HoaDon> hdLock = dsHoaDonDatTrongNgay.stream()
+                    .filter(hd -> hd.getBan() != null && hd.getBan().getMaBan().equals(ban.getMaBan()))
+                    .filter(hd -> hd.getTrangThai() == TrangThaiHoaDon.DANG_XAC_NHAN)
+                    .findFirst();
+            
+            String lockingUser = hdLock.isPresent() ? hdLock.get().getTenNhanVien() : "một nhân viên khác";
+            showAlert(Alert.AlertType.WARNING, "Bàn đang được xử lý", 
+                "Bàn " + ban.getMaBan() + " đang được " + lockingUser + " thực hiện xác nhận đặt bàn.\n" +
+                "Vui lòng đợi 5 phút hoặc chọn bàn khác.");
+            return;
+        }
+
         if (trangThaiHienThi == TrangThaiBan.DA_DAT || trangThaiHienThi == TrangThaiBan.DANG_SU_DUNG) {
             Optional<HoaDon> hdActive = dsHoaDonDatTrongNgay.stream()
                     .filter(hd -> hd.getBan() != null && hd.getBan().getMaBan().equals(ban.getMaBan()))
@@ -2854,9 +2883,17 @@ public class DatBan implements Initializable, network.RealTimeSubscriber {
             btnThanhToanCoc.setDisable(true);
         }
         // 3. Reset trạng thái logic
+        boolean wasConfirmedButNotSaved = (currentHoaDon == null && isBookingConfirmed);
         isBookingConfirmed = false; //
         currentHoaDon = null; // Reset hóa đơn đang xem
         this.daThanhToanCoc = false;
+        
+        // 🔥 GIẢI PHÓNG KHÓA BÀN NẾU ĐANG TRONG QUÁ TRÌNH XÁC NHẬN (Nhưng chưa lưu)
+        if (wasConfirmedButNotSaved && !selectedBanList.isEmpty()) {
+            List<String> maBans = selectedBanList.stream().map(Ban::getMaBan).collect(Collectors.toList());
+            Client.sendWithParams(CommandType.UNLOCK_TABLES, Map.of("maBans", maBans));
+        }
+
         // 4. Cập nhật hiển thị nút vọtrạng thái TẠO MỚI
         updateButtonVisibility(false); //
     }

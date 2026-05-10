@@ -172,6 +172,10 @@ public class RequestDispatcher {
                 return PaymentService.handleConfirmDeposit(request);
             case GENERATE_INVOICE_ID:
                 return OrderService.handleGenerateId(request);
+            case LOCK_TABLES:
+                return OrderService.handleLockTables(request);
+            case UNLOCK_TABLES:
+                return OrderService.handleUnlockTables(request);
             case SEND_OTP:
                 return AuthService.handleSendOTP(request);
             case REGISTER_CUSTOMER:

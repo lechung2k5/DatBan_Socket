@@ -38,11 +38,14 @@ const RegisterScreen = ({ navigation }) => {
 
   useEffect(() => {
     SocketService.connect();
+    
+    let isMounted = true;
     const unsubscribe = SocketService.addListener((res) => {
+      if (!isMounted || !res) return; // Phòng vệ rỗng và unmounted
+      
       if (res.statusCode === 200) {
         if (res.data && res.data.otp) {
           setLoading(false);
-          // Lưu OTP tạm thời để verify ở màn hình tiếp theo
           navigation.navigate('Otp', { 
             email: formData.email, 
             serverOtp: res.data.otp,
@@ -57,8 +60,13 @@ const RegisterScreen = ({ navigation }) => {
         Alert.alert('Lỗi', res.message || 'Không thể gửi OTP');
       }
     });
-    return unsubscribe;
-  }, [formData]);
+
+    return () => {
+        isMounted = false;
+        if (typeof unsubscribe === 'function') unsubscribe();
+        else SocketService.removeListener(unsubscribe);
+    };
+  }, [formData, navigation]);
 
   const handleRegister = () => {
     const { name, phone, email, diaChi, password, confirmPassword } = formData;

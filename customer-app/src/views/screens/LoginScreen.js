@@ -32,14 +32,16 @@ const LoginScreen = ({ navigation }) => {
 
   useEffect(() => {
     SocketService.connect();
+    let isMounted = true;
+    
     const unsubscribe = SocketService.addListener((res) => {
+      if (!isMounted || !res) return; // Phòng vệ rỗng và unmounted
+
       if (res.CommandType === 'CUSTOMER_LOGIN' || res.statusCode !== undefined) {
         setLoading(false);
         if (res.statusCode === 200) {
-          // Đăng nhập thành công, lưu token và toàn bộ profile khách hàng
           if (res.data && res.data.token) {
             const customerData = res.data.customer || {};
-            // Chuẩn hóa profile để dễ dùng nhưng vẫn giữ nguyên data gốc
             const profile = {
               ...customerData,
               name: customerData.tenKH,
@@ -53,8 +55,13 @@ const LoginScreen = ({ navigation }) => {
         }
       }
     });
-    return unsubscribe;
-  }, []);
+
+    return () => {
+        isMounted = false;
+        if (typeof unsubscribe === 'function') unsubscribe();
+        else SocketService.removeListener(unsubscribe);
+    };
+  }, [navigation]);
 
   const handleLogin = () => {
     if (!email || !password) {

@@ -121,14 +121,68 @@ public Response handleGetInvoicesToday(Request request) {
     return Response.error("Lỗi: " + e.getMessage());
 }
 }
-public Response handleGetInvoicesPending(Request request) {
-    try {
-        List<HoaDon> list = invoiceDAO.findPending();
-        return Response.ok(list);
-    } catch (Exception e) {
-    return Response.error("Lỗi: " + e.getMessage());
-}
-}
+    public Response handleGetInvoicesPending(Request request) {
+        try {
+            List<HoaDon> list = invoiceDAO.findPending();
+            
+            // 🔥 Merge locks from Redis
+            List<HoaDon> locks = utils.CacheService.getAllLocks();
+            if (locks != null) {
+                list.addAll(locks);
+            }
+            
+            return Response.ok(list);
+        } catch (Exception e) {
+            return Response.error("Lỗi: " + e.getMessage());
+        }
+    }
+
+    public Response handleLockTables(Request request) {
+        try {
+            List<String> maBans = (List<String>) request.getParam("maBans");
+            String date = (String) request.getParam("date");
+            String time = (String) request.getParam("time");
+            String employeeId = (String) request.getParam("employeeId");
+
+            if (maBans == null || date == null || time == null) {
+                return Response.error("Thiếu thông tin khóa bàn");
+            }
+
+            for (String maBan : maBans) {
+                boolean success = utils.CacheService.lockTable(maBan, date, time, employeeId);
+                if (!success) {
+                    return Response.error("Bàn " + maBan + " đã được người khác khóa");
+                }
+            }
+
+            // Broadcast to all clients
+            for (String maBan : maBans) {
+                Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Bàn đang được xác nhận", maBan));
+            }
+
+            return Response.ok("Đã khóa bàn thành công");
+        } catch (Exception e) {
+            return Response.error("Lỗi khóa bàn: " + e.getMessage());
+        }
+    }
+
+    public Response handleUnlockTables(Request request) {
+        try {
+            List<String> maBans = (List<String>) request.getParam("maBans");
+            String date = (String) request.getParam("date");
+            String time = (String) request.getParam("time");
+
+            if (maBans != null && date != null && time != null) {
+                for (String maBan : maBans) {
+                    utils.CacheService.unlockTable(maBan, date, time);
+                    Service.broadcast(new RealTimeEvent(CommandType.UPDATE_TABLE_STATUS, "Giải phóng khóa bàn", maBan));
+                }
+            }
+            return Response.ok("Đã giải phóng khóa bàn");
+        } catch (Exception e) {
+            return Response.error("Lỗi giải phóng khóa: " + e.getMessage());
+        }
+    }
 public Response handleGetActiveInvoices(Request request) {
     try {
         String type = (String) request.getParam("type");

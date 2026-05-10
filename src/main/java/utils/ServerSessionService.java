@@ -1,7 +1,6 @@
 package utils;
 import db.EnvConfig;
 import db.RedisConfig;
-import utils.JsonUtil;
 import redis.clients.jedis.Jedis;
 import java.util.concurrent.ConcurrentHashMap;
 import java.time.LocalDateTime;

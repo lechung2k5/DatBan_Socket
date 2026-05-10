@@ -79,10 +79,12 @@ function MainTabs({ unreadCount, setUnreadCount }) {
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [userToken, setUserToken] = useState(null);
 
   useEffect(() => {
     const initApp = async () => {
       await SocketService.loadToken();
+      setUserToken(SocketService.token);
       SocketService.connect();
 
       // Lấy số lượng chưa đọc ban đầu
@@ -155,7 +157,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator 
         screenOptions={{ headerShown: false }} 
-        initialRouteName={SocketService.token ? "Main" : "Login"}
+        initialRouteName={userToken ? "Main" : "Login"}
       >
         {/* Auth Screens */}
         <Stack.Screen name="Login" component={LoginScreen} />

@@ -10,7 +10,9 @@ public enum TrangThaiBan {
     @SerializedName("DangSuDung")
     DANG_SU_DUNG("DangSuDung", "Đang sử dụng"),
     @SerializedName("Dat")
-    DA_DAT("Dat", "Đã đặt"); // Sử dụng "Dat" làm dbValue khớp với script SQL INSERT
+    DA_DAT("Dat", "Đã đặt"), // Sử dụng "Dat" làm dbValue khớp với script SQL INSERT
+    @SerializedName("DangXacNhan")
+    DANG_XAC_NHAN("DangXacNhan", "Đang xác nhận");
     private final String dbValue;
     private final String displayName;
     TrangThaiBan(String dbValue, String displayName) {
@@ -53,6 +55,8 @@ public enum TrangThaiBan {
             case "DAT":
             case "DADAT":
                 return DA_DAT;
+            case "DANGXACNHAN":
+                return DANG_XAC_NHAN;
             default:
                 System.err.println("WARNING: Giá trị TrangThaiBan không xác định từ DB: '" + dbValue + "'. Mặc định thành TRONG.");
                 return TRONG;

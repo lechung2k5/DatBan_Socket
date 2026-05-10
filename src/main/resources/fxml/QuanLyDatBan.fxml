@@ -208,7 +208,7 @@
                         <Button fx:id="btnTachBan" mnemonicParsing="false" text="Tách Bàn" styleClass="action-button-split" />
                         <Button fx:id="btnGopBan" mnemonicParsing="false" text="Gộp Bàn" styleClass="action-button-merge" />
                         <Button fx:id="btnHuyBan" mnemonicParsing="false" text="Hủy Bàn" styleClass="action-button-cancel" />
-                        <Button fx:id="btnLamMoi" mnemonicParsing="false" text="Làm mới" styleClass="action-button-refresh" />
+
                     </HBox>
                     
                     <!-- Hàng 2: Lưu và Thanh toán -->

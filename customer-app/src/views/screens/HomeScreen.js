@@ -38,6 +38,7 @@ const HomeScreen = () => {
 
     // 🔥 KẾT NỐI REAL-TIME: Lắng nghe sự kiện cập nhật thực đơn từ Server
     const unsubscribe = SocketService.addListener((event) => {
+      if (!event) return; // Phòng vệ rỗng
       // Kiểm tra cả 'type' (RealTimeEvent) và 'CommandType' (Request/Response) cho chắc chắn
       if (event.type === 'UPDATE_MENU' || event.CommandType === 'UPDATE_MENU') {
         console.log('[HomeScreen] Nhận thông báo cập nhật thực đơn real-time! Đang làm mới...');

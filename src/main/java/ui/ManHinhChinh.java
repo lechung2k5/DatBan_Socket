@@ -870,8 +870,8 @@ public class ManHinhChinh {
                 return;
             }
             // Cấu hình Email (Thay đổi thông tin thật của bạn)
-            final String username = "nhahangtuhuu@gmail.com";
-            final String password = "rnwm bkli pycf bjcv";
+            final String username = "nhahangtuhuu.vn@gmail.com";
+            final String password = "xsfg hbmg ypuv ejty";
             Properties prop = new Properties();
             prop.put("mail.smtp.host", "smtp.gmail.com");
             prop.put("mail.smtp.port", "587");
@@ -1063,7 +1063,6 @@ public class ManHinhChinh {
                 String finalMessage = message;
                 Platform.runLater(() -> {
                     updateNotificationBadge();
-                    showAlert(Alert.AlertType.INFORMATION, title != null ? title : "Thông báo mới", finalMessage);
                 });
             }
         });

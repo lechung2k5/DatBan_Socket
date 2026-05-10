@@ -30,30 +30,58 @@ Apache PDFBox: Xử lý xuất hóa đơn PDF chuyên dụng.
 
 JavaMail API: Gửi thông báo chương trình thành viên qua Email.
 
-SQL Server: Cơ sở dữ liệu lưu trữ nghiệp vụ.
+Cơ sở dữ liệu: AWS DynamoDB (NoSQL) & Redis (Caching).
 
 🚀 Hướng dẫn Build & Chạy ứng dụng
 1. Yêu cầu hệ thống
-Java: OpenJDK 21 hoặc Azul Zulu (có sẵn JavaFX).
+- Java: OpenJDK 21 hoặc Azul Zulu (có sẵn JavaFX).
+- Maven: Phiên bản 3.9 trở lên.
 
-Maven: Phiên bản 3.9 trở lên.
-
-2. Cài đặt font chữ (Dành cho in ấn)
-Hệ thống sử dụng font Arial hệ thống để đảm bảo hiển thị Tiếng Việt trên hóa đơn. Đảm bảo máy tính của bạn có font Arial tại đường dẫn C:/Windows/Fonts/arial.ttf.
+2. Cấu hình Môi trường (.env)
+Dự án sử dụng file `.env` để quản lý các thông số kết nối bí mật. 
+- Vui lòng copy file `.env.example` thành `.env`.
+- **LƯU Ý:** Để đảm bảo an toàn thông tin, các Key truy cập AWS và Redis trong file nộp bài đã được ẩn đi. 
+- **Để lấy thông tin kết nối thực tế nhằm chấm bài, vui lòng liên hệ với nhóm qua zalo hoặc email: lechung020905@gmail.com.**
 
 3. Biên dịch và đóng gói (Executable JAR)
 Sử dụng Maven để tạo file JAR thực thi bao gồm tất cả thư viện:
-
-Bash
-
-mvn clean package
-File kết quả sẽ nằm trong thư mục /target/ dưới dạng {Tên_Dự_Án}.jar.
+```bash
+mvn clean package -DskipTests
+```
+File kết quả sẽ nằm trong thư mục `/target/` dưới dạng `javafx-app.jar`.
 
 4. Chạy ứng dụng
-Bash
 
-java -jar target/Nhom08_QuanLyDatBan.jar
-5.Tài khoản - mật khẩu
-Admin (Toàn quyền) - username: admin | password: admin123
-Quản lý - username: nv001 | password: 123
-Nhân viên thu ngân - username: nv003 | password: 123
+#### Cách 1: Chạy nhanh bằng Maven (Khuyên dùng khi chấm bài)
+Mở hai cửa sổ terminal riêng biệt và chạy các lệnh sau:
+- **Chạy Server:**
+  ```bash
+  mvn exec:java -Dexec.mainClass="network.Service"
+  ```
+- **Chạy Client (Giao diện):**
+  ```bash
+  mvn javafx:run
+  ```
+
+#### Cách 2: Chạy bằng file JAR (Sau khi đã build ở bước 3)
+- **Chạy Server:**
+  ```bash
+  java -cp target/javafx-app.jar network.Service
+  ```
+- **Sau đó chạy Client:**
+  ```bash
+  java -jar target/javafx-app.jar
+  ```
+
+
+5. Tài khoản dùng thử
+- Admin (Toàn quyền) - username: `admin` | password: `admin123`
+- Quản lý - username: `quanly` | password: `quanly123`
+- Nhân viên thu ngân - username: `thungan1` | password: `tn123`
+
+---
+📧 **Thông tin liên hệ nhóm:** 
+- Nhóm trưởng: Lê Công Chung
+- Email: lechung020905@gmail.com
+- SĐT: 0377019958
+

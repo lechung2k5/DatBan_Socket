@@ -44,3 +44,4 @@ node_modules/
 .expo/
 dist/
 build/
+dist_client/

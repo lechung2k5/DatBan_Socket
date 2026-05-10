@@ -94,6 +94,7 @@ const BookingDetailScreen = ({ route, navigation }) => {
     
     // 🔥 Lắng nghe Socket để cập nhật real-time thay vì Polling
     const socketHandler = (event) => {
+        if (!event) return; // Phòng vệ rỗng
         // Hỗ trợ cả format từ Java (event.CommandType) và Node.js (event.action hoặc CommandType lồng trong data)
         const cmd = event.CommandType || event.action;
         if (cmd === 'UPDATE_INVOICE' && (event.affectedId === maHD || (event.data && event.data.maHD === maHD))) {

@@ -116,4 +116,59 @@ public static void invalidateAll() {
             System.err.println("[CACHE] Lỗi publishNotification: " + e.getMessage());
         }
     }
+
+    // --- Table Locking (TTL: 5 minutes) ---
+    private static final String LOCK_PREFIX = "lock:table:";
+    private static final int LOCK_TTL = 300;
+
+    public static boolean lockTable(String maBan, String date, String time, String employeeId) {
+        String key = LOCK_PREFIX + maBan + ":" + date + ":" + time;
+        try (Jedis j = RedisConfig.getPool().getResource()) {
+            // SET with NX (Only set if not exists)
+            String result = j.set(key, employeeId, redis.clients.jedis.params.SetParams.setParams().nx().ex(LOCK_TTL));
+            return "OK".equalsIgnoreCase(result);
+        } catch (Exception e) {
+            System.err.println("[CACHE] Lỗi lockTable: " + e.getMessage());
+            return true; // Fallback to true if Redis fails
+        }
+    }
+
+    public static void unlockTable(String maBan, String date, String time) {
+        String key = LOCK_PREFIX + maBan + ":" + date + ":" + time;
+        try (Jedis j = RedisConfig.getPool().getResource()) {
+            j.del(key);
+        } catch (Exception e) {
+            System.err.println("[CACHE] Lỗi unlockTable: " + e.getMessage());
+        }
+    }
+
+    public static java.util.List<entity.HoaDon> getAllLocks() {
+        java.util.List<entity.HoaDon> locks = new java.util.ArrayList<>();
+        try (Jedis j = RedisConfig.getPool().getResource()) {
+            java.util.Set<String> keys = j.keys(LOCK_PREFIX + "*");
+            for (String key : keys) {
+                // key format: lock:table:maBan:date:time
+                String[] parts = key.split(":");
+                if (parts.length >= 5) {
+                    String maBan = parts[2];
+                    String date = parts[3];
+                    String time = parts[4];
+                    String employeeId = j.get(key);
+
+                    entity.HoaDon hd = new entity.HoaDon();
+                    hd.setMaHD("LOCK_" + maBan + "_" + System.currentTimeMillis() % 1000);
+                    hd.setMaBan(maBan);
+                    hd.setTrangThai(entity.TrangThaiHoaDon.DANG_XAC_NHAN.getDbValue());
+                    hd.setTenNhanVien(employeeId);
+                    try {
+                        hd.setGioVao(java.time.LocalDateTime.of(java.time.LocalDate.parse(date), java.time.LocalTime.parse(time)));
+                    } catch (Exception ignored) {}
+                    locks.add(hd);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[CACHE] Lỗi getAllLocks: " + e.getMessage());
+        }
+        return locks;
+    }
 }

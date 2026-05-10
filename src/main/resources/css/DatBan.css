@@ -105,10 +105,15 @@
 /* ==================== CỘT GIỮA: THAO TÁC (Bổ sung và Sửa) ==================== */
 
 /* Màu Đã Đặt: Sửa lại màu để dễ nhìn hơn */
-.table-button-booked { 
-    -fx-background-color: #d00000; /* ĐỎ ĐẬM HƠN */
-    -fx-text-fill: white; 
-    -fx-border-color: transparent;
+.table-button-booked {
+    -fx-background-color: #e03131; /* Đỏ */
+    -fx-text-fill: white;
+}
+
+.table-button-locking {
+    -fx-background-color: #9c36b5; /* Tím (Đang xác nhận) */
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(156, 54, 181, 0.4), 10, 0, 0, 0);
 }
 
 /* Màu Đang Sử Dụng: Thêm định nghĩa cho trạng thái này */

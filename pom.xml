@@ -219,7 +219,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>ui.MainApp</mainClass>
+                    <mainClass>ui.MainLauncher</mainClass>
                     <options>
                         <option>--add-exports=javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED</option>
                         <option>--add-exports=javafx.fxml/com.sun.javafx.fxml=ALL-UNNAMED</option>
@@ -239,7 +239,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>ui.MainApp</mainClass>
+                            <mainClass>ui.MainLauncher</mainClass>
                         </manifest>
                     </archive>
                     <appendAssemblyId>false</appendAssemblyId>

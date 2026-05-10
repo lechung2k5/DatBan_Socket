@@ -19,7 +19,9 @@ public enum TrangThaiHoaDon {
     @SerializedName("HoaDonTam")
     HOA_DON_TAM("HoaDonTam", "Hóa đơn tạm"),
     @SerializedName("ChoXacNhan")
-    CHO_XAC_NHAN("ChoXacNhan", "Chờ xác nhận"); // <<< THÊM MỚI
+    CHO_XAC_NHAN("ChoXacNhan", "Chờ xác nhận"), // <<< THÊM MỚI
+    @SerializedName("DangXacNhan")
+    DANG_XAC_NHAN("DangXacNhan", "Đang xác nhận");
     // ========================================================
     private final String dbValue;
     private final String displayName;
